@@ -36,4 +36,12 @@ def step_impl(context, ccy, bid, ask, baseCcy):
         context.rm.ratesMap[ccy]['bid'] = float(bid)
         context.rm.ratesMap[ccy]['ask'] = float(ask)
 
+@given('we have ccy exposure manager with base currency {baseCurrency}, default ccy limit of {def_limit}')
+def step_impl(context, baseCurrency, def_limit):
+        context.rm = CcyExposureLimitRiskEvaluator(baseCurrency, ccyLimit=float(def_limit))
+
+
+@given('the specific exposure limit for currency {ccy} is {ccy_limit}')
+def step_impl(context, ccy, ccy_limit):
+        context.rm.set_limit(ccy, float(ccy_limit))
 

@@ -18,6 +18,17 @@ class TestRiskManager(unittest.TestCase):
 		rm.ratesMap['SGD']['bid'] = 0.74
 		rm.ratesMap['SGD']['ask'] = 0.75
 
+	def assignDummyUnityRates(self, rm):
+		rm.ratesMap['CHF'] = {}
+		rm.ratesMap['CHF']['bid'] = 1.0
+		rm.ratesMap['CHF']['ask'] = 1.0
+		rm.ratesMap['EUR'] = {}
+		rm.ratesMap['EUR']['bid'] = 1.0
+		rm.ratesMap['EUR']['ask'] = 1.0
+		rm.ratesMap['SGD'] = {}
+		rm.ratesMap['SGD']['bid'] = 1.0
+		rm.ratesMap['SGD']['ask'] = 1.0
+
 	def setUp(self):
 		self.rm = CcyExposureLimitRiskEvaluator('USD')
 		self.assignDummyRates(self.rm)
@@ -193,7 +204,18 @@ class TestRiskManager(unittest.TestCase):
 		self.assertEquals(filtered.instrument, 'CHF_USD')
 		self.assertEquals(filtered.side, 'sell')
 
+	def testCanSetPerCcyExpLimit(self):
+		rm = CcyExposureLimitRiskEvaluator('BC', ccyLimits={})
+		rm.set_limit('CHF', 1234.5)
+		self.assertEquals(rm.ccyLimits['CHF'], 1234.5)
 
+	def testFilteredOrderSpecificAndDefaultLimitBreach1stCcy(self):
+		ccyLimits = {'CHF': 12000}
+		rm = CcyExposureLimitRiskEvaluator('SGD', ccyLimit=10000, ccyLimits=ccyLimits)
+		self.assignDummyUnityRates(rm)
+		order = OrderEvent('CHF_SGD', 15000, 'market', 'buy')
+		filtered = rm.filter_order(order)
+		self.assertEquals(filtered.units, 12000)
 	"""
 	def testFilterOrderCcyExpLimitBreach_2Instruments(self):
 		rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100)
