@@ -40,31 +40,32 @@ class TestRiskManager(unittest.TestCase):
 
 	def testFilterOrder(self):
 		rm = FxPositionLimitRiskEvaluator()
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
 
 	def testFilterOrderHasCorrectInstrument(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 100, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 100, 'buy'))
 		self.assertEquals(filtered.instrument, 'CHF_USD')
 
 	def testFilteredOrderHasCorrectSide(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 100, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 100, 'buy'))
 		self.assertEquals(filtered.side, 'buy')
 
 	def testFilteredOrderHasCorrectSide2(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 100, 'market', 'sell'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 100, 'sell'))
 		self.assertEquals(filtered.side, 'sell')
 
 	def testFilteredOrderHasCorrectType(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 100, 'market', 'buy'))
-		self.assertEquals(filtered.order_type, 'market')
+		order = OrderEvent('CHF_USD', 100, 'buy')
+		filtered = rm.filter_order(order)
+		self.assertEquals(order.order_type, filtered.order_type)
 
 	def testFilterOrderPositionLimitBreach(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		print (order)
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
@@ -73,29 +74,29 @@ class TestRiskManager(unittest.TestCase):
 	def testFilteredOrderSpecificLimitNoBreach(self):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
 		self.assertEquals(filtered.units, 1000)
 
 	def testFilteredOrderSpecificLimitBreach(self):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
 		self.assertEquals(filtered.units, 1234)
 
 	def testFilteredOrderSpecificLimitLessThanDefault_Breach(self):
 		posLimits = {'CHF_USD': 100}
 		rm = FxPositionLimitRiskEvaluator(posLimit=1000, posLimits=posLimits)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
 		self.assertEquals(filtered.units, 100)
 
 	def testFilterOrderPositionLimitBreach_2Instruments(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
 		self.assertEquals(filtered.units, 100)
 
-		order = OrderEvent('EUR_SGD', 10000, 'market', 'buy')
+		order = OrderEvent('EUR_SGD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
 		self.assertEquals(filtered.units, 100)
@@ -103,11 +104,11 @@ class TestRiskManager(unittest.TestCase):
 	def testFilteredOrderSpecificLimitBreach_2Instruments(self):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertEquals(filtered.units, 1234)
 
-		order = OrderEvent('EUR_SGD', 1000, 'market', 'buy')
+		order = OrderEvent('EUR_SGD', 1000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 1000)
 		self.assertEquals(filtered.units, 100)
@@ -115,13 +116,13 @@ class TestRiskManager(unittest.TestCase):
 	def testFilteredOrderSpecificLimit_2InstrumentsBreahces(self):
 		posLimits = {'CHF_USD': 1234, 'EUR_SGD':10000}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
 		self.assertEquals(filtered.units, 1234)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'buy'))
 		self.assertEquals(filtered.units, 5000)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'buy'))
 		self.assertEquals(filtered.units, 10000)
 
 	#Short limits
@@ -160,7 +161,7 @@ class TestRiskManager(unittest.TestCase):
 
 	def testFilterOrderDefaultShortPositionLimitBreach(self):
 		rm = FxPositionLimitRiskEvaluator()
-		order = OrderEvent('CHF_USD', 10000, 'market', 'sell')
+		order = OrderEvent('CHF_USD', 10000, 'sell')
 		print (order)
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
@@ -168,7 +169,7 @@ class TestRiskManager(unittest.TestCase):
 
 	def testFilterOrderShortPositionLimitBreach(self):
 		rm = FxPositionLimitRiskEvaluator(posLimitShort=-100)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'sell')
+		order = OrderEvent('CHF_USD', 10000, 'sell')
 		print (order)
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
@@ -177,13 +178,13 @@ class TestRiskManager(unittest.TestCase):
 	def testFilteredOrderSpecificLimitNoBreachShort(self):
 		posLimitsShort = {'CHF_USD': -234}
 		rm = FxPositionLimitRiskEvaluator(posLimitShort=-100, posLimitsShort=posLimitsShort)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 200, 'market', 'sell'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 200, 'sell'))
 		self.assertEquals(filtered.units, 200)
 
 	def testFilteredOrderSpecificLimitBreachShort(self):
 		posLimitsShort = {'CHF_USD': -234}
 		rm = FxPositionLimitRiskEvaluator(posLimitShort=-100, posLimitsShort=posLimitsShort)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'sell'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'sell'))
 		self.assertEquals(filtered.units, 234)
 
 
@@ -217,7 +218,7 @@ class TestRiskManager(unittest.TestCase):
 	def testHasAppendedPos_FilterOrderPositionLimitBreach(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
 		rm.append_position('CHF_USD', 10)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
 		self.assertEquals(filtered.units, 90)
@@ -226,32 +227,32 @@ class TestRiskManager(unittest.TestCase):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('CHF_USD', 10)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
 		self.assertEquals(filtered.units, 1000)
 
 	def testHasAppendedPos_FilteredOrderSpecificLimitBreach(self):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('CHF_USD', 100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
 		self.assertEquals(filtered.units, 1134)
 
 	def testHasAppendedPos_FilteredOrderSpecificLimitLessThanDefault_Breach(self):
 		posLimits = {'CHF_USD': 100}
 		rm = FxPositionLimitRiskEvaluator(posLimit=1000, posLimits=posLimits)
 		rm.append_position('CHF_USD', 10)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
 		self.assertEquals(filtered.units, 90)
 
 	def testHasAppendedPos_FilterOrderPositionLimitBreach_2Instruments(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
 		rm.append_position('CHF_USD', 10)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
 		self.assertEquals(filtered.units, 90)
 
-		order = OrderEvent('EUR_SGD', 10000, 'market', 'buy')
+		order = OrderEvent('EUR_SGD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
 		self.assertEquals(filtered.units, 100)
@@ -260,12 +261,12 @@ class TestRiskManager(unittest.TestCase):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('CHF_USD', 100)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertEquals(filtered.units, 1134)
 		rm.append_position(filtered.instrument, filtered.units)
 
-		order = OrderEvent('EUR_SGD', 1000, 'market', 'buy')
+		order = OrderEvent('EUR_SGD', 1000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 1000)
 		self.assertEquals(filtered.units, 100)
@@ -274,15 +275,15 @@ class TestRiskManager(unittest.TestCase):
 		posLimits = {'CHF_USD': 1234, 'EUR_SGD':10000}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('EUR_SGD', 100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
 		self.assertEquals(filtered.units, 1234)
 		rm.append_position(filtered.instrument, filtered.units)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'buy'))
 		self.assertEquals(filtered.units, 5000)
 		rm.append_position(filtered.instrument, filtered.units)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'buy'))
 		self.assertEquals(filtered.units, 4900)
 
 	def testHas2AppendedPos_FilteredOrderSpecificLimit_2InstrumentsBreahces(self):
@@ -290,22 +291,22 @@ class TestRiskManager(unittest.TestCase):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('CHF_USD', 50)
 		rm.append_position('EUR_SGD', 100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
 		self.assertEquals(filtered.units, 1184)
 		rm.append_position(filtered.instrument, filtered.units)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'buy'))
 		self.assertEquals(filtered.units, 5000)
 		rm.append_position(filtered.instrument, filtered.units)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'buy'))
 		self.assertEquals(filtered.units, 4900)
 
 	#Short current positions
 	def testHasAppendedShortPos_FilterOrderPositionLimitBreach(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
 		rm.append_position('CHF_USD', -10)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
 		self.assertEquals(filtered.units, 110)
@@ -314,32 +315,32 @@ class TestRiskManager(unittest.TestCase):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('CHF_USD', -10)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
 		self.assertEquals(filtered.units, 1000)
 
 	def testHasAppendedShortPos_FilteredOrderSpecificLimitBreach(self):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('CHF_USD', -100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
 		self.assertEquals(filtered.units, 1334)
 
 	def testHasAppendedShortPos_FilteredOrderSpecificLimitLessThanDefault_Breach(self):
 		posLimits = {'CHF_USD': 100}
 		rm = FxPositionLimitRiskEvaluator(posLimit=1000, posLimits=posLimits)
 		rm.append_position('CHF_USD', -10)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
 		self.assertEquals(filtered.units, 110)
 
 	def testHasAppendedShortPos_FilterOrderPositionLimitBreach_2Instruments(self):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100)
 		rm.append_position('CHF_USD', -10)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
 		self.assertEquals(filtered.units, 110)
 
-		order = OrderEvent('EUR_SGD', 10000, 'market', 'buy')
+		order = OrderEvent('EUR_SGD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 10000)
 		self.assertEquals(filtered.units, 100)
@@ -348,11 +349,11 @@ class TestRiskManager(unittest.TestCase):
 		posLimits = {'CHF_USD': 1234}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('CHF_USD', -100)
-		order = OrderEvent('CHF_USD', 10000, 'market', 'buy')
+		order = OrderEvent('CHF_USD', 10000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertEquals(filtered.units, 1334)
 
-		order = OrderEvent('EUR_SGD', 1000, 'market', 'buy')
+		order = OrderEvent('EUR_SGD', 1000, 'buy')
 		filtered = rm.filter_order(order)
 		self.assertNotEquals(filtered.units, 1000)
 		self.assertEquals(filtered.units, 100)
@@ -361,14 +362,14 @@ class TestRiskManager(unittest.TestCase):
 		posLimits = {'CHF_USD': 1234, 'EUR_SGD':10000}
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('EUR_SGD', -100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
 		self.assertEquals(filtered.units, 1234)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'buy'))
 		self.assertEquals(filtered.units, 5000)
 		rm.append_position(filtered.instrument, filtered.units)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'buy'))
 		self.assertEquals(filtered.units, 5100)
 
 	def testHasAppended2ShortPos_FilteredOrderSpecificLimit_2InstrumentsBreahces(self):
@@ -376,15 +377,15 @@ class TestRiskManager(unittest.TestCase):
 		rm = FxPositionLimitRiskEvaluator(posLimit=100, posLimits=posLimits)
 		rm.append_position('CHF_USD', -50)
 		rm.append_position('EUR_SGD', -100)
-		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
 		self.assertEquals(filtered.units, 1284)
 		rm.append_position(filtered.instrument, filtered.units)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 5000, 'buy'))
 		self.assertEquals(filtered.units, 5000)
 		rm.append_position(filtered.instrument, filtered.units)
 
-		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'market', 'buy'))
+		filtered = rm.filter_order(OrderEvent('EUR_SGD', 50000, 'buy'))
 		self.assertEquals(filtered.units, 5100)
 
 	def testCanSetPerPositionLimit(self):

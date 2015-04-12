@@ -10,19 +10,22 @@ class TestOrderEvents(unittest.TestCase):
 		pass
 
 	def testOrderEventClassExists(self):
-		self.assertNotEquals(OrderEvent(None, None, None, None), None)
+		self.assertNotEquals(OrderEvent(None, None, None), None)
 
 	def testOrderEventHasExpectedType(self):
-		self.assertEquals(OrderEvent(None, None, None, None).TYPE, "ORDER")
+		self.assertEquals(OrderEvent(None, None, None).TYPE, "ORDER")
 
 	def testOrderEventHasExpectedInstrument(self):
-		self.assertEquals(OrderEvent("ABC", None, None, None).instrument, "ABC")
+		self.assertEquals(OrderEvent("ABC", None, None).instrument, "ABC")
 
 	def testOrderEventHasExpectedUnits(self):
-		self.assertEquals(OrderEvent(None, "125", None, None).units, "125")
+		self.assertEquals(OrderEvent(None, "125", None).units, "125")
 
 	def testOrderEventHasExpectedOrderType(self):
-		self.assertEquals(OrderEvent(None, None, "MKT", None).order_type, "MKT")
+		self.assertEquals(OrderEvent(None, None, None, order_type='market').order_type, 'market')
 
 	def testOrderEventHasExpectedSide(self):
-		self.assertEquals(OrderEvent(None, None, None, "SELL").side, "SELL")
+		self.assertEquals(OrderEvent(None, None, "SELL").side, "SELL")
+
+	def testOrderEventHasExpectedOrderType2(self):
+		self.assertEquals(OrderEvent(None, None, None, order_type='limit').order_type, 'limit')

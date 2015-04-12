@@ -14,7 +14,7 @@ class TickEvent (Event):
 		return msg
 
 class OrderEvent (Event) :
-	def __init__ (self, instrument, units, order_type, side, price=None, lowerBound=None, upperBound=None, stopLoss=None, takeProfit=None, expiry=None, trailingStop=None):
+	def __init__ (self, instrument, units, side, order_type='market', price=None, lowerBound=None, upperBound=None, stopLoss=None, takeProfit=None, expiry=None, trailingStop=None):
 		self.TYPE = 'ORDER'
 		self.instrument = instrument
 		self.units = units

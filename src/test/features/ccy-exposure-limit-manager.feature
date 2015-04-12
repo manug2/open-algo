@@ -6,7 +6,7 @@ Feature: Risk Manager is available to pre check orders based on currency exposur
 
     Scenario: Currency exposure calculator does not filter order
         Given we have ccy exposure manager with base currency SGD, default ccy limit
-          and we want to buy 100 units of CHF_USD at market rate
+          and we want to buy 100 units of CHF_USD
           and there is no specific exposure limit for currencies CHF and USD
           and market rate to buy CHF is 1.1 units of base ccy
           and market rate to sell USD is 1.4 units of base ccy
@@ -17,7 +17,7 @@ Feature: Risk Manager is available to pre check orders based on currency exposur
 
     Scenario: Currency exposure calculator filters large order
         Given we have ccy exposure manager with base currency SGD, default ccy limit
-          and we want to buy 12345000 units of CHF_USD at market rate
+          and we want to buy 12345000 units of CHF_USD
           and there is no specific exposure limit for currencies CHF and USD
           and market rate to buy CHF is 1.0 units of base ccy
           and market rate to sell USD is 1.4 units of base ccy
@@ -28,7 +28,7 @@ Feature: Risk Manager is available to pre check orders based on currency exposur
 
     Scenario Outline: Currency exposure calculator filters orders
         Given we have ccy exposure manager with base currency <base ccy>, default ccy limit
-          and we want to <side> <units> units of <ccy1>_<ccy2> at market rate
+          and we want to <side> <units> units of <ccy1>_<ccy2>
           and there is no specific exposure limit for currencies <ccy1> and <ccy1>
           and market rate for <ccy1> is <ccy1Bid>/<ccy1Ask> wrt <base ccy>
           and market rate for <ccy2> is <ccy2Bid>/<ccy2Ask> wrt <base ccy>
@@ -46,7 +46,7 @@ Feature: Risk Manager is available to pre check orders based on currency exposur
 
     Scenario Outline: Currency exposure calculator filters orders using specific limits, with unit fx rates
         Given we have ccy exposure manager with base currency <base ccy>, default ccy limit of <def limit>
-          and we want to <side> <units> units of <ccy1>_<ccy2> at market rate
+          and we want to <side> <units> units of <ccy1>_<ccy2>
           and the specific exposure limit for currency <ccy1> is <ccy1 limit>
           and market rate for <ccy1> is 1.0/1.0 wrt <base ccy>
           and market rate for <ccy2> is 1.0/1.0 wrt <base ccy>
@@ -65,7 +65,7 @@ Feature: Risk Manager is available to pre check orders based on currency exposur
 
     Scenario Outline: Currency exposure calculator filters orders using specific limits, with some fx rates above 1
         Given we have ccy exposure manager with base currency <base ccy>, default ccy limit of <def limit>
-          and we want to <side> <units> units of <ccy1>_<ccy2> at market rate
+          and we want to <side> <units> units of <ccy1>_<ccy2>
           and the specific exposure limit for currency <ccy1> is <ccy1 limit>
           and market rate for <ccy1> is <ccy1Bid>/<ccy1Ask> wrt <base ccy>
           and market rate for <ccy2> is <ccy2Bid>/<ccy2Ask> wrt <base ccy>

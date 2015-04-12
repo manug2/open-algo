@@ -9,7 +9,7 @@ Feature: Oanda provides order execution capability via API
 
 	Scenario: Execution order can be issued to Oanda
 		Given Executor is setup to connect to Oanda practice using api connection
-		  and we want to buy 125 units of EUR_USD at market rate
+		  and we want to buy 125 units of EUR_USD
 		 when i say execute order
 		 then we received response from Oanda
 		  and response has tradeOpened section
@@ -18,7 +18,7 @@ Feature: Oanda provides order execution capability via API
 
 	Scenario: Limit order can be issued to Oanda
 		Given Executor is setup to connect to Oanda practice using api connection
-		  and we want to buy 125 units of EUR_USD at limit price 0.75 expiring in 2 minutes
+		  and we put limit order to buy 125 units of EUR_USD at price 0.75 expiring in 2 minutes
 		 when i say execute order
 		 then we received response from Oanda
 		  and response has orderOpened section
@@ -28,7 +28,7 @@ Feature: Oanda provides order execution capability via API
 
 	Scenario: We can query open orders from Oanda
 		Given Executor is setup to connect to Oanda practice using api connection
-		  and we want to buy 125 units of EUR_USD at limit price 0.75 expiring in 2 minutes
+		  and we put limit order to buy 125 units of EUR_USD at price 0.75 expiring in 2 minutes
 		  and we have executed the order
 		 when i say query my orders
 		 then we received response from Oanda

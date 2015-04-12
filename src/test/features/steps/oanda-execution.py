@@ -10,9 +10,9 @@ from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH
 from behave import *
 import logging
 
-@given('we want to {side} {units} units of {instrument} at {order_type} rate')
-def step_impl(context, side, units, instrument, order_type):
-	context.orderEvent = OrderEvent(instrument, int(units), order_type, side)
+@given('we want to {side} {units} units of {instrument}')
+def step_impl(context, side, units, instrument):
+	context.orderEvent = OrderEvent(instrument, int(units), side)
 
 @given('using authorization details from config file from path "{path}"')
 def step_impl(context, path):
@@ -70,10 +70,10 @@ def step_impl(context):
 	context.response = context.executor.get_orders()
 	context.executor.stop()
 
-@given('we want to {side} {units} units of {instrument} at {order_type} price {price} expiring in {expiry} minutes')
-def step_impl(context, side, units, instrument, order_type, price, expiry):
+@given('we put limit order to {side} {units} units of {instrument} at price {price} expiring in {expiry} minutes')
+def step_impl(context, side, units, instrument, price, expiry):
 	expiryTime = gettime(60*int(expiry))
-	context.orderEvent = OrderEvent(instrument, int(units), order_type, side, price=float(price), expiry=expiryTime)
+	context.orderEvent = OrderEvent(instrument, int(units), side, order_type='limit', price=float(price), expiry=expiryTime)
 
 @then('response lists my original order')
 def step_impl(context):

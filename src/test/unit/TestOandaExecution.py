@@ -75,8 +75,7 @@ class TestOandaExecution(unittest.TestCase):
 		self.executor.connect()
 		side = "buy"
 		expiry = gettime(100)
-		event = OrderEvent("EUR_USD", 1000, "limit", side
-			, price=0.75, expiry=expiry)
+		event = OrderEvent("EUR_USD", 1000, side, order_type='limit', price=0.75, expiry=expiry)
 		response = self.executor.execute_order(event)
 		#self.logger.debug('response on booking : %s' % response)
 		self.assertNotEqual(None, response)
