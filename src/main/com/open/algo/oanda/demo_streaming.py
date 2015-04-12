@@ -17,6 +17,7 @@ import datetime
 
 from optparse import OptionParser
 
+
 def connect_to_stream():
     """
 
@@ -35,29 +36,30 @@ def connect_to_stream():
     try:
         s = requests.Session()
         url = domain + "/v1/prices"
-        headers = {'Authorization' : 'Bearer ' + access_token,
+        headers = {'Authorization': 'Bearer ' + access_token,
                    # 'X-Accept-Datetime-Format' : 'unix'
-                  }
-        params = {'instruments' : instruments, 'accountId' : account_id}
-        req = requests.Request('GET', url, headers = headers, params = params)
+                   }
+        params = {'instruments': instruments, 'accountId': account_id}
+        req = requests.Request('GET', url, headers=headers, params=params)
         pre = req.prepare()
-        resp = s.send(pre, stream = True, verify = False)
+        resp = s.send(pre, stream=True, verify=False)
         return resp
     except Exception as e:
         s.close()
-        print ("Caught exception when connecting to stream\n" + str(e) )
+        print("Caught exception when connecting to stream\n" + str(e))
+
 
 def demo(displayHeartbeat):
     my_tick = datetime.datetime.now().isoformat()
-    print ('creating streaming connection', my_tick)
+    print('creating streaming connection', my_tick)
 
     response = connect_to_stream()
 
     my_tick_end = datetime.datetime.now().isoformat()
-    print ('received response', my_tick_end)
+    print('received response', my_tick_end)
 
     if response.status_code != 200:
-        print (response.text)
+        print(response.text)
         return
     for line in response.iter_lines(1):
         my_tick_end = datetime.datetime.now().isoformat()
@@ -65,20 +67,21 @@ def demo(displayHeartbeat):
             try:
                 msg = json.loads(line.decode("utf-8"))
             except Exception as e:
-                print ("Caught exception when converting message into json\n" + str(e))
+                print("Caught exception when converting message into json\n" + str(e))
                 return
-            
+
             if displayHeartbeat:
-                print (my_tick_end, line)
+                print(my_tick_end, line)
             else:
                 if "instrument" in msg or "tick" in msg:
-                    print (my_tick_end, line)
+                    print(my_tick_end, line)
+
 
 def main():
     usage = "usage: %prog [options]"
     parser = OptionParser(usage)
-    parser.add_option("-b", "--displayHeartBeat", dest = "verbose", action = "store_true", 
-                        help = "Display HeartBeat in streaming data")
+    parser.add_option("-b", "--displayHeartBeat", dest="verbose", action="store_true",
+                      help="Display HeartBeat in streaming data")
     displayHeartbeat = False
 
     (options, args) = parser.parse_args()

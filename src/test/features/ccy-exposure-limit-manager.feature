@@ -1,4 +1,4 @@
-Feature: Risk Manager is available to pre check orders based on currency exposures
+Feature: Risk Manager is available to pre check orders based on first currency exposure
 
     Scenario: There is a RiskManager to evaluate currency exposure
         Given we want to trade
@@ -74,14 +74,14 @@ Feature: Risk Manager is available to pre check orders based on currency exposur
           and filtered order has instrument=<ccy1>_<ccy2>, side=buy, order_type=market
           and filtered order has numerical units=<target units>
         Examples: with some fx rates
-            | base ccy | side | ccy1 | ccy2 | def limit | ccy1 limit | units | ccy1Bid | ccy1Ask | ccy2Bid | ccy2Ask | order type | target units | NOTES                  |
+            | base ccy | side | ccy1 | ccy2 | def limit | ccy1 limit | units | ccy1Bid | ccy1Ask | ccy2Bid | ccy2Ask | order type | target units | NOTES                      |
             | SGD      | buy  | CHF  | USD  | 10000     | 12000      | 15000 | 1.05    | 1.1     | 1.3     | 1.4     | market     | 13200        | default < spec < trade*ask |
             | SGD      | buy  | CHF  | USD  | 10000     | 12000      | 15000 | 1.05    | 1.1     | 1.3     | 1.4     | market     | 13200        | default < trade*ask < spec |
             | SGD      | buy  | CHF  | USD  | 10000     | 1000       | 2000  | 1.05    | 1.1     | 1.3     | 1.4     | market     | 1100         | spec < trade*ask < default |
             | SGD      | buy  | CHF  | USD  | 10000     | 2000       | 15000 | 1.05    | 1.1     | 1.3     | 1.4     | market     | 2200         | spec < default < trade*ask |
             | SGD      | buy  | CHF  | USD  | 10000     | 8000       | 1000  | 1.05    | 1.1     | 1.3     | 1.4     | market     | 1000         | trade*ask < default < spec |
             | SGD      | buy  | CHF  | USD  | 10000     | 1000       | 100   | 1.05    | 1.1     | 1.3     | 1.4     | market     |  100         | trade*ask < spec < default |
-            | SGD      | buy  | CHF  | USD  | 10000     | 1000       | 100   | 1.05    | 1.1     | 1.3     | 1.4     | market     |  0           | trade*ask = spec < default |
+            | SGD      | buy  | CHF  | USD  | 10000     |  110       | 100   | 1.05    | 1.1     | 1.3     | 1.4     | market     |  100         | trade*ask = spec < default |
 
 
 

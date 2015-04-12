@@ -1,31 +1,32 @@
 import sys
+
 sys.path.append('../../main')
 import unittest
 
 from com.open.algo.trading.fxEvents import OrderEvent
 
+
 class TestOrderEvents(unittest.TestCase):
+    def setUp(self):
+        pass
 
-	def setUp(self):
-		pass
+    def testOrderEventClassExists(self):
+        self.assertNotEquals(OrderEvent(None, None, None), None)
 
-	def testOrderEventClassExists(self):
-		self.assertNotEquals(OrderEvent(None, None, None), None)
+    def testOrderEventHasExpectedType(self):
+        self.assertEquals(OrderEvent(None, None, None).TYPE, "ORDER")
 
-	def testOrderEventHasExpectedType(self):
-		self.assertEquals(OrderEvent(None, None, None).TYPE, "ORDER")
+    def testOrderEventHasExpectedInstrument(self):
+        self.assertEquals(OrderEvent("ABC", None, None).instrument, "ABC")
 
-	def testOrderEventHasExpectedInstrument(self):
-		self.assertEquals(OrderEvent("ABC", None, None).instrument, "ABC")
+    def testOrderEventHasExpectedUnits(self):
+        self.assertEquals(OrderEvent(None, "125", None).units, "125")
 
-	def testOrderEventHasExpectedUnits(self):
-		self.assertEquals(OrderEvent(None, "125", None).units, "125")
+    def testOrderEventHasExpectedOrderType(self):
+        self.assertEquals(OrderEvent(None, None, None, order_type='market').order_type, 'market')
 
-	def testOrderEventHasExpectedOrderType(self):
-		self.assertEquals(OrderEvent(None, None, None, order_type='market').order_type, 'market')
+    def testOrderEventHasExpectedSide(self):
+        self.assertEquals(OrderEvent(None, None, "SELL").side, "SELL")
 
-	def testOrderEventHasExpectedSide(self):
-		self.assertEquals(OrderEvent(None, None, "SELL").side, "SELL")
-
-	def testOrderEventHasExpectedOrderType2(self):
-		self.assertEquals(OrderEvent(None, None, None, order_type='limit').order_type, 'limit')
+    def testOrderEventHasExpectedOrderType2(self):
+        self.assertEquals(OrderEvent(None, None, None, order_type='limit').order_type, 'limit')
