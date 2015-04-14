@@ -62,6 +62,9 @@ Feature: Risk Manager is available to pre check orders based on first currency e
             | SGD      | buy  | CHF  | USD  | 10000     |  1000      |  2000 |  1000        | spec < trade < default |
             | SGD      | buy  | CHF  | USD  | 10000     |  8000      |  1000 |  1000        | trade < default < spec |
             | SGD      | buy  | CHF  | USD  | 10000     |  1000      |   100 |   100        | trade < spec < default |
+            | SGD      | buy  | CHF  | USD  | 10000     |  1000      |  1000 |  1000        | trade = spec < default |
+            | SGD      | buy  | CHF  | USD  | 10000     |   999      |  1000 |   999        | trade=spec-1 < default |
+            | SGD      | buy  | CHF  | USD  | 10000     |  1001      |  1000 |  1000        | trade=spec+1 < default |
 
     Scenario Outline: Currency exposure calculator filters orders using specific limits, with some fx rates above 1
         Given we have ccy exposure manager with base currency <base ccy>, default ccy limit of <def limit>
@@ -82,6 +85,8 @@ Feature: Risk Manager is available to pre check orders based on first currency e
             | SGD      | buy  | CHF  | USD  | 10000     | 8000       | 1000  | 1.05    | 1.1     | 1.3     | 1.4     | 1000         | trade*ask < default < spec |
             | SGD      | buy  | CHF  | USD  | 10000     | 1000       | 100   | 1.05    | 1.1     | 1.3     | 1.4     |  100         | trade*ask < spec < default |
             | SGD      | buy  | CHF  | USD  | 10000     |  110       | 100   | 1.05    | 1.1     | 1.3     | 1.4     |  100         | trade*ask = spec < default |
+            | SGD      | buy  | CHF  | USD  | 10000     |  110       |  99   | 1.05    | 1.1     | 1.3     | 1.4     |   99         | trade*ask~=spec-1 < default |
+            | SGD      | buy  | CHF  | USD  | 10000     |  110       | 101   | 1.05    | 1.1     | 1.3     | 1.4     |  101         | trade*ask~=spec+1 < default |
 
 
 

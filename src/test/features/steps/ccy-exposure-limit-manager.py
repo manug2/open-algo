@@ -16,6 +16,9 @@ def step_impl(context):
 def step_impl(context, baseCurrency):
     context.rm = CcyExposureLimitRiskEvaluator(baseCurrency)
 
+@given('we have ccy exposure manager with base currency {baseCurrency}, default ccy short limit')
+def step_impl(context, baseCurrency):
+    context.rm = CcyExposureLimitRiskEvaluator(baseCurrency)
 
 @given('market rate to {longShort} {ccy} is {ccyRate} units of base ccy')
 def step_impl(context, longShort, ccy, ccyRate):
@@ -33,6 +36,9 @@ def step_impl(context, ccy1, ccy2):
     context.rm.set_limit(ccy1)
     context.rm.set_limit(ccy2)
 
+@given('there is no specific short exposure limit for currency {ccy}')
+def step_impl(context, ccy):
+    context.rm.set_limit(ccy)
 
 @given('market rate for {ccy} is {bid}/{ask} wrt {baseCcy}')
 def step_impl(context, ccy, bid, ask, baseCcy):
@@ -45,6 +51,10 @@ def step_impl(context, ccy, bid, ask, baseCcy):
 @given('we have ccy exposure manager with base currency {baseCurrency}, default ccy limit of {def_limit}')
 def step_impl(context, baseCurrency, def_limit):
     context.rm = CcyExposureLimitRiskEvaluator(baseCurrency, ccyLimit=float(def_limit))
+
+@given('we have ccy exposure manager with base currency {baseCurrency}, default ccy short limit of {def_limit}')
+def step_impl(context, baseCurrency, def_limit):
+    context.rm = CcyExposureLimitRiskEvaluator(baseCurrency, ccyLimitShort=-1*float(def_limit))
 
 
 @given('the specific exposure limit for currency {ccy} is {ccy_limit}')

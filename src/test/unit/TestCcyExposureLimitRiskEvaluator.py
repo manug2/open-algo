@@ -219,6 +219,22 @@ class TestRiskManager(unittest.TestCase):
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 12000)
 
+    def testFilteredOrderSpecificLimitRateEqualTo1NoBreach1stCcy(self):
+        ccyLimits = {'CHF': 110}
+        rm = CcyExposureLimitRiskEvaluator('SGD', ccyLimit=10000, ccyLimits=ccyLimits)
+        rm.fix_rate('CHF', 1.0, 1.0)
+        order = OrderEvent('CHF_SGD', 105, 'buy')
+        filtered = rm.filter_order(order)
+        self.assertEquals(filtered.units, 105)
+
+    def testFilteredOrderSpecificLimitRateEqualTo1Breach1stCcy(self):
+        ccyLimits = {'CHF': 110}
+        rm = CcyExposureLimitRiskEvaluator('SGD', ccyLimit=10000, ccyLimits=ccyLimits)
+        rm.fix_rate('CHF', 1.0, 1.0)
+        order = OrderEvent('CHF_SGD', 150, 'buy')
+        filtered = rm.filter_order(order)
+        self.assertEquals(filtered.units, 110)
+
     """
     def testFilterOrderCcyExpLimitBreach_2Instruments(self):
         rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100)
