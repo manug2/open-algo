@@ -45,7 +45,7 @@ Feature: Risk Manager is available to pre check orders based on first currency e
 
 
     Scenario Outline: Currency exposure calculator filters orders using specific limits, with unit fx rates
-        Given we have ccy exposure manager with base currency <base ccy>, default ccy limit of <def limit>
+        Given we have ccy exposure manager, base currency <base ccy>, large short limit, default ccy limit of <def limit>
           and we want to <side> <units> units of <ccy1>_<ccy2>
           and the specific exposure limit for currency <ccy1> is <ccy1 limit>
           and market rate for <ccy1> is 1.0/1.0 wrt <base ccy>
@@ -67,7 +67,7 @@ Feature: Risk Manager is available to pre check orders based on first currency e
             | SGD      | buy  | CHF  | USD  | 10000     |  1001      |  1000 |  1000        | trade=spec+1 < default |
 
     Scenario Outline: Currency exposure calculator filters orders using specific limits, with some fx rates above 1
-        Given we have ccy exposure manager with base currency <base ccy>, default ccy limit of <def limit>
+        Given we have ccy exposure manager, base currency <base ccy>, large short limit, default ccy limit of <def limit>
           and we want to <side> <units> units of <ccy1>_<ccy2>
           and the specific exposure limit for currency <ccy1> is <ccy1 limit>
           and market rate for <ccy1> is <ccy1Bid>/<ccy1Ask> wrt <base ccy>

@@ -97,6 +97,11 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
             ccyPosition = self.positions[currencies[0]]
         maxExposure = 0
 
+        ccyPosition2nd = 0
+        if currencies[1] in self.positions:
+            ccyPosition2nd = self.positions[currencies[1]]
+        maxExposure2nd=0
+
         if order.side == 'buy':
             limit = self.ccyLimit
             if currencies[0] in self.ccyLimits:
@@ -107,7 +112,19 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
             maxUnits = round(maxExposure * fxRatesWrtBase[0], 0)
             if maxUnits < filteredOrder.units:
                 filteredOrder.units = maxUnits
-        else:  #sell order
+
+            # 2nd currency in a buy order
+            limit = self.ccyLimitShort
+            if currencies[1] in self.ccyLimitsShort:
+                limit = self.ccyLimitsShort[currencies[1]]
+                assert limit <= 0, '[%s] cannot be +ve for [%s]' % ("short ccy limit", currencies[0])
+            if ccyPosition2nd > limit:
+                maxExposure2nd = ccyPosition2nd - limit
+            maxUnits = round(maxExposure2nd * fxRatesWrtBase[1], 0)
+            if maxUnits < filteredOrder.units:
+                filteredOrder.units = maxUnits
+
+        else:  # sell order
             limit = self.ccyLimitShort
             if currencies[0] in self.ccyLimitsShort:
                 limit = self.ccyLimitsShort[currencies[0]]
@@ -117,6 +134,18 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
             maxUnits = round(maxExposure * fxRatesWrtBase[0], 0)
             if maxUnits < order.units:
                 filteredOrder.units = maxUnits
+
+            # 2nd currency in a sell order
+            limit = self.ccyLimit
+            if currencies[1] in self.ccyLimits:
+                limit = self.ccyLimits[currencies[1]]
+                assert limit >= 0, '[%s] cannot be -ve for [%s]' % ("ccy limit", currencies[1])
+            if ccyPosition2nd < limit:
+                maxExposure2nd = limit - ccyPosition2nd
+            maxUnits = round(maxExposure2nd * fxRatesWrtBase[1], 0)
+            if maxUnits < filteredOrder.units:
+                filteredOrder.units = maxUnits
+
 
         #now check currency level limits
         return filteredOrder
@@ -138,7 +167,10 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
         raise NotImplementedError("Should implement 'reval_positions()' method")
 
     def fix_rate(self, instrument, bid, ask):
-        raise NotImplementedError("Should implement 'fix_rate()' method")
+        if instrument not in self.ratesMap:
+            self.ratesMap[instrument] = {}
+        self.ratesMap[instrument]['bid'] = bid
+        self.ratesMap[instrument]['ask'] = ask
 
     def set_limit(self, instrument, ccyLimit=None, ccyLimitShort=None):
         if ccyLimit:

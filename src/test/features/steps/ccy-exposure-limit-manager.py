@@ -61,3 +61,7 @@ def step_impl(context, baseCurrency, def_limit):
 def step_impl(context, ccy, ccy_limit):
     context.rm.set_limit(ccy, float(ccy_limit))
 
+
+@given('we have ccy exposure manager, base currency {baseCurrency}, large short limit, default ccy limit of {def_limit}')
+def step_impl(context, baseCurrency, def_limit):
+    context.rm = CcyExposureLimitRiskEvaluator(baseCurrency, ccyLimit=float(def_limit), ccyLimitShort=-100000)

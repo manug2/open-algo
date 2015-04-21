@@ -12,7 +12,7 @@ Feature: Risk Manager is available to pre check orders based on second currency 
           and filtered order has instrument=CHF_USD and side=buy
           and filtered order has numerical units=100
 
-    Scenario: Currency exposure calculator filters large order
+    Scenario: Currency exposure calculator filters large order because of 2nd ccy
         Given we have ccy exposure manager with base currency SGD, default ccy short limit
           and we want to buy 12345000 units of CHF_USD
           and the specific exposure limit for currency CHF is 100000
@@ -24,7 +24,7 @@ Feature: Risk Manager is available to pre check orders based on second currency 
           and filtered order has instrument=CHF_USD and side=buy
           and filtered order has numerical units=5000
 
-    Scenario Outline: Currency exposure calculator filters orders
+    Scenario Outline: Currency exposure calculator filters orders using 2nd ccy
         Given we have ccy exposure manager with base currency <base ccy>, default ccy short limit
           and we want to <side> <units> units of <ccy1>_<ccy2>
           and the specific exposure limit for currency <ccy1> is 100000
