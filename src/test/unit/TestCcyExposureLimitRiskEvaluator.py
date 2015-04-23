@@ -8,112 +8,112 @@ from com.open.algo.trading.fxEvents import OrderEvent
 
 
 class TestRiskManager(unittest.TestCase):
-    def assignDummyRates(self, rm):
-        rm.ratesMap['CHF'] = {}
-        rm.ratesMap['CHF']['bid'] = 1.04
-        rm.ratesMap['CHF']['ask'] = 1.05
-        rm.ratesMap['EUR'] = {}
-        rm.ratesMap['EUR']['bid'] = 1.08
-        rm.ratesMap['EUR']['ask'] = 1.09
-        rm.ratesMap['SGD'] = {}
-        rm.ratesMap['SGD']['bid'] = 0.74
-        rm.ratesMap['SGD']['ask'] = 0.75
+    def assign_dummy_rates(self, rm):
+        rm.rates['CHF'] = {}
+        rm.rates['CHF']['bid'] = 1.04
+        rm.rates['CHF']['ask'] = 1.05
+        rm.rates['EUR'] = {}
+        rm.rates['EUR']['bid'] = 1.08
+        rm.rates['EUR']['ask'] = 1.09
+        rm.rates['SGD'] = {}
+        rm.rates['SGD']['bid'] = 0.74
+        rm.rates['SGD']['ask'] = 0.75
 
-    def assignDummyUnityRates(self, rm):
-        rm.ratesMap['CHF'] = {}
-        rm.ratesMap['CHF']['bid'] = 1.0
-        rm.ratesMap['CHF']['ask'] = 1.0
-        rm.ratesMap['EUR'] = {}
-        rm.ratesMap['EUR']['bid'] = 1.0
-        rm.ratesMap['EUR']['ask'] = 1.0
-        rm.ratesMap['SGD'] = {}
-        rm.ratesMap['SGD']['bid'] = 1.0
-        rm.ratesMap['SGD']['ask'] = 1.0
+    def assign_unity_rates(self, rm):
+        rm.rates['CHF'] = {}
+        rm.rates['CHF']['bid'] = 1.0
+        rm.rates['CHF']['ask'] = 1.0
+        rm.rates['EUR'] = {}
+        rm.rates['EUR']['bid'] = 1.0
+        rm.rates['EUR']['ask'] = 1.0
+        rm.rates['SGD'] = {}
+        rm.rates['SGD']['bid'] = 1.0
+        rm.rates['SGD']['ask'] = 1.0
 
     def setUp(self):
-        self.rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitShort=-100000)
-        self.assignDummyRates(self.rm)
+        self.rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit_short=-100000)
+        self.assign_dummy_rates(self.rm)
 
-    def testClassExists(self):
-        self.assertNotEquals(CcyExposureLimitRiskEvaluator('BC'), None)
+    def test_currency_exposure_manager_exists(self):
+        self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC'))
 
-    def testHasBaseCurrency(self):
-        self.assertNotEquals(CcyExposureLimitRiskEvaluator('BC').baseCcy, None)
-        self.assertEquals(CcyExposureLimitRiskEvaluator('BC').baseCcy, 'BC')
+    def test_should_have_base_currency(self):
+        self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC').base_ccy)
+        self.assertEquals(CcyExposureLimitRiskEvaluator('BC').base_ccy, 'BC')
 
-    def testHasPositions(self):
-        self.assertNotEquals(CcyExposureLimitRiskEvaluator('BC').positions, None)
+    def test_should_have_positions(self):
+        self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC').positions)
 
-    def testHasCcyExpLimit(self):
-        self.assertNotEquals(CcyExposureLimitRiskEvaluator('BC').ccyLimit, None)
+    def test_should_have_currency_exposure_limit(self):
+        self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC').ccy_limit)
 
-    def testHasPortfolioLimit(self):
-        self.assertNotEquals(CcyExposureLimitRiskEvaluator('BC').portLimit, None)
+    def test_should_have_portfolio_limit(self):
+        self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC').port_limit)
 
-    def testHasDefaultCcyExpLimit(self):
+    def test_should_have_default_ccy_exposure_limit(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        self.assertTrue(rm.ccyLimit > 0)
+        self.assertTrue(rm.ccy_limit > 0)
 
-    def testHasPresetCcyExpLimit(self):
-        rm = CcyExposureLimitRiskEvaluator('BC', ccyLimit=123)
-        self.assertEquals(rm.ccyLimit, 123)
+    def test_should_have_preset_ccy_exposure_limit(self):
+        rm = CcyExposureLimitRiskEvaluator('BC', ccy_limit=123)
+        self.assertEquals(rm.ccy_limit, 123)
 
-    def testHasDefaultPortfolioLimit(self):
+    def test_should_have_default_portfolio_limit(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        self.assertTrue(rm.portLimit > 0)
+        self.assertTrue(rm.port_limit > 0)
 
-    def testHasPresetPortfolioLimit(self):
-        rm = CcyExposureLimitRiskEvaluator('BC', portLimit=1230)
-        self.assertEquals(rm.portLimit, 1230)
+    def test_should_have_preset_portfolio_limit(self):
+        rm = CcyExposureLimitRiskEvaluator('BC', port_limit=1230)
+        self.assertEquals(rm.port_limit, 1230)
 
-    def testHasPerCcyExpLimit(self):
-        self.assertNotEquals(CcyExposureLimitRiskEvaluator('BC').ccyLimits, None)
+    def test_should_have_specific_ccy_exposure_limits(self):
+        self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC').ccy_limits)
 
-    def testCanInitWithPerCcyExpLimit(self):
-        self.assertEquals(CcyExposureLimitRiskEvaluator('BC', ccyLimits={}).ccyLimits, {})
+    def test_should_init_with_specific_ccy_exposure_limits(self):
+        self.assertEquals(CcyExposureLimitRiskEvaluator('BC', ccy_limits={}).ccy_limits, {})
 
-    def testCanInitWithPerCcyExpLimitCHF(self):
-        ccyLimits = {'CHF': 100.1}
-        rm = CcyExposureLimitRiskEvaluator('BC', ccyLimits=ccyLimits)
-        self.assertEquals(rm.ccyLimits['CHF'], 100.1)
+    def test_should_init_with_specific_ccy_exposure_limit_for_CHF(self):
+        ccy_limits = {'CHF': 100.1}
+        rm = CcyExposureLimitRiskEvaluator('BC', ccy_limits=ccy_limits)
+        self.assertEquals(rm.ccy_limits['CHF'], 100.1)
 
-    def testCannotFilterOrderWithoutRates(self):
+    def test_should_not_filter_order_without_rates(self):
         rmo = CcyExposureLimitRiskEvaluator('ABC')
         try:
-            filtered = rmo.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
+            rmo.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
             self.fail('Filtered order without fx rates')
         except AssertionError:
             pass
 
-    def testFilterOrder(self):
+    def test_should_filter_order(self):
         filtered = self.rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
         self.assertNotEqual(None, filtered, 'Could not filter trade')
 
-    def testFilterOrderHasCorrectInstrument(self):
+    def test_filtered_order_should_have_expected_instrument(self):
         filtered = self.rm.filter_order(OrderEvent('CHF_USD', 100, 'buy'))
         self.assertEquals(filtered.instrument, 'CHF_USD')
 
-    def testFilteredOrderHasCorrectSide(self):
+    def test_filtered_buy_order_should_have_expected_side(self):
         filtered = self.rm.filter_order(OrderEvent('CHF_USD', 100, 'buy'))
         self.assertEquals(filtered.side, 'buy')
 
-    def testFilteredOrderHasCorrectSide2(self):
+    def test_filtered_sell_order_should_have_expected_side(self):
         filtered = self.rm.filter_order(OrderEvent('CHF_USD', 100, 'sell'))
         self.assertEquals(filtered.side, 'sell')
 
-    def testFilteredOrderHasCorrectType(self):
+    def test_filtered_order_should_have_expected_type(self):
         order = OrderEvent('CHF_USD', 100, 'buy')
         filtered = self.rm.filter_order(order)
         self.assertEquals(order.order_type, filtered.order_type)
 
-    def testFilterOrderCcyExpLimitNoBreach1stCcy(self):
+    def test_filtered_order_should_have_expected_units_without_breach_of_1st_ccy_limit_exposure(self):
         order = OrderEvent('CHF_USD', 100, 'buy')
         filtered = self.rm.filter_order(order)
         self.assertEquals(filtered.units, 100)
 
     def testFilterOrderPresetCcyExpLimitNoBreach1stCcy(self):
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimit=150)
-        self.assignDummyRates(rm)
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit=150)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 140, 'buy')
         filtered = self.rm.filter_order(order)
         self.assertEquals(filtered.units, 140)
@@ -122,25 +122,25 @@ class TestRiskManager(unittest.TestCase):
         order = OrderEvent('EUR_SGD', 10000, 'buy')
         filtered = self.rm.filter_order(order)
         self.assertNotEquals(filtered.units, 10000)
-        amountInBase = round(self.rm.ccyLimit * self.rm.ratesMap['EUR']['ask'], 0)
-        self.assertEquals(amountInBase, filtered.units)
+        amount_in_base_ccy = round(self.rm.ccy_limit * self.rm.rates['EUR']['ask'], 0)
+        self.assertEquals(amount_in_base_ccy, filtered.units)
 
     def testFilteredOrderSpecificLimitNoBreach1stCcy(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimit=100, ccyLimits=ccyLimits)
-        self.assignDummyRates(rm)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit=100, ccy_limits=ccy_limits)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 1000, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 1000)
 
     def testFilteredOrderSpecificLimitBreach1stCcy(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimit=100, ccyLimits=ccyLimits)
-        self.assignDummyRates(rm)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit=100, ccy_limits=ccy_limits)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 10000, 'buy')
-        amountInBase = round(rm.ccyLimits['CHF'] * self.rm.ratesMap['CHF']['ask'], 0)
+        amount_in_base_ccy = round(rm.ccy_limits['CHF'] * self.rm.rates['CHF']['ask'], 0)
         filtered = rm.filter_order(order)
-        self.assertEquals(amountInBase, filtered.units)
+        self.assertEquals(amount_in_base_ccy, filtered.units)
 
     def testFilterOrderCcyExpLimitNoBreach1stCcySell(self):
         order = OrderEvent('CHF_USD', 100, 'sell')
@@ -148,16 +148,16 @@ class TestRiskManager(unittest.TestCase):
         self.assertEqual(100, filtered.units)
 
     def testFilteredOrderSpecificLimitNoBreach1stCcySell(self):
-        ccyLimitsShort = {'CHF': -234}
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimit=100, ccyLimitsShort=ccyLimitsShort)
-        self.assignDummyRates(rm)
+        ccy_limits_short = {'CHF': -234}
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit=100, ccy_limits_short=ccy_limits_short)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 100, 'sell')
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 100)
 
     def testFilterOrderPresetCcyExpLimitNoBreach1stCcySell(self):
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitShort=-10)
-        self.assignDummyRates(rm)
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit_short=-10)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 10, 'sell')
         filtered = self.rm.filter_order(order)
         self.assertEquals(filtered.units, 10)
@@ -166,41 +166,41 @@ class TestRiskManager(unittest.TestCase):
         order = OrderEvent('EUR_SGD', 10000, 'sell')
         filtered = self.rm.filter_order(order)
         self.assertNotEquals(filtered.units, 10000)
-        amountInBase = round(self.rm.ccyLimit * self.rm.ratesMap['SGD']['ask'], 0)
-        self.assertEquals(amountInBase, filtered.units)
+        amount_in_base_ccy = round(self.rm.ccy_limit * self.rm.rates['SGD']['ask'], 0)
+        self.assertEquals(amount_in_base_ccy, filtered.units)
 
     def testFilteredOrderSpecificLimitLessThanDefault_Breach1stCcy(self):
-        ccyLimits = {'CHF': 100}
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimit=1000, ccyLimits=ccyLimits)
-        self.assignDummyRates(rm)
+        ccy_limits = {'CHF': 100}
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit=1000, ccy_limits=ccy_limits)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 1000, 'buy')
-        amountInBase = round(rm.ccyLimits['CHF'] * self.rm.ratesMap['CHF']['ask'], 0)
+        amount_in_base_ccy = round(rm.ccy_limits['CHF'] * self.rm.rates['CHF']['ask'], 0)
         filtered = rm.filter_order(order)
-        self.assertEquals(amountInBase, filtered.units)
+        self.assertEquals(amount_in_base_ccy, filtered.units)
 
     def testFilteredOrderSpecificLimitMoreThanDefault_Breach1stCcy(self):
-        ccyLimits = {'CHF': 10000}
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimit=1000, ccyLimits=ccyLimits, ccyLimitShort=-10000)
-        self.assignDummyRates(rm)
+        ccy_limits = {'CHF': 10000}
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit=1000, ccy_limits=ccy_limits, ccy_limit_short=-10000)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(10000, filtered.units)
 
     def testFilteredOrderSpecificLimitLessThanDefault_Breach1stCcySell(self):
-        ccyLimitsShort = {'CHF': -100}
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitShort=-1000, ccyLimitsShort=ccyLimitsShort)
-        self.assignDummyRates(rm)
+        ccy_limits_short = {'CHF': -100}
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit_short=-1000, ccy_limits_short=ccy_limits_short)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 1000, 'sell')
-        amountInBase = round(-1 * rm.ccyLimitsShort['CHF'] * self.rm.ratesMap['CHF']['bid'], 0)
+        amount_in_base_ccy = round(-1 * rm.ccy_limits_short['CHF'] * self.rm.rates['CHF']['bid'], 0)
         filtered = rm.filter_order(order)
-        self.assertEquals(amountInBase, filtered.units)
+        self.assertEquals(amount_in_base_ccy, filtered.units)
         self.assertEquals(filtered.instrument, 'CHF_USD')
         self.assertEquals(filtered.side, 'sell')
 
     def testFilteredOrderSpecificLimitMoreThanDefault_Breach1stCcySell(self):
-        ccyLimitsShort = {'CHF': -10000}
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitShort=-1000, ccyLimitsShort=ccyLimitsShort, ccyLimit=100000)
-        self.assignDummyRates(rm)
+        ccy_limits_short = {'CHF': -10000}
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit_short=-1000, ccy_limits_short=ccy_limits_short, ccy_limit=100000)
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 10000, 'sell')
         filtered = rm.filter_order(order)
         self.assertEquals(10000, filtered.units)
@@ -208,29 +208,29 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.side, 'sell')
 
     def testCanSetPerCcyExpLimit(self):
-        rm = CcyExposureLimitRiskEvaluator('BC', ccyLimits={})
+        rm = CcyExposureLimitRiskEvaluator('BC', ccy_limits={})
         rm.set_limit('CHF', 1234.5)
-        self.assertEquals(rm.ccyLimits['CHF'], 1234.5)
+        self.assertEquals(rm.ccy_limits['CHF'], 1234.5)
 
     def testFilteredOrderSpecificAndDefaultLimitBreach1stCcy(self):
-        ccyLimits = {'CHF': 12000}
-        rm = CcyExposureLimitRiskEvaluator('SGD', ccyLimit=10000, ccyLimits=ccyLimits, ccyLimitShort=-100000)
-        self.assignDummyUnityRates(rm)
+        ccy_limits = {'CHF': 12000}
+        rm = CcyExposureLimitRiskEvaluator('SGD', ccy_limit=10000, ccy_limits=ccy_limits, ccy_limit_short=-100000)
+        self.assign_unity_rates(rm)
         order = OrderEvent('CHF_SGD', 15000, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 12000)
 
     def testFilteredOrderSpecificLimitFixRateEqualTo1NoBreach1stCcy(self):
-        ccyLimits = {'CHF': 110}
-        rm = CcyExposureLimitRiskEvaluator('SGD', ccyLimit=10000, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 110}
+        rm = CcyExposureLimitRiskEvaluator('SGD', ccy_limit=10000, ccy_limits=ccy_limits)
         rm.fix_rate('CHF', 1.0, 1.0)
         order = OrderEvent('CHF_SGD', 105, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 105)
 
     def testFilteredOrderSpecificLimitRateEqualTo1Breach1stCcy(self):
-        ccyLimits = {'CHF': 110}
-        rm = CcyExposureLimitRiskEvaluator('SGD', ccyLimit=10000, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 110}
+        rm = CcyExposureLimitRiskEvaluator('SGD', ccy_limit=10000, ccy_limits=ccy_limits)
         rm.fix_rate('CHF', 1.0, 1.0)
         order = OrderEvent('CHF_SGD', 150, 'buy')
         filtered = rm.filter_order(order)
@@ -243,38 +243,38 @@ class TestRiskManager(unittest.TestCase):
     """
 
     def testFilterOrderCcyDefLimitNoBreach2ndCcy(self):
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitShort=-150, ccyLimits={'CHF': 10000})
-        self.assignDummyRates(rm)
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit_short=-150, ccy_limits={'CHF': 10000})
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 100, 'buy')
         filtered = self.rm.filter_order(order)
         self.assertEquals(filtered.units, 100)
 
     def testFilterOrderPresetCcyDefLimitNoBreach2ndCcy(self):
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitShort=-150, ccyLimits={'CHF': 10000})
-        self.assignDummyRates(rm)
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit_short=-150, ccy_limits={'CHF': 10000})
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 140, 'buy')
         filtered = self.rm.filter_order(order)
         self.assertEquals(filtered.units, 140)
 
     def testFilterOrderCcyDefLimitBreach2ndCcy(self):
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitShort=-150, ccyLimits={'EUR': 10000})
-        self.assignDummyUnityRates(rm)
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit_short=-150, ccy_limits={'EUR': 10000})
+        self.assign_unity_rates(rm)
         order = OrderEvent('EUR_SGD', 10000, 'buy')
         filtered = self.rm.filter_order(order)
         self.assertNotEquals(filtered.units, 10000)
-        amountInBase = round(self.rm.ccyLimit * self.rm.ratesMap['EUR']['ask'], 0)
-        self.assertEquals(amountInBase, filtered.units)
+        amount_in_base_ccy = round(self.rm.ccy_limit * self.rm.rates['EUR']['ask'], 0)
+        self.assertEquals(amount_in_base_ccy, filtered.units)
 
     def testFilteredOrderSpecificLimitNoBreach2ndCcy(self):
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitsShort={'USD': -1000}, ccyLimits={'CHF': 1500})
-        self.assignDummyUnityRates(rm)
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limits_short={'USD': -1000}, ccy_limits={'CHF': 1500})
+        self.assign_unity_rates(rm)
         order = OrderEvent('CHF_USD', 1000, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 1000)
 
     def testFilteredOrderSpecificLimitBreach2ndCcy(self):
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimitsShort={'USD': -1000}, ccyLimits={'CHF': 15000})
-        self.assignDummyRates(rm)
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limits_short={'USD': -1000}, ccy_limits={'CHF': 15000})
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(1000, filtered.units)
@@ -285,15 +285,15 @@ class TestRiskManager(unittest.TestCase):
         self.assertEqual(100, filtered.units)
 
     def testFilteredOrderSpecificLimitNoBreach2ndCcy_Sell(self):
-        rm = CcyExposureLimitRiskEvaluator('USD', ccyLimit=100, ccyLimitsShort={'CHF': -234})
-        self.assignDummyRates(rm)
+        rm = CcyExposureLimitRiskEvaluator('USD', ccy_limit=100, ccy_limits_short={'CHF': -234})
+        self.assign_dummy_rates(rm)
         order = OrderEvent('CHF_USD', 100, 'sell')
         filtered = rm.filter_order(order)
         self.assertEquals(100, filtered.units)
 
     """
     def testFilterOrderCcyExpLimitBreach_2Instruments(self):
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100)
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
         self.assertNotEquals(filtered.units, 10000)
@@ -305,8 +305,8 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 100)
 
     def testFilteredOrderSpecificLimitBreach_2Instruments(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 1234)
@@ -317,8 +317,8 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 100)
 
     def testFilteredOrderSpecificLimit_2InstrumentsBreahces(self):
-        ccyLimits = {'CHF': 1234, 'EUR':10000}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234, 'EUR':10000}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
         self.assertEquals(filtered.units, 1234)
 
@@ -330,53 +330,53 @@ class TestRiskManager(unittest.TestCase):
 
     def testFilterBasedOnCcyExposure(self):
         rm = CcyExposureLimitRiskEvaluator('ABC')
-        self.assertNotEquals(rm.ccyLimit, None)
+        self.assertNotEquals(rm.ccy_limit, None)
 
     def testHasDefaultCurrencyLimit(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        self.assertTrue(rm.ccyLimit > 0)
+        self.assertTrue(rm.ccy_limit > 0)
 
     def testFilterBasedOnCcyExposure(self):
         rm = CcyExposureLimitRiskEvaluator('ABC')
-        rm.ratesMap['CHF'] = {}
-        rm.ratesMap['CHF']['bid'] = 0.8123
-        rm.ratesMap['CHF']['ask'] = 0.8120
-        self.assertEquals(rm.ratesMap['CHF']['bid'], 0.8123)
-        self.assertEquals(rm.ratesMap['CHF']['ask'], 0.8120)
+        rm.rates['CHF'] = {}
+        rm.rates['CHF']['bid'] = 0.8123
+        rm.rates['CHF']['ask'] = 0.8120
+        self.assertEquals(rm.rates['CHF']['bid'], 0.8123)
+        self.assertEquals(rm.rates['CHF']['ask'], 0.8120)
 
     #Short limits
     def testHasDefaultShortCcyExpLimit(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        self.assertTrue(rm.ccyLimitShort <= 0)
+        self.assertTrue(rm.ccy_limit_short <= 0)
 
     def testHasPresetShortCcyExpLimit(self):
-        rm = CcyExposureLimitRiskEvaluator('BC', ccyLimit=123, ccyLimitShort=-100)
-        self.assertEquals(rm.ccyLimitShort, -100)
+        rm = CcyExposureLimitRiskEvaluator('BC', ccy_limit=123, ccy_limit_short=-100)
+        self.assertEquals(rm.ccy_limit_short, -100)
 
     def testWrongPresetShortCcyExpLimitRaisesError(self):
         try:
-            rm = CcyExposureLimitRiskEvaluator('BC', ccyLimitShort=100)
+            rm = CcyExposureLimitRiskEvaluator('BC', ccy_limit_short=100)
             self.fail('Should have failed using +ve short position limit')
         except AssertionError:
             pass
 
     def testWrongPresetCcyExpLimitRaisesError(self):
         try:
-            rm = CcyExposureLimitRiskEvaluator('BC', ccyLimit=-12)
+            rm = CcyExposureLimitRiskEvaluator('BC', ccy_limit=-12)
             self.fail('Should have failed using -ve short position limit')
         except AssertionError:
             pass
 
     def testHasPerPositionShortLimit(self):
-        self.assertNotEquals(CcyExposureLimitRiskEvaluator('BC').ccyLimitsShort, None)
+        self.assertNotEquals(CcyExposureLimitRiskEvaluator('BC').ccy_limits_short, None)
 
     def testCanInitWithPerPositionShortLimit(self):
-        self.assertEquals(CcyExposureLimitRiskEvaluator('BC', ccyLimitsShort={}).ccyLimitsShort, {})
+        self.assertEquals(CcyExposureLimitRiskEvaluator('BC', ccy_limits_short={}).ccy_limits_short, {})
 
     def testCanInitWithPerPositionShortLimitCHF(self):
-        ccyLimitsShort = { 'CHF': -12.1}
-        rm = CcyExposureLimitRiskEvaluator('BC', ccyLimitsShort=ccyLimitsShort)
-        self.assertEquals(rm.ccyLimitsShort['CHF_USD'], -12.1)
+        ccy_limits_short = { 'CHF': -12.1}
+        rm = CcyExposureLimitRiskEvaluator('BC', ccy_limits_short=ccy_limits_short)
+        self.assertEquals(rm.ccy_limits_short['CHF_USD'], -12.1)
 
     def testFilterOrderDefaultShortCcyExpLimitBreach(self):
         rm = CcyExposureLimitRiskEvaluator('ABC')
@@ -387,7 +387,7 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 0)
 
     def testFilterOrderShortCcyExpLimitBreach(self):
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimitShort=-100)
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit_short=-100)
         order = OrderEvent('CHF_USD', 10000, 'sell')
         print (order)
         filtered = rm.filter_order(order)
@@ -395,14 +395,14 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 100)
 
     def testFilteredOrderSpecificLimitNoBreachShort(self):
-        ccyLimitsShort = {'CHF': -234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimitShort=-100, ccyLimitsShort=ccyLimitsShort)
+        ccy_limits_short = {'CHF': -234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit_short=-100, ccy_limits_short=ccy_limits_short)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 200, 'sell'))
         self.assertEquals(filtered.units, 200)
 
     def testFilteredOrderSpecificLimitBreachShort(self):
-        ccyLimitsShort = {'CHF': -234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimitShort=-100, ccyLimitsShort=ccyLimitsShort)
+        ccy_limits_short = {'CHF': -234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit_short=-100, ccy_limits_short=ccy_limits_short)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'sell'))
         self.assertEquals(filtered.units, 234)
 
@@ -435,7 +435,7 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(rm.positions['EUR_USD'], 1000)
 
     def testHasAppendedPos_FilterOrderCcyExpLimitBreach(self):
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100)
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100)
         rm.append_position('CHF', 10)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
@@ -443,28 +443,28 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 90)
 
     def testHasAppendedPos_FilteredOrderSpecificLimitNoBreach(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('CHF', 10)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
         self.assertEquals(filtered.units, 1000)
 
     def testHasAppendedPos_FilteredOrderSpecificLimitBreach(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('CHF', 100)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
         self.assertEquals(filtered.units, 1134)
 
     def testHasAppendedPos_FilteredOrderSpecificLimitLessThanDefault_Breach(self):
-        ccyLimits = {'CHF': 100}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=1000, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 100}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=1000, ccy_limits=ccy_limits)
         rm.append_position('CHF', 10)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
         self.assertEquals(filtered.units, 90)
 
     def testHasAppendedPos_FilterOrderCcyExpLimitBreach_2Instruments(self):
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100)
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100)
         rm.append_position('CHF', 10)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
@@ -477,8 +477,8 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 100)
 
     def testHasAppendedPos_FilteredOrderSpecificLimitBreach_2Instruments(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('CHF', 100)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
@@ -491,8 +491,8 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 100)
 
     def testHasAppendedPos_FilteredOrderSpecificLimit_2InstrumentsBreahces(self):
-        ccyLimits = {'CHF': 1234, 'EUR':10000}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234, 'EUR':10000}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('EUR', 100)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
         self.assertEquals(filtered.units, 1234)
@@ -506,8 +506,8 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 4900)
 
     def testHas2AppendedPos_FilteredOrderSpecificLimit_2InstrumentsBreahces(self):
-        ccyLimits = {'CHF': 1234, 'EUR':10000}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234, 'EUR':10000}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('CHF', 50)
         rm.append_position('EUR', 100)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
@@ -523,7 +523,7 @@ class TestRiskManager(unittest.TestCase):
 
     #Short current positions
     def testHasAppendedShortPos_FilterOrderCcyExpLimitBreach(self):
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100)
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100)
         rm.append_position('CHF', -10)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
@@ -531,28 +531,28 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 110)
 
     def testHasAppendedShortPos_FilteredOrderSpecificLimitNoBreach(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('CHF', -10)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
         self.assertEquals(filtered.units, 1000)
 
     def testHasAppendedShortPos_FilteredOrderSpecificLimitBreach(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('CHF', -100)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
         self.assertEquals(filtered.units, 1334)
 
     def testHasAppendedShortPos_FilteredOrderSpecificLimitLessThanDefault_Breach(self):
-        ccyLimits = {'CHF': 100}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=1000, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 100}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=1000, ccy_limits=ccy_limits)
         rm.append_position('CHF', -10)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
         self.assertEquals(filtered.units, 110)
 
     def testHasAppendedShortPos_FilterOrderCcyExpLimitBreach_2Instruments(self):
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100)
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100)
         rm.append_position('CHF', -10)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
@@ -565,8 +565,8 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 100)
 
     def testHasAppendedShortPos_FilteredOrderSpecificLimitBreach_2Instruments(self):
-        ccyLimits = {'CHF': 1234}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('CHF', -100)
         order = OrderEvent('CHF_USD', 10000, 'buy')
         filtered = rm.filter_order(order)
@@ -578,8 +578,8 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 100)
 
     def testHasAppendedShortPos_FilteredOrderSpecificLimit_2InstrumentsBreahces(self):
-        ccyLimits = {'CHF': 1234, 'EUR':10000}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234, 'EUR':10000}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('EUR', -100)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
         self.assertEquals(filtered.units, 1234)
@@ -592,8 +592,8 @@ class TestRiskManager(unittest.TestCase):
         self.assertEquals(filtered.units, 5100)
 
     def testHasAppended2ShortPos_FilteredOrderSpecificLimit_2InstrumentsBreahces(self):
-        ccyLimits = {'CHF': 1234, 'EUR':10000}
-        rm = CcyExposureLimitRiskEvaluator('ABC', ccyLimit=100, ccyLimits=ccyLimits)
+        ccy_limits = {'CHF': 1234, 'EUR':10000}
+        rm = CcyExposureLimitRiskEvaluator('ABC', ccy_limit=100, ccy_limits=ccy_limits)
         rm.append_position('CHF', -50)
         rm.append_position('EUR', -100)
         filtered = rm.filter_order(OrderEvent('CHF_USD', 10000, 'buy'))
@@ -609,44 +609,44 @@ class TestRiskManager(unittest.TestCase):
 
     def testCanSetPerCcyExpLimit(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        rm.set_limit('SHF_USD', ccyLimit=10000)
-        self.assertEquals(rm.ccyLimits['SHF_USD'], 10000)
+        rm.set_limit('SHF_USD', ccy_limit=10000)
+        self.assertEquals(rm.ccy_limits['SHF_USD'], 10000)
 
     def testCanSetPerPositionShortLimit(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        rm.set_limit('SHF_USD', ccyLimitShort=-22)
-        self.assertEquals(rm.ccyLimitsShort['SHF_USD'], -22)
+        rm.set_limit('SHF_USD', ccy_limit_short=-22)
+        self.assertEquals(rm.ccy_limits_short['SHF_USD'], -22)
 
     def testCanSetPerPositionLongShortLimit(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        rm.set_limit('SHF_USD', ccyLimit=10000, ccyLimitShort=-22)
-        self.assertEquals(rm.ccyLimits['SHF_USD'], 10000)
-        self.assertEquals(rm.ccyLimitsShort['SHF_USD'], -22)
+        rm.set_limit('SHF_USD', ccy_limit=10000, ccy_limit_short=-22)
+        self.assertEquals(rm.ccy_limits['SHF_USD'], 10000)
+        self.assertEquals(rm.ccy_limits_short['SHF_USD'], -22)
 
     def testCanSetPerCcyExpLimitAndUnsetShort(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        rm.set_limit('SHF_USD', ccyLimitShort=-22)
-        self.assertEquals(rm.ccyLimitsShort['SHF_USD'], -22)
-        rm.set_limit('SHF_USD', ccyLimit=10000)
-        self.assertEquals(rm.ccyLimits['SHF_USD'], 10000)
-        self.assertFalse('SHF_USD' in rm.ccyLimitsShort)
+        rm.set_limit('SHF_USD', ccy_limit_short=-22)
+        self.assertEquals(rm.ccy_limits_short['SHF_USD'], -22)
+        rm.set_limit('SHF_USD', ccy_limit=10000)
+        self.assertEquals(rm.ccy_limits['SHF_USD'], 10000)
+        self.assertFalse('SHF_USD' in rm.ccy_limits_short)
 
     def testCanSetPerPositionShortLimitAndUnsetLong(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        rm.set_limit('SHF_USD', ccyLimit=10000)
-        self.assertEquals(rm.ccyLimits['SHF_USD'], 10000)
-        rm.set_limit('SHF_USD', ccyLimitShort=-22)
-        self.assertEquals(rm.ccyLimitsShort['SHF_USD'], -22)
-        self.assertFalse('SHF_USD' in rm.ccyLimits)
+        rm.set_limit('SHF_USD', ccy_limit=10000)
+        self.assertEquals(rm.ccy_limits['SHF_USD'], 10000)
+        rm.set_limit('SHF_USD', ccy_limit_short=-22)
+        self.assertEquals(rm.ccy_limits_short['SHF_USD'], -22)
+        self.assertFalse('SHF_USD' in rm.ccy_limits)
 
     def testCanUnSetPerPositionShortLimit(self):
         rm = CcyExposureLimitRiskEvaluator('BC')
-        rm.set_limit('SHF_USD', ccyLimit=10000 , ccyLimitShort=-22)
-        self.assertEquals(rm.ccyLimits['SHF_USD'], 10000)
-        self.assertEquals(rm.ccyLimitsShort['SHF_USD'], -22)
+        rm.set_limit('SHF_USD', ccy_limit=10000 , ccy_limit_short=-22)
+        self.assertEquals(rm.ccy_limits['SHF_USD'], 10000)
+        self.assertEquals(rm.ccy_limits_short['SHF_USD'], -22)
         rm.set_limit('SHF_USD')
-        self.assertFalse('SHF_USD' in rm.ccyLimits)
-        self.assertFalse('SHF_USD' in rm.ccyLimitsShort)
+        self.assertFalse('SHF_USD' in rm.ccy_limits)
+        self.assertFalse('SHF_USD' in rm.ccy_limits_short)
     def testCannotFilterOrderWithStaleRates(self):
         rm = CcyExposureLimitRiskEvaluator('ABC')
         try:
@@ -655,4 +655,3 @@ class TestRiskManager(unittest.TestCase):
         except AssertionError:
             pass
     """
-

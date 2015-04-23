@@ -10,145 +10,146 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
 
         It also helps in issuing liquidating transactions which breach exposure limits
 
-        ccyLimit  - default individual ccy exposure limit for per ccy
-        ccyLimits  - specific individual position limits in terms of units
-        portLimit - ccy exposure limit for whole portfolio
-        portLimitShort - ccy exposure limit for whole portfolio
-        ccyLimitShort  - default individual short position limit in terms of units
-        ccyLimitsShort  - specific individual short position limits in terms of units
+        ccy_limit  - default individual ccy exposure limit for per ccy
+        ccy_limits  - specific individual position limits in terms of units
+        port_limit - ccy exposure limit for whole portfolio
+        port_limit_short - ccy exposure limit for whole portfolio
+        ccy_limit_short  - default individual short position limit in terms of units
+        ccy_limits_short  - specific individual short position limits in terms of units
         short limits are specified in -ve numbers, with a max of 0
         short limits are specified in -ve numbers, with a max of 0
     """
 
-    def __init__(self, baseCurrency
-                 , ccyLimit=5000, ccyLimits={}
-                 , ccyLimitShort=-5000, ccyLimitsShort={}
-                 , portLimit=100, portLimitShort=-100, ratesMap={}):
+    def __init__(self, base_ccy
+                 , ccy_limit=5000, ccy_limits=None
+                 , ccy_limit_short=-5000, ccy_limits_short=None
+                 , port_limit=100, port_limit_short=-100, rates=None):
 
-        assert baseCurrency != None, '[%s] is None for [%s]' % ("base ccy", self.__class__.__name__)
-        self.baseCcy = baseCurrency
+        assert base_ccy is not None, '[%s] is None for [%s]' % ("base ccy", self.__class__.__name__)
+        self.base_ccy = base_ccy
 
         self.positions = {}
 
-        assert ccyLimit > 0, '[%s] is [%s] for [%s]' % ("position limit", ccyLimit, self.__class__.__name__)
-        self.ccyLimit = ccyLimit  # default individual position limit in terms of units
+        assert ccy_limit > 0, '[%s] is [%s] for [%s]' % ("position limit", ccy_limit, self.__class__.__name__)
+        self.ccy_limit = ccy_limit  # default individual position limit in terms of units
 
-        assert portLimit > 0, '[%s] is [%s] for [%s]' % ("portfolio limit", portLimit, self.__class__.__name__)
-        self.portLimit = portLimit  # ccy exposure limit for whole portfolio
-        assert portLimitShort < 0, '[%s] is -ve for [%s]' % ("portfolio short limit", self.__class__.__name__)
-        self.portLimitShort = portLimitShort  # ccy exposure limit for whole portfolio
+        assert port_limit > 0, '[%s] is [%s] for [%s]' % ("portfolio limit", port_limit, self.__class__.__name__)
+        self.port_limit = port_limit  # ccy exposure limit for whole portfolio
+        assert port_limit_short < 0, '[%s] is -ve for [%s]' % ("portfolio short limit", self.__class__.__name__)
+        self.port_limit_short = port_limit_short  # ccy exposure limit for whole portfolio
 
-        self.ratesMap = ratesMap
-        if ccyLimits == None:
-            self.ccyLimits = {}
+        if rates is None:
+            self.rates = {}
         else:
-            self.ccyLimits = ccyLimits
+            self.rates = rates
 
-        assert ccyLimitShort <= 0, '[%s] is [%s] for [%s]' % (
-        "short position limit", ccyLimitShort, self.__class__.__name__)
-        self.ccyLimitShort = ccyLimitShort  # default individual short position limit in terms of units
-        if ccyLimitsShort == None:
-            self.ccyLimitsShort = {}
+        if ccy_limits is None:
+            self.ccy_limits = {}
         else:
-            self.ccyLimitsShort = ccyLimitsShort
+            self.ccy_limits = ccy_limits
 
-        assert self.ccyLimit >= 0, '[%s] cannot be -ve for [%s]' % ("position limit", self.__class__.__name__)
-        assert self.ccyLimitShort <= 0, '[%s] cannot be +ve for [%s]' % (
-        "short position limit", self.__class__.__name__)
+        assert ccy_limit_short <= 0, '[%s] is [%s] for [%s]' % ("short position limit", ccy_limit_short, self.__class__.__name__)
+        self.ccy_limit_short = ccy_limit_short  # default individual short position limit in terms of units
+        if ccy_limits_short is None:
+            self.ccy_limits_short = {}
+        else:
+            self.ccy_limits_short = ccy_limits_short
+
+        assert self.ccy_limit >= 0, '[%s] cannot be -ve for [%s]' % ("position limit", self.__class__.__name__)
+        assert self.ccy_limit_short <= 0, '[%s] cannot be +ve for [%s]' % ("short position limit", self.__class__.__name__)
 
     def filter_order(self, order):
 
         currencies = order.instrument.split('_')
         # currAmounts = []
-        fxRatesWrtBase = []
+        fx_rates_wrt_base_ccy = []
 
         try:
             if order.side == 'buy':
-                if currencies[0] == self.baseCcy:
-                    fxRatesWrtBase.append(1)
+                if currencies[0] == self.base_ccy:
+                    fx_rates_wrt_base_ccy.append(1)
                 else:
-                    fxRatesWrtBase.append(self.ratesMap[currencies[0]]['ask'])
-                #currAmounts.append(order.units / fxRatesWrtBase[0])
+                    fx_rates_wrt_base_ccy.append(self.rates[currencies[0]]['ask'])
+                # currAmounts.append(order.units / fx_rates_wrt_base_ccy[0])
 
-                if currencies[1] == self.baseCcy:
-                    fxRatesWrtBase.append(1)
+                if currencies[1] == self.base_ccy:
+                    fx_rates_wrt_base_ccy.append(1)
                 else:
-                    fxRatesWrtBase.append(self.ratesMap[currencies[1]]['bid'])
-                    #currAmounts.append(order.units * -1 / fxRatesWrtBase[1])
+                    fx_rates_wrt_base_ccy.append(self.rates[currencies[1]]['bid'])
+                    # currAmounts.append(order.units * -1 / fx_rates_wrt_base_ccy[1])
             else:
-                if currencies[0] == self.baseCcy:
-                    fxRatesWrtBase.append(1)
+                if currencies[0] == self.base_ccy:
+                    fx_rates_wrt_base_ccy.append(1)
                 else:
-                    fxRatesWrtBase.append(self.ratesMap[currencies[0]]['bid'])
-                #currAmounts.append(order.units/ fxRatesWrtBase[0])
+                    fx_rates_wrt_base_ccy.append(self.rates[currencies[0]]['bid'])
+                # currAmounts.append(order.units/ fx_rates_wrt_base_ccy[0])
 
-                if currencies[1] == self.baseCcy:
-                    fxRatesWrtBase.append(1)
+                if currencies[1] == self.base_ccy:
+                    fx_rates_wrt_base_ccy.append(1)
                 else:
-                    fxRatesWrtBase.append(self.ratesMap[currencies[1]]['ask'])
-                    #currAmounts.append(order.units * -1 / fxRatesWrtBase[1])
+                    fx_rates_wrt_base_ccy.append(self.rates[currencies[1]]['ask'])
+                    # currAmounts.append(order.units * -1 / fx_rates_wrt_base_ccy[1])
         except KeyError as e:
             raise AssertionError('Could not find rate for evaluating [%s] - [%s]' % (order.instrument, str(e)))
 
-        filteredOrder = copy.copy(order)
+        filtered_order = copy.copy(order)
 
-        ccyPosition = 0
+        ccy_position = 0
         if currencies[0] in self.positions:
-            ccyPosition = self.positions[currencies[0]]
-        maxExposure = 0
+            ccy_position = self.positions[currencies[0]]
+        max_exposure = 0
 
-        ccyPosition2nd = 0
+        ccy_position2nd = 0
         if currencies[1] in self.positions:
-            ccyPosition2nd = self.positions[currencies[1]]
-        maxExposure2nd=0
+            ccy_position2nd = self.positions[currencies[1]]
+        max_exposure2nd = 0
 
         if order.side == 'buy':
-            limit = self.ccyLimit
-            if currencies[0] in self.ccyLimits:
-                limit = self.ccyLimits[currencies[0]]
+            limit = self.ccy_limit
+            if currencies[0] in self.ccy_limits:
+                limit = self.ccy_limits[currencies[0]]
                 assert limit >= 0, '[%s] cannot be -ve for [%s]' % ("ccy limit", currencies[0])
-            if ccyPosition < limit:
-                maxExposure = limit - ccyPosition
-            maxUnits = round(maxExposure * fxRatesWrtBase[0], 0)
-            if maxUnits < filteredOrder.units:
-                filteredOrder.units = maxUnits
+            if ccy_position < limit:
+                max_exposure = limit - ccy_position
+            max_units = round(max_exposure * fx_rates_wrt_base_ccy[0], 0)
+            if max_units < filtered_order.units:
+                filtered_order.units = max_units
 
             # 2nd currency in a buy order
-            limit = self.ccyLimitShort
-            if currencies[1] in self.ccyLimitsShort:
-                limit = self.ccyLimitsShort[currencies[1]]
+            limit = self.ccy_limit_short
+            if currencies[1] in self.ccy_limits_short:
+                limit = self.ccy_limits_short[currencies[1]]
                 assert limit <= 0, '[%s] cannot be +ve for [%s]' % ("short ccy limit", currencies[0])
-            if ccyPosition2nd > limit:
-                maxExposure2nd = ccyPosition2nd - limit
-            maxUnits = round(maxExposure2nd * fxRatesWrtBase[1], 0)
-            if maxUnits < filteredOrder.units:
-                filteredOrder.units = maxUnits
+            if ccy_position2nd > limit:
+                max_exposure2nd = ccy_position2nd - limit
+            max_units = round(max_exposure2nd * fx_rates_wrt_base_ccy[1], 0)
+            if max_units < filtered_order.units:
+                filtered_order.units = max_units
 
         else:  # sell order
-            limit = self.ccyLimitShort
-            if currencies[0] in self.ccyLimitsShort:
-                limit = self.ccyLimitsShort[currencies[0]]
+            limit = self.ccy_limit_short
+            if currencies[0] in self.ccy_limits_short:
+                limit = self.ccy_limits_short[currencies[0]]
                 assert limit <= 0, '[%s] cannot be +ve for [%s]' % ("short position limit", order.instrument)
-            if ccyPosition > limit:
-                maxExposure = ccyPosition - limit
-            maxUnits = round(maxExposure * fxRatesWrtBase[0], 0)
-            if maxUnits < order.units:
-                filteredOrder.units = maxUnits
+            if ccy_position > limit:
+                max_exposure = ccy_position - limit
+            max_units = round(max_exposure * fx_rates_wrt_base_ccy[0], 0)
+            if max_units < order.units:
+                filtered_order.units = max_units
 
             # 2nd currency in a sell order
-            limit = self.ccyLimit
-            if currencies[1] in self.ccyLimits:
-                limit = self.ccyLimits[currencies[1]]
+            limit = self.ccy_limit
+            if currencies[1] in self.ccy_limits:
+                limit = self.ccy_limits[currencies[1]]
                 assert limit >= 0, '[%s] cannot be -ve for [%s]' % ("ccy limit", currencies[1])
-            if ccyPosition2nd < limit:
-                maxExposure2nd = limit - ccyPosition2nd
-            maxUnits = round(maxExposure2nd * fxRatesWrtBase[1], 0)
-            if maxUnits < filteredOrder.units:
-                filteredOrder.units = maxUnits
+            if ccy_position2nd < limit:
+                max_exposure2nd = limit - ccy_position2nd
+            max_units = round(max_exposure2nd * fx_rates_wrt_base_ccy[1], 0)
+            if max_units < filtered_order.units:
+                filtered_order.units = max_units
 
-
-        #now check currency level limits
-        return filteredOrder
+        # now check currency level limits
+        return filtered_order
 
     def reval_positions(self):
         raise NotImplementedError("Should implement 'reval_positions()' method")
@@ -167,21 +168,21 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
         raise NotImplementedError("Should implement 'reval_positions()' method")
 
     def fix_rate(self, instrument, bid, ask):
-        if instrument not in self.ratesMap:
-            self.ratesMap[instrument] = {}
-        self.ratesMap[instrument]['bid'] = bid
-        self.ratesMap[instrument]['ask'] = ask
+        if instrument not in self.rates:
+            self.rates[instrument] = {}
+        self.rates[instrument]['bid'] = bid
+        self.rates[instrument]['ask'] = ask
 
-    def set_limit(self, instrument, ccyLimit=None, ccyLimitShort=None):
-        if ccyLimit:
-            self.ccyLimits[instrument] = ccyLimit
+    def set_limit(self, instrument, ccy_limit=None, ccy_limit_short=None):
+        if ccy_limit:
+            self.ccy_limits[instrument] = ccy_limit
         else:
-            if instrument in self.ccyLimits:
-                del self.ccyLimits[instrument]
-        if ccyLimitShort:
-            self.ccyLimitsShort[instrument] = ccyLimitShort
+            if instrument in self.ccy_limits:
+                del self.ccy_limits[instrument]
+        if ccy_limit_short:
+            self.ccy_limits_short[instrument] = ccy_limit_short
         else:
-            if instrument in self.ccyLimitsShort:
-                del self.ccyLimitsShort[instrument]
+            if instrument in self.ccy_limits_short:
+                del self.ccy_limits_short[instrument]
 
 
