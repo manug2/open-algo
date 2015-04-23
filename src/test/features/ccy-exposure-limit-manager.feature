@@ -8,9 +8,9 @@ Feature: Risk Manager is available to pre check orders based on first currency e
         Given we have ccy exposure manager with base currency SGD, default ccy limit
           and we want to buy 100 units of CHF_USD
           and there is no specific exposure limit for currencies CHF and USD
-          and market rate to buy CHF is 1.1 units of base ccy
-          and market rate to sell USD is 1.4 units of base ccy
-         when when i say filter order
+          and market rate for CHF is 1.05/1.1 wrt SGD
+          and market rate for USD is 1.3/1.4 wrt SGD
+       when when i say filter order
           then RiskManager returns filtered order
           and filtered order has instrument=CHF_USD and side=buy
           and filtered order has numerical units=100
@@ -19,8 +19,8 @@ Feature: Risk Manager is available to pre check orders based on first currency e
         Given we have ccy exposure manager with base currency SGD, default ccy limit
           and we want to buy 12345000 units of CHF_USD
           and there is no specific exposure limit for currencies CHF and USD
-          and market rate to buy CHF is 1.0 units of base ccy
-          and market rate to sell USD is 1.4 units of base ccy
+          and market rate for CHF is 0.99/1.0 wrt SGD
+          and market rate for USD is 1.3/1.4 wrt SGD
          when when i say filter order
           then RiskManager returns filtered order
           and filtered order has instrument=CHF_USD and side=buy

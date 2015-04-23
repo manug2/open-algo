@@ -5,8 +5,8 @@ Feature: Risk Manager is available to pre check orders based on second currency 
           and we want to buy 100 units of CHF_USD
           and the specific exposure limit for currency CHF is 100000
           and there is no specific short exposure limit for currency USD
-          and market rate to buy CHF is 1.05 units of base ccy
-          and market rate to sell USD is 1.1 units of base ccy
+          and market rate for CHF is 1.1/1.15 wrt SGD
+          and market rate for USD is 1.3/1.4 wrt SGD
          when when i say filter order
           then RiskManager returns filtered order
           and filtered order has instrument=CHF_USD and side=buy
@@ -17,8 +17,8 @@ Feature: Risk Manager is available to pre check orders based on second currency 
           and we want to buy 12345000 units of CHF_USD
           and the specific exposure limit for currency CHF is 100000
           and there is no specific short exposure limit for currency USD
-          and market rate to buy CHF is 1.05 units of base ccy
-          and market rate to sell USD is 1.1 units of base ccy
+          and market rate for CHF is 0.99/1.0 wrt SGD
+          and market rate for USD is 1.3/1.4 wrt SGD
          when when i say filter order
           then RiskManager returns filtered order
           and filtered order has instrument=CHF_USD and side=buy

@@ -35,7 +35,7 @@ class TestOandaExecution(unittest.TestCase):
     def testOrderBuy(self):
         self.executor.connect()
         side = "buy"
-        event = OrderEvent("EUR_USD", 125, "market", side)
+        event = OrderEvent("EUR_USD", 125, side)
         response = self.executor.execute_order(event)
         self.executor.stop()
         self.logger.info('Response received : "%s"' % response)
