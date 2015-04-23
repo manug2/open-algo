@@ -111,7 +111,7 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
                 assert limit >= 0, '[%s] cannot be -ve for [%s]' % ("ccy limit", currencies[0])
             if ccy_position < limit:
                 max_exposure = limit - ccy_position
-            max_units = round(max_exposure * fx_rates_wrt_base_ccy[0], 0)
+            max_units = round(max_exposure / fx_rates_wrt_base_ccy[0], 0)
             if max_units < filtered_order.units:
                 filtered_order.units = max_units
 
@@ -122,7 +122,7 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
                 assert limit <= 0, '[%s] cannot be +ve for [%s]' % ("short ccy limit", currencies[0])
             if ccy_position2nd > limit:
                 max_exposure2nd = ccy_position2nd - limit
-            max_units = round(max_exposure2nd * fx_rates_wrt_base_ccy[1], 0)
+            max_units = round(max_exposure2nd / fx_rates_wrt_base_ccy[1], 0)
             if max_units < filtered_order.units:
                 filtered_order.units = max_units
 
@@ -133,7 +133,7 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
                 assert limit <= 0, '[%s] cannot be +ve for [%s]' % ("short position limit", order.instrument)
             if ccy_position > limit:
                 max_exposure = ccy_position - limit
-            max_units = round(max_exposure * fx_rates_wrt_base_ccy[0], 0)
+            max_units = round(max_exposure / fx_rates_wrt_base_ccy[0], 0)
             if max_units < order.units:
                 filtered_order.units = max_units
 
@@ -144,7 +144,7 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
                 assert limit >= 0, '[%s] cannot be -ve for [%s]' % ("ccy limit", currencies[1])
             if ccy_position2nd < limit:
                 max_exposure2nd = limit - ccy_position2nd
-            max_units = round(max_exposure2nd * fx_rates_wrt_base_ccy[1], 0)
+            max_units = round(max_exposure2nd / fx_rates_wrt_base_ccy[1], 0)
             if max_units < filtered_order.units:
                 filtered_order.units = max_units
 
