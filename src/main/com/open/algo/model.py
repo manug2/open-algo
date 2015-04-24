@@ -150,3 +150,8 @@ class RiskManager(Loggables):
     def append_position(self, position):
         raise NotImplementedError("Should implement 'append_position()' method")
 
+
+class ExecutionCostPredictor(Loggables):
+    def eval_cost(self, order):
+        raise NotImplementedError("Should implement 'eval_cost()' method")
+

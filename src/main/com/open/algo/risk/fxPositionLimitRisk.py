@@ -89,9 +89,6 @@ class FxPositionLimitRiskEvaluator(RiskManager):
     def reval_positions_internal(self, instrument, bid, ask):
         raise NotImplementedError("Should implement 'reval_positions()' method")
 
-    def fix_rate(self, instrument, bid, ask):
-        raise NotImplementedError("Should implement 'fix_rate()' method")
-
     def set_limit(self, instrument, posLimit=None, posLimitShort=None):
         if posLimit:
             self.posLimits[instrument] = posLimit
