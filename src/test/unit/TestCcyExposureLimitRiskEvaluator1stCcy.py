@@ -4,8 +4,8 @@ sys.path.append('../../main')
 import unittest
 
 from com.open.algo.risk.ccyExposureLimitRisk import CcyExposureLimitRiskEvaluator
-from com.open.algo.trading.fxEvents import OrderEvent
-
+from com.open.algo.trading.fxEvents import TickEvent, OrderEvent
+from com.open.algo.model import gettime
 
 class TestRiskManager(unittest.TestCase):
     def assign_dummy_rates(self, rm):
@@ -227,7 +227,7 @@ class TestRiskManager(unittest.TestCase):
     def test_should_allow_to_set_unity_fx_rate_and_have_same_units(self):
         ccy_limits = {'CHF': 110}
         rm = CcyExposureLimitRiskEvaluator('SGD', ccy_limit=10000, ccy_limits=ccy_limits)
-        rm.fix_rate('CHF', 1.0, 1.0)
+        rm.set_rate(TickEvent('CHF', gettime(), 1.0, 1.0))
         order = OrderEvent('CHF_SGD', 105, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 105)
@@ -235,7 +235,7 @@ class TestRiskManager(unittest.TestCase):
     def test_should_allow_to_set_unity_fx_rate_and_have_less_units_when_order_size_breaches_specific_limit_on_1st_ccy(self):
         ccy_limits = {'CHF': 110}
         rm = CcyExposureLimitRiskEvaluator('SGD', ccy_limit=10000, ccy_limits=ccy_limits)
-        rm.fix_rate('CHF', 1.0, 1.0)
+        rm.set_rate(TickEvent('CHF', gettime(), 1.0, 1.0))
         order = OrderEvent('CHF_SGD', 150, 'buy')
         filtered = rm.filter_order(order)
         self.assertEquals(filtered.units, 110)

@@ -167,11 +167,16 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
     def reval_positions_internal(self, instrument, bid, ask):
         raise NotImplementedError("Should implement 'reval_positions()' method")
 
-    def fix_rate(self, instrument, bid, ask):
-        if instrument not in self.rates:
-            self.rates[instrument] = {}
-        self.rates[instrument]['bid'] = bid
-        self.rates[instrument]['ask'] = ask
+    def set_rate(self, tick):
+        assert tick is not None
+        assert tick.instrument is not None
+        assert tick.bid is not None
+        assert tick.ask is not None
+
+        if tick.instrument not in self.rates:
+            self.rates[tick.instrument] = {}
+        self.rates[tick.instrument]['bid'] = tick.bid
+        self.rates[tick.instrument]['ask'] = tick.ask
 
     def set_limit(self, instrument, ccy_limit=None, ccy_limit_short=None):
         if ccy_limit:

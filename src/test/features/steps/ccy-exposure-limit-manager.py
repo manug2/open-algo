@@ -5,6 +5,8 @@ sys.path.append('../main/')
 from behave import *
 
 from com.open.algo.risk.ccyExposureLimitRisk import CcyExposureLimitRiskEvaluator
+from com.open.algo.trading.fxEvents import TickEvent
+from com.open.algo.model import gettime
 
 
 @then('we use RiskManager to evaluate currency exposure')
@@ -32,7 +34,7 @@ def step_impl(context, ccy):
 @given('market rate for {ccy} is {bid}/{ask} wrt {base_ccy}')
 def step_impl(context, ccy, bid, ask, base_ccy):
     assert context.rm.base_ccy == base_ccy, 'fx rate specified in currency [%s] which is not base currency [%s]' % (base_ccy, context.rm.base_ccy)
-    context.rm.fix_rate(ccy, float(bid), float(ask))
+    context.rm.set_rate(TickEvent(ccy, gettime(), float(bid), float(ask)))
 
 @given('we have ccy exposure manager with base currency {base_ccy}, default ccy limit of {def_limit}')
 def step_impl(context, base_ccy, def_limit):
