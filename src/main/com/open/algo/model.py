@@ -154,6 +154,3 @@ class RiskManager(Loggables):
 class ExecutionCostPredictor(Loggables):
     def eval_cost(self, order):
         raise NotImplementedError("Should implement 'eval_cost()' method")
-
-    def set_rate(self, tick):
-        raise NotImplementedError("Should implement 'eval_cost()' method")

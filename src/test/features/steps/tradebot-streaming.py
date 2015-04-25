@@ -48,7 +48,7 @@ def step_impl(context):
 
 @when('bot trading is stopped')
 def step_impl(context):
-    context.trader.pullAndProcess()
+    context.trader.pull_process()
     context.trader.trading = False
 
 

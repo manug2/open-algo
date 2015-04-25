@@ -1,6 +1,4 @@
 import queue
-import time
-import threading
 
 from com.open.algo.model import TradeBot
 import logging
@@ -14,7 +12,7 @@ class ListenAndTradeBot(TradeBot):
         self.strategy = strategy
         self.executor = executor
         self.trading = False
-        if name == None:
+        if name is None:
             self.logger = logging.getLogger(self.__class__.__name__)
         else:
             self.logger = logging.getLogger('%s-%s', (self.__class__.__name__, name))
@@ -28,25 +26,25 @@ class ListenAndTradeBot(TradeBot):
         """
         self.logger.info('starting..')
         self.trading = True
-        self.runInLoop()
+        self.run_in_loop()
 
-    def runInLoop(self):
-        while self.trading == True:
+    def run_in_loop(self):
+        while self.trading:
             # outer while loop will trigger inner while loop after 'hearbeat'
-            self.logger.info('runInLoop..')
-            self.pullAndProcess()
+            self.logger.info('run_in_loop..')
+            self.pull_process()
 
     # end of outer while loop after stopping
 
-    def pullAndProcess(self):
-        while self.trading == True:
+    def pull_process(self):
+        while self.trading:
             # while loop to poll for events
             try:
                 event = self.events.get(True, self.heartbeat)
             except queue.Empty:
                 break
             else:
-                if self.logger != None:
+                if self.logger is not None:
                     self.logger.debug('got event')
                 if event is not None:
                     try:
@@ -64,13 +62,13 @@ class ListenAndTradeBot(TradeBot):
 
     def stop(self):
         self.logger.info("stopping..")
-        if self.executor != None:
+        if self.executor is not None:
             self.executor.stop()
 
         self.trading = False
 
-        if self.prices != None:
+        if self.prices is not None:
             self.prices.stop()
 
-        #End of stop()
+        # End of stop()
 
