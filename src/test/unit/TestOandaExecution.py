@@ -17,9 +17,9 @@ TARGET_ENV = "practice"
 class TestOandaExecution(unittest.TestCase):
     def setUp(self):
         self.logger = logging.getLogger(self.__class__.__name__)
-        domain = ENVIRONMENTS["api"][TARGET_ENV]
+        domain = ENVIRONMENTS['api'][TARGET_ENV]
         config = ConfigParser()
-        config.read(os.path.join(CONFIG_PATH, "practice.oanda.config"))
+        config.read(os.path.join(CONFIG_PATH, TARGET_ENV + '.oanda.config'))
         ACCESS_TOKEN = config.get('CONFIG', 'ACCESS_TOKEN')
         ACCOUNT_ID = config.get('CONFIG', 'ACCOUNT_ID')
         self.executor = OandaExecutionHandler(domain, ACCESS_TOKEN, ACCOUNT_ID, logEnabled=True)

@@ -1,18 +1,10 @@
-Feature: Oanda provides historical rates
-
-	Scenario: Connection can be established with Oanda
-		Given we want to establish connection to Oanda sandbox
-		  and using account_id=1234567, instrument=EUR_USD and token=abcdef0123456abcdef0123456-abcdef0123456abcdef0123456
-		  and using api connection
-		 when i say connect
-		 then we are able to connect to Oanda
-		
+Feature: Oanda provides historical prices
 
 	Scenario: Sample ticks can be received from Oanda if connection is available
 		Given we want to stream ticks from Oanda sandbox
 		  and using account_id=1234567, instrument=EUR_USD and token=abcdef0123456abcdef0123456-abcdef0123456abcdef0123456
 		  and using api connection
-		 when i say connect and query rates
+		 when i say query prices for 'CHF_USD'
 		 then we receive ticks for this instrument
 
 
@@ -20,7 +12,6 @@ Feature: Oanda provides historical rates
 		Given we want to stream ticks from Oanda sandbox
 		  and using account_id=1234567, instrument=EUR_USD and token=abcdef0123456abcdef0123456-abcdef0123456abcdef0123456
 		  and using api connection
-		 when i say connect and query rates
-		 then we receive ticks for this instrument
+		 when i say query prices for 'CHF_USD'
 		  and last tick was logged by the journaler as last event
 

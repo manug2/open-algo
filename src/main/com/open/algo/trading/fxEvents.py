@@ -10,10 +10,15 @@ class TickEvent(Event):
         self.ask = ask
 
     def __str__(self):
-        msg = __class__.__name__ + "(" + self.instrument + ","
+        return self.to_string();
+
+    def __repr__(self):
+        return self.to_string();
+
+    def to_string(self):
+        msg = self.__class__.__name__ + "(" + self.instrument + ","
         msg = msg + str(self.bid) + "," + str(self.ask) + "," + self.time + ")"
         return msg
-
 
 class OrderEvent(Event):
     def __init__(self, instrument, units, side, order_type='market', price=None, lowerBound=None, upperBound=None,
@@ -33,6 +38,12 @@ class OrderEvent(Event):
         self.trailingStop = trailingStop
 
     def __str__(self):
+        return self.to_string();
+
+    def __repr__(self):
+        return self.to_string();
+
+    def to_string(self):
         msg = '%s(%s,%s,%s,%s' % (__class__.__name__, self.instrument, self.units
                                   , self.order_type, self.side)
         for attr in ['price', 'lowerBound', 'upperBound', 'stopLoss', 'takeProfit', 'trailingStop', 'expiry']:

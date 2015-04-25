@@ -47,9 +47,9 @@ class StreamingForexPrices(StreamDataHandler):
         except Exception as e:
             self.session.close()
             exm = 'Caught exception when connecting to stream - %s' % e
-            if self.logger != None:
+            if self.logger is not None:
                 self.logger.error(exm)
-            #using a blocking put to stall application in case of several exceptions
+            # using a blocking put to stall application in case of several exceptions
             self.exception_queue.put(ExceptionEvent(self, exm))
 
     def stream(self):
@@ -57,26 +57,27 @@ class StreamingForexPrices(StreamDataHandler):
         response = self.connect()
         if response.status_code != 200:
             exm = 'Web response not OK (%d), "%s"' % (response.status_code, response.text)
-            if self.logger != None:
+            if self.logger is not None:
                 self.logger.error(exm)
             self.exception_queue.put_nowait(ExceptionEvent(self, exm))
             return
+        if not self.streaming:
+            return
         for line in response.iter_lines(1):
-            if self.streaming == False:
-                break
+
             if line:
                 try:
                     msg = json.loads(line.decode("utf-8"))
                 except Exception as e:
                     exm = 'Cannot convert response to json - "%s"' % e
-                    if self.logger != None:
+                    if self.logger is not None:
                         self.logger.error(exm)
                     self.exception_queue.put_nowait(ExceptionEvent(self, exm))
-                    if self.logger != None:
+                    if self.logger is not None:
                         self.logger.debug('web response line "%s"' % line)
 
                 if "instrument" in msg or "tick" in msg:
-                    if self.logger != None:
+                    if self.logger is not None:
                         self.logger.debug(msg)
                     instrument = msg["tick"]["instrument"]
                     time = msg["tick"]["time"]
@@ -84,11 +85,14 @@ class StreamingForexPrices(StreamDataHandler):
                     ask = msg["tick"]["ask"]
                     tev = TickEvent(instrument, time, bid, ask)
                     self.journaler.logEvent(tev)
-                    self.events_queue.put(tev)
+                    self.events_queue.put_nowait(tev)
+
+            if not self.streaming:
+                break
 
     def stop(self):
         self.streaming = False
-        if self.session != None:
+        if self.session is not None:
             self.session.close()
             self.session = None
 

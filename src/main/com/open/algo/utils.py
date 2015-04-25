@@ -34,7 +34,7 @@ class Journaler(object):
 
     @abstractmethod
     def logEvent(self, event):
-        print('%s -> %s', (strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()), event))
+        print('%s -> %s' % (strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()), event))
         self.lastEvent = event
 
     @abstractmethod
