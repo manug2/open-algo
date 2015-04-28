@@ -18,7 +18,7 @@ class DummyBuyStrategy(object):
             self.events.put(order)
 
 
-class RandomStrategy(object):
+class BuyOrSellAt5thTickStrategy(object):
     def __init__(self, events, units, journaler):
         self.events = events
         self.units = units

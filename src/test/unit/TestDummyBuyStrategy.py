@@ -32,7 +32,7 @@ class TestRandomStrategy(unittest.TestCase):
     def setUp(self):
         self.events = queue.Queue()
         self.journaler = Journaler()
-        self.strategy = RandomStrategy(self.events, 100, self.journaler)
+        self.strategy = BuyOrSellAt5thTickStrategy(self.events, 100, self.journaler)
 
     def testSetup(self):
         pass

@@ -10,3 +10,8 @@ Feature: test fx cost predictor module against input events
          when a new tick arrives
          then Cost Predictor has last event same as arrived tick
 
+    Scenario: cost predictor does not evaluate when no rate is present
+        Given Cost Predictor is initialized
+         when a new tick arrives
+         then Cost Predictor has last spread based on last tick
+

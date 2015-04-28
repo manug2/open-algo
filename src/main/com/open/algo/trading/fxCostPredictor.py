@@ -1,29 +1,38 @@
 from com.open.algo.model import ExecutionCostPredictor
 from queue import Empty
 
+from com.open.algo.calcs.ma import sma as ma
 
 class FxSpreadCostEvaluator(ExecutionCostPredictor):
-    def __init__(self, events, heart_beat=0.5):
+    def __init__(self, events, period=14, heart_beat=0.5):
         self.TYPE = 'TICK'
         self.rates = {}
         self.last_tick = None
-        self.ticks = {}
+        self.ticks = []
         self.events = events
         self.trading = True
         self.heart_beat = heart_beat
+        self.period = period
 
     def __str__(self):
         msg = self.__class__.__name__
         return msg
 
     def eval_cost(self, order):
-        raise NotImplementedError('should implement "%s()" method' % 'eval_cost')
+        ma_values = ma(self.ticks, period = self.period, attributes=['bid', 'ask'])
+        bid_ma = ma_values['bid']
+        ask_ma = ma_values['ask']
+        return ask_ma - bid_ma
 
     def append_rate(self, tick):
         self.last_tick = tick
+        self.ticks.insert(0, tick)
 
     def get_last_tick(self):
         return self.last_tick
+
+    def get_last_spread(self):
+        return self.last_tick.ask-self.last_tick.bid
 
     def run_in_loop(self):
         while self.trading:
