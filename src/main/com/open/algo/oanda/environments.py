@@ -14,4 +14,6 @@ ENVIRONMENTS = {
 STRATEGY_CONFIG_PATH = "../../../../../../../fx-oanda/"
 COMPONENT_CONFIG_PATH = "../../../fx-oanda"
 CONFIG_PATH = "../../../../fx-oanda"
+CONFIG_PATH_FOR_UNIT_TESTS = "../../../../fx-oanda"
+CONFIG_PATH_FOR_FEATURE_STEPS = "../../../fx-oanda"
 

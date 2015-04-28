@@ -1,9 +1,9 @@
-import imp, importlib
+import importlib
 import os
 from time import gmtime, strftime
 from abc import ABCMeta, abstractmethod
 
-from com.open.algo.model import Event
+from configparser import ConfigParser
 
 
 class DynamicLoader(object):
@@ -25,6 +25,14 @@ class DynamicLoader(object):
             code = compile(file.read(), fPath, 'exec', dont_inherit=True)
             exec(code, dictionary, loadedDict)
         return loadedDict
+
+
+def read_settings(path, env):
+    config = ConfigParser()
+    cf = os.path.join(path, env + '.oanda.config')
+    config.read(cf)
+    settings = config['CONFIG']
+    return settings
 
 
 # journaler

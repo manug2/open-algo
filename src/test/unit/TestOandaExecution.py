@@ -1,13 +1,13 @@
-import os
 import sys
-
 sys.path.append('../../main')
+
 import unittest
-from configparser import ConfigParser
 import logging
 
+from com.open.algo.utils import read_settings
+from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
+
 from com.open.algo.trading.fxEvents import OrderEvent
-from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH
 from com.open.algo.oanda.execution import OandaExecutionHandler
 from com.open.algo.model import gettime
 
@@ -18,11 +18,8 @@ class TestOandaExecution(unittest.TestCase):
     def setUp(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         domain = ENVIRONMENTS['api'][TARGET_ENV]
-        config = ConfigParser()
-        config.read(os.path.join(CONFIG_PATH, TARGET_ENV + '.oanda.config'))
-        ACCESS_TOKEN = config.get('CONFIG', 'ACCESS_TOKEN')
-        ACCOUNT_ID = config.get('CONFIG', 'ACCOUNT_ID')
-        self.executor = OandaExecutionHandler(domain, ACCESS_TOKEN, ACCOUNT_ID, logEnabled=True)
+        settings = read_settings(CONFIG_PATH_FOR_UNIT_TESTS, TARGET_ENV)
+        self.executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], logEnabled=True)
         self.logger.info('Using executor : %s' % self.executor)
 
     def testConnect(self):
