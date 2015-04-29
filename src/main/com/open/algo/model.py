@@ -5,7 +5,7 @@ import datetime
 
 def gettime(offset=None):
     now = datetime.datetime.now()
-    if offset == None:
+    if offset is None:
         return now.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
     else:
         now = now + datetime.timedelta(seconds=offset)
@@ -34,7 +34,7 @@ class ExceptionEvent(Event):
         return '%s(%s) from "%s"' % (self.TYPE, self.message, self.caller)
 
 
-#Classes that can log stuff
+# Classes that can log stuff
 class Loggables:
     __metaclass__ = ABCMeta
 
@@ -55,7 +55,7 @@ class Loggables:
             self.logger = None
 
 
-#DataHandler Abstract Classes
+# DataHandler Abstract Classes
 class DataHandler(Loggables):
     def __init__(self):
         self.TYPE = None
@@ -81,7 +81,7 @@ class StreamDataHandler(DataHandler):
         raise NotImplementedError("Should implement 'get_historic_prices()' method")
 
 
-#Execution Handler Abstract Class
+# Execution Handler Abstract Class
 class ExecutionHandler(Loggables):
     @abstractmethod
     def execute_order(self, event):
@@ -100,7 +100,7 @@ class ExecutionHandler(Loggables):
         raise NotImplementedError("Should implement 'stream()' method")
 
 
-#Generic trading engine
+# Generic trading engine
 class TradeBot(Loggables):
     @abstractmethod
     def trade(self):
@@ -111,7 +111,7 @@ class TradeBot(Loggables):
         raise NotImplementedError("Should implement 'obtain_connection()' method")
 
 
-#Portfolio management
+# Portfolio management
 class Portfolio(Loggables):
     @abstractmethod
     def manage(self):

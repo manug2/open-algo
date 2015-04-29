@@ -1,7 +1,4 @@
-import sys, os
-
-sys.path.append('../main/')
-
+import sys
 from com.open.algo.oanda.execution import *
 from com.open.algo.model import gettime
 from com.open.algo.trading.fxEvents import *

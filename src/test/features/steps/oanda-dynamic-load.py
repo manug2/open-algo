@@ -1,10 +1,5 @@
-import sys, time
-
-sys.path.append('../main/')
-import queue, threading, time
-
-from com.open.algo.utils import Journaler, DynamicLoader
-from com.open.algo.oanda.streaming import *
+import time
+from com.open.algo.utils import DynamicLoader
 from com.open.algo.oanda.environments import ENVIRONMENTS, COMPONENT_CONFIG_PATH
 
 from behave import *
