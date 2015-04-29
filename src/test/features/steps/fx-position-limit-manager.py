@@ -1,6 +1,5 @@
 import logging
 from behave import *
-from com.open.algo.model import RiskManager
 from com.open.algo.risk.fxPositionLimitRisk import FxPositionLimitRiskEvaluator
 
 

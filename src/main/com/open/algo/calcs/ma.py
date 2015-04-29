@@ -2,9 +2,13 @@ __author__ = 'ManuGarg'
 
 
 def sma(data, period=None, attribute=None, attributes=None):
+    if data is None:
+        raise ValueError('input data list is None')
+    if len(data) == 0:
+        raise ValueError('input data list is empty')
+
     if period is None or period > len(data):
         period = len(data)
-
 
     if attributes is not None:
         total = {}

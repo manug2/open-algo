@@ -14,18 +14,17 @@ def step_impl(context):
 @when('a new order arrives')
 def step_impl(context):
     context.response = None
-    order = OrderEvent('CHF_USD', 100, 'buy')
-    try:
-        context.response = context.cost_predictor.eval_cost(order)
-    except NotImplementedError as e:
-        context.response = e.__class__.__name__
+    context.order = OrderEvent('CHF_USD', 100, 'buy')
 
 
-@then('Cost Predictor gives assertion error')
+@then('Cost Predictor gives error')
 def step_impl(context):
     context.cost_predictor.pull_process()
-    assert context.response == 'NotImplementedError', 'was this implemented without changing behaviour test'
-
+    try:
+        context.cost_predictor.eval_cost(context.order)
+        assert False, 'there should not be any tick read received by cost evaluator hence no spreads to calculate cost'
+    except KeyError:
+        pass
 
 @when('a new tick arrives')
 def step_impl(context):
@@ -56,6 +55,19 @@ def step_impl(context):
 @then('Cost Predictor has last spread based on last tick')
 def step_impl(context):
     context.cost_predictor.pull_process()
-    assert context.cost_predictor.get_last_spread() == context.tick.ask - context.tick.bid, \
+    assert context.cost_predictor.get_last_spread(context.tick.instrument) == context.tick.ask - context.tick.bid, \
         'expecting last spread [%s] found [%s]' % \
-        (context.cost_predictor.get_last_spread(), context.tick.ask - context.tick.bid)
+        (context.cost_predictor.get_last_spread(context.tick.instrument), context.tick.ask - context.tick.bid)
+
+
+@when('a price tick arrives for {instrument} {bid}/{ask}')
+def step_impl(context, instrument, bid, ask):
+    context.events.put(TickEvent(instrument, gettime(), float(bid), float(ask)))
+
+
+@then('Cost Predictor can evaluate cost = {cost}')
+def step_impl(context, cost):
+    context.cost_predictor.pull_process()
+    order = context.orderEvent
+    evaluated = context.cost_predictor.eval_cost(order)
+    assert evaluated == float(cost), 'wrongly evaluated cost to be [%s], expected [%s]' % (evaluated, cost)
