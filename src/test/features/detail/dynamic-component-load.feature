@@ -1,4 +1,4 @@
-Feature: can load dynamic components using path of setting file
+Feature: detail - load dynamic components using path of setting file
 
 	Scenario: Load a components defition py file and check the loaded components
 		Given we have a dynamic loader module

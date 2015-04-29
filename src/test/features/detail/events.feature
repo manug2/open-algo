@@ -1,4 +1,4 @@
-Feature: there is a thing called 'event' in trading which is captured by a journaler
+Feature: detail - there is a thing called 'event' in trading which is captured by a journaler
 
 	Scenario: TickEvent can be created
 		Given we want to trade

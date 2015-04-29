@@ -1,4 +1,4 @@
-Feature: trading system a has portfolio management module
+Feature: detail - trading system a has portfolio management module
 
     Scenario: Portfolio Manager can list positions when no trade is made
         Given Portfolio Manager is initialized
