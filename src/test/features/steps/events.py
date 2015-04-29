@@ -20,7 +20,7 @@ def step_impl(context):
 
 @when('we want to create order')
 def step_impl(context):
-    context.event = OrderEvent(None, None, None, None)
+    context.event = OrderEvent('ABC', 1, 'buy')
 
 
 @then('we use TickEvent')

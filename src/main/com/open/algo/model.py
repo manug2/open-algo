@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from time import gmtime, strftime
 import datetime
 
 
@@ -12,7 +11,7 @@ def gettime(offset=None):
         return now.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
 
 
-# Forex Events Abstract Class
+# FX Events Abstract Class
 class Event:
     __metaclass__ = ABCMeta
 
@@ -20,6 +19,12 @@ class Event:
         self.TYPE = None
 
     def __str__(self):
+        return self.to_string()
+
+    def __repr__(self):
+        return self.to_string()
+
+    def to_string(self):
         return self.__class__.__name__
 
 
@@ -127,10 +132,10 @@ class Portfolio(Loggables):
     def close_all_positions(self):
         raise NotImplementedError("Should implement 'close_all_positions()' method")
 
-    def close_positions(self, instrument):
+    def close_position(self, instrument):
         raise NotImplementedError("Should implement 'close_positions()' method")
 
-    def close_position(self, position_id):
+    def close_position_id(self, position_id):
         raise NotImplementedError("Should implement 'close_position()' method")
 
     def reval_positions(self):
@@ -138,6 +143,9 @@ class Portfolio(Loggables):
 
     def append_position(self, position):
         raise NotImplementedError("Should implement 'append_position()' method")
+
+    def list_position(self, instrument):
+        raise NotImplementedError("Should implement 'list_positions()' method")
 
 
 class RiskManager(Loggables):
