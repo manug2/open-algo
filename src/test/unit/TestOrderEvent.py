@@ -58,6 +58,12 @@ class TestOrderEvents(unittest.TestCase):
         except AssertionError:
             pass
 
+    def test_should_not_allow_to_create_with_bad_units(self):
+        try:
+            OrderEvent('ABC', 'hello', 'buy')
+        except AssertionError:
+            pass
+
     def test_should_not_allow_to_create_with_negative_units(self):
         try:
             OrderEvent('ABC', -100, 'buy')

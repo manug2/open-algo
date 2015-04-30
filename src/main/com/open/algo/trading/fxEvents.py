@@ -21,11 +21,13 @@ class OrderEvent(Event):
         assert instrument is not None, 'order cannot be made with none "instrument"'
         assert len(instrument) > 0, 'order cannot be made with empty "instrument" string'
         self.instrument = instrument
-        assert units > 0, 'order cannot be made with "units" less than or equal to zero'
+        assert isinstance(units, int), 'order cannot be made with integral "units" only, found %s' % units
+        assert units > 0, 'order cannot be made with "units" less than or equal to zero, found %s' % units
         self.units = units
-        assert order_type == 'market' or order_type == 'limit', 'side can be only "market" or "limit"'
+        assert order_type == 'market' or order_type == 'limit', \
+            'side can be only "market" or "limit", found %s' % order_type
         self.order_type = order_type
-        assert side == 'buy' or side == 'sell', 'side can be only "buy" or "sell"'
+        assert side == 'buy' or side == 'sell', 'side can be only "buy" or "sell", found %s' % side
         self.side = side
 
         self.price = price

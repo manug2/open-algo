@@ -53,11 +53,6 @@ def step_impl(context):
     assert len(context.pm.list_executions()) > 0, 'executions list is empty'
 
 
-@given('a new executed order is available to {side} {units} units')
-def step_impl(context, side, units):
-    context.executed_order = ExecutedOrder(OrderEvent('CHF_USD', 100, side), 1.1, int(units))
-
-
 @then('Portfolio Manager yields executions list with number of items = {num_of_pos}')
 def step_impl(context, num_of_pos):
     assert len(context.pm.list_executions()) == int(num_of_pos), \
@@ -68,4 +63,18 @@ def step_impl(context, num_of_pos):
 def step_impl(context, units):
     assert context.pm.list_position(context.executed_order.order.instrument) == int(units), \
         'position list has [%s] items, expecting [%s] units' % (len(context.pm.list_positions()), units)
+
+
+@given('a new executed order is available to {side} {units} {instrument} units')
+def step_impl(context, side, units, instrument):
+    context.executed_order = ExecutedOrder(OrderEvent(instrument, int(units), side), 1.1, int(units))
+
+
+@then('Portfolio Manager yields positions list with {instrument} units = {units}')
+def step_impl(context, instrument, units):
+    try:
+        pos = context.pm.list_position(instrument)
+    except KeyError:
+        pos = None
+    assert pos == int(units), 'position list has [%s] units for [%s], expecting [%s] units' % (pos, instrument, units)
 
