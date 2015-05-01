@@ -8,6 +8,8 @@ from com.open.algo.utils import read_settings
 from behave import *
 import logging
 
+OANDA_TRADE_KEY = 'tradeOpened'
+OANDA_ORDER_KEY = 'orderOpened'
 
 @given('we want to {side} {units} units of {instrument}')
 def step_impl(context, side, units, instrument):
@@ -30,35 +32,63 @@ def step_impl(context):
     context.executor.stop()
 
 
-@then('we received response from Oanda')
+# @then('we received response from Oanda')
+# def step_impl(context):
+#    assert context.response is not None
+
+
+@then('Oanda booked a new trade')
 def step_impl(context):
     assert context.response is not None
-
-
-@then('response has {trade} section')
-def step_impl(context, trade):
     assert not (('code' in context.response) or ('message' in context.response)), \
         'Unexpected Oanda response, code :(%s), message : "%s"' % \
             (context.response['code'], context.response['message'])
-    assert trade in context.response
-    assert context.response[trade] is not None
+    assert OANDA_TRADE_KEY in context.response
+    assert context.response[OANDA_TRADE_KEY] is not None
 
 
-@then('response has {field} equal to {value}')
+# @then('Oanda response has {field} equal to {value}')
+# def step_impl(context, field, value):
+#     assert context.response[field] == value
+
+
+@then('Oanda trade has {field} = {value}')
 def step_impl(context, field, value):
-    assert context.response[field] == value
-
-
-@then('response section {trade} has {field} equal to {value}')
-def step_impl(context, trade, field, value):
     # assert type(context.response[trade][field]) == type(value), \
     # 'type found is [%s], expecting [%s]' % (type(context.response[trade][field]), type(value))
-    assert str(context.response[trade][field]) == value, 'value found is [%s], expecting [%s]' % (context.response[trade][field], value)
+    if field == 'instrument':
+        assert str(context.response['instrument']) == value, \
+            'value found is [%s], expecting [%s]' % (context.response['instrument'], value)
+    else:
+        assert str(context.response[OANDA_TRADE_KEY][field]) == value, \
+            'value found is [%s], expecting [%s]' % (context.response[OANDA_TRADE_KEY][field], value)
 
 
 @given('we have executed the order')
 def step_impl(context):
     context.executor.execute_order(context.orderEvent)
+
+
+@then('Oanda opened a new order')
+def step_impl(context):
+    assert context.response is not None
+    assert not (('code' in context.response) or ('message' in context.response)), \
+        'Unexpected Oanda response, code :(%s), message : "%s"' % \
+            (context.response['code'], context.response['message'])
+    assert OANDA_ORDER_KEY in context.response
+    assert context.response[OANDA_ORDER_KEY] is not None
+
+
+@then('Oanda order has {field} = {value}')
+def step_impl(context, field, value):
+    # assert type(context.response[trade][field]) == type(value), \
+    # 'type found is [%s], expecting [%s]' % (type(context.response[trade][field]), type(value))
+    if field == 'instrument':
+        assert str(context.response['instrument']) == value, \
+            'value found is [%s], expecting [%s]' % (context.response['instrument'], value)
+    else:
+        assert str(context.response[OANDA_ORDER_KEY][field]) == value, \
+            'value found is [%s], expecting [%s]' % (context.response[OANDA_ORDER_KEY][field], value)
 
 
 @when('i say query my orders')
@@ -77,8 +107,9 @@ def step_impl(context, side, units, instrument, price, expiry):
         OrderEvent(instrument, int(units), side, order_type='limit', price=float(price), expiry=expiry_time)
 
 
-@then('response lists my original order')
+@then('Oanda lists my original order')
 def step_impl(context):
+    assert context.response is not None
     assert 'orders' in context.response
     found = False
     oe = context.orderEvent
