@@ -29,18 +29,18 @@ Feature: detail - trading system a has portfolio management module
 
     Scenario: Portfolio Manager can append two executed orders and yield total position
         Given Portfolio Manager is initialized
-          and a new executed order is available to buy 20 units
+          and a new executed order is available to buy 20 CHF_USD units
           and executed order is appended to Portfolio Manager
-          and a new executed order is available to buy 30 units
+          and a new executed order is available to buy 30 CHF_USD units
           and executed order is appended to Portfolio Manager
          then Portfolio Manager yields positions list with units = 50
 
 
     Scenario: Portfolio Manager can append two executed orders and yield net negative position
         Given Portfolio Manager is initialized
-          and a new executed order is available to buy 30 units
+          and a new executed order is available to buy 30 CHF_USD units
           and executed order is appended to Portfolio Manager
-          and a new executed order is available to sell 50 units
+          and a new executed order is available to sell 50 CHF_USD units
           and executed order is appended to Portfolio Manager
          then Portfolio Manager yields positions list with units = -20
 
