@@ -1,13 +1,16 @@
+import queue
+
 __author__ = 'ManuGarg'
 
 from behave import *
 
 from com.open.algo.trading.fxPortfolio import *
 from com.open.algo.trading.fxEvents import *
+from com.open.algo.trading.fxPricesCache import FxPricesCache
 
 @given('Portfolio Manager is initialized')
 def step_impl(context):
-    context.pm = FxPortfolio()
+    context.pm = FxPortfolio('USD')
 
 
 @then('Portfolio Manager yields empty position list')
@@ -77,4 +80,25 @@ def step_impl(context, instrument, units):
     except KeyError:
         pos = None
     assert pos == int(units), 'position list has [%s] units for [%s], expecting [%s] units' % (pos, instrument, units)
+
+
+@given('Portfolio Manager is initialized with base currency {base_ccy}, market rate cache')
+def step_impl(context, base_ccy):
+    context.rates_cache = FxPricesCache(0.5, context.rates_events)
+    context.pm = FxPortfolio(base_ccy, context.rates_cache)
+
+
+@given('portfolio has an executed order to {side} {units} {instrument} units at {price}')
+def step_impl(context, side, units, instrument, price):
+    executed_order = ExecutedOrder(OrderEvent(instrument, int(units), side), float(price), int(units))
+    context.pm.append_position(executed_order)
+
+
+@then('Portfolio Manager evaluates {instrument} PnL = {pnl}')
+def step_impl(context, instrument, pnl):
+    context.rates_cache.pull_process()
+    revalued = context.pm.reval_position(instrument)
+    assert revalued == float(pnl), \
+        'position list has [%s] items, expecting [%s] units' % (revalued, pnl)
+
 

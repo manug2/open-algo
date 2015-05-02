@@ -94,14 +94,14 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
 
         filtered_order = copy.copy(order)
 
-        ccy_position = 0
+        position_in_base_ccy_ = 0
         if currencies[0] in self.positions:
-            ccy_position = self.positions[currencies[0]]
+            position_in_base_ccy_ = self.positions[currencies[0]] # * fx_rates_wrt_base_ccy[0]
         max_exposure = 0
 
-        ccy_position2nd = 0
+        position_in_base_ccy_2nd = 0
         if currencies[1] in self.positions:
-            ccy_position2nd = self.positions[currencies[1]]
+            position_in_base_ccy_2nd = self.positions[currencies[1]] # * fx_rates_wrt_base_ccy[1]
         max_exposure2nd = 0
 
         if order.side == 'buy':
@@ -109,8 +109,8 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
             if currencies[0] in self.ccy_limits:
                 limit = self.ccy_limits[currencies[0]]
                 assert limit >= 0, '[%s] cannot be -ve for [%s]' % ("ccy limit", currencies[0])
-            if ccy_position < limit:
-                max_exposure = limit - ccy_position
+            if position_in_base_ccy_ < limit:
+                max_exposure = limit - position_in_base_ccy_
             max_units = round(max_exposure / fx_rates_wrt_base_ccy[0], 0)
             if max_units < filtered_order.units:
                 filtered_order.units = max_units
@@ -120,8 +120,8 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
             if currencies[1] in self.ccy_limits_short:
                 limit = self.ccy_limits_short[currencies[1]]
                 assert limit <= 0, '[%s] cannot be +ve for [%s]' % ("short ccy limit", currencies[0])
-            if ccy_position2nd > limit:
-                max_exposure2nd = ccy_position2nd - limit
+            if position_in_base_ccy_2nd > limit:
+                max_exposure2nd = position_in_base_ccy_2nd - limit
             max_units = round(max_exposure2nd / fx_rates_wrt_base_ccy[1], 0)
             if max_units < filtered_order.units:
                 filtered_order.units = max_units
@@ -131,8 +131,8 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
             if currencies[0] in self.ccy_limits_short:
                 limit = self.ccy_limits_short[currencies[0]]
                 assert limit <= 0, '[%s] cannot be +ve for [%s]' % ("short position limit", order.instrument)
-            if ccy_position > limit:
-                max_exposure = ccy_position - limit
+            if position_in_base_ccy_ > limit:
+                max_exposure = position_in_base_ccy_ - limit
             max_units = round(max_exposure / fx_rates_wrt_base_ccy[0], 0)
             if max_units < order.units:
                 filtered_order.units = max_units
@@ -142,8 +142,8 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
             if currencies[1] in self.ccy_limits:
                 limit = self.ccy_limits[currencies[1]]
                 assert limit >= 0, '[%s] cannot be -ve for [%s]' % ("ccy limit", currencies[1])
-            if ccy_position2nd < limit:
-                max_exposure2nd = limit - ccy_position2nd
+            if position_in_base_ccy_2nd < limit:
+                max_exposure2nd = limit - position_in_base_ccy_2nd
             max_units = round(max_exposure2nd / fx_rates_wrt_base_ccy[1], 0)
             if max_units < filtered_order.units:
                 filtered_order.units = max_units

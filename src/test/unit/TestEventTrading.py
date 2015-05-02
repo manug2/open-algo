@@ -1,13 +1,9 @@
 import unittest
-import sys
-
-sys.path.append('../../main')
 
 from com.open.algo.trading.eventTrading import ListenAndTradeBot
 from com.open.algo.trading.fxEvents import *
 from com.open.algo.utils import Journaler
 from com.open.algo.dummy import *
-import threading, time
 import queue
 from datetime import datetime
 

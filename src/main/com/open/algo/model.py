@@ -138,6 +138,9 @@ class Portfolio(Loggables):
     def close_position_id(self, position_id):
         raise NotImplementedError("Should implement 'close_position()' method")
 
+    def reval_position(self, instrument):
+        raise NotImplementedError("Should implement 'reval_position()' method")
+
     def reval_positions(self):
         raise NotImplementedError("Should implement 'reval_positions()' method")
 
@@ -162,3 +165,15 @@ class RiskManager(Loggables):
 class ExecutionCostPredictor(Loggables):
     def eval_cost(self, order):
         raise NotImplementedError("Should implement 'eval_cost()' method")
+
+
+class MarketRateCache(Loggables):
+    def get_rate(self, instrument):
+        raise NotImplementedError("Should implement 'get_rate()' method")
+
+    def start(self):
+        raise NotImplementedError("Should implement 'start()' method")
+
+    @abstractmethod
+    def stop(self):
+        raise NotImplementedError("Should implement 'stop()' method")

@@ -1,5 +1,7 @@
 Feature: test fx cost predictor module against input events
 
+  Background: rates queue is initialized
+
     Scenario: cost predictor does not evaluate when no rate is present
         Given Cost Predictor is initialized
          when a new order arrives

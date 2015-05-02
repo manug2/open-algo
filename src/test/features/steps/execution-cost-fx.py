@@ -5,10 +5,14 @@ from com.open.algo.model import gettime
 import queue
 
 
+@given('Queue for market rates is initialized')
+def step_impl(context):
+    context.rates_events = queue.Queue()
+
+
 @given('Cost Predictor is initialized')
 def step_impl(context):
-    context.events = queue.Queue()
-    context.cost_predictor = FxSpreadCostEvaluator(context.events)
+    context.cost_predictor = FxSpreadCostEvaluator(context.rates_events)
 
 
 @when('a new order arrives')
@@ -30,7 +34,7 @@ def step_impl(context):
 def step_impl(context):
     context.response = None
     context.tick = TickEvent('CHF_USD', gettime(), 1.0, 1.0)
-    context.events.put(context.tick)
+    context.rates_events.put(context.tick)
 
 
 @then('Cost Predictor has last event same as arrived tick')
@@ -44,7 +48,6 @@ def step_impl(context):
 @given('Slippage Calculator is initialized')
 def step_impl(context):
     context.slippage_calculator = None
-    context.events = queue.Queue()
 
 
 @then('Slippage Calculator gives no output')
@@ -62,7 +65,7 @@ def step_impl(context):
 
 @when('a price tick arrives for {instrument} {bid}/{ask}')
 def step_impl(context, instrument, bid, ask):
-    context.events.put(TickEvent(instrument, gettime(), float(bid), float(ask)))
+    context.rates_events.put(TickEvent(instrument, gettime(), float(bid), float(ask)))
 
 
 @then('Cost Predictor can evaluate cost = {cost}')
