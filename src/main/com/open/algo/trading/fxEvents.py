@@ -31,7 +31,7 @@ class OrderEvent(Event):
         self.side = side
 
         if price is not None:
-            assert isinstance(price, int), 'order can be made with decimal "price" only, found %s' % price
+            assert isinstance(price, float), 'order can be made with decimal "price" only, found %s' % price
         self.price = price
         self.lowerBound = lowerBound
         self.upperBound = upperBound

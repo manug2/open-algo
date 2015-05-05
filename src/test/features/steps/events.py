@@ -4,7 +4,6 @@ sys.path.append('../main/')
 
 from com.open.algo.trading.fxEvents import *
 from com.open.algo.utils import Journaler
-
 from behave import *
 
 # events
@@ -67,5 +66,4 @@ def step_impl(context):
 def step_impl(context):
     assert context.event == context.journaler.getLastEvent()
     context.journaler.logEvent(context.event)
-
 

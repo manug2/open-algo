@@ -1,5 +1,7 @@
 Feature: trading system a has portfolio management module
 
+  Background:
+    Given rates queue is initialized
 
     Scenario: Portfolio Manager with two executed orders appended yields one position
         Given Portfolio Manager is initialized
@@ -50,16 +52,20 @@ Feature: trading system a has portfolio management module
 
 
     Scenario: Portfolio Manager can re-evaluate unrealized profit using latest market price
-        Given Portfolio Manager is initialized with base currency USD, market rate cache
+        Given market rate cache is listening to ticks
+          and Portfolio Manager is initialized with base currency USD, market rate cache
           and portfolio has an executed order to buy 100 CHF_USD units at 1.04
          when a price tick arrives for CHF_USD 1.05/1.1
+          and market rate cache stops
          then Portfolio Manager evaluates CHF_USD PnL = 1
 
 
     Scenario: Portfolio Manager can evaluate unrealized loss using latest market price
-        Given Portfolio Manager is initialized with base currency USD, market rate cache
+        Given market rate cache is listening to ticks
+          and Portfolio Manager is initialized with base currency USD, market rate cache
           and portfolio has an executed order to buy 100 CHF_USD units at 1.05
          when a price tick arrives for CHF_USD 1.04/1.1
+          and market rate cache stops
          then Portfolio Manager evaluates CHF_USD PnL = -1
 
 

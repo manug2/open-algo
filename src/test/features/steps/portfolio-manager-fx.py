@@ -84,7 +84,6 @@ def step_impl(context, instrument, units):
 
 @given('Portfolio Manager is initialized with base currency {base_ccy}, market rate cache')
 def step_impl(context, base_ccy):
-    context.rates_cache = FxPricesCache(0.5, context.rates_events)
     context.pm = FxPortfolio(base_ccy, context.rates_cache)
 
 
@@ -96,9 +95,8 @@ def step_impl(context, side, units, instrument, price):
 
 @then('Portfolio Manager evaluates {instrument} PnL = {pnl}')
 def step_impl(context, instrument, pnl):
-    context.rates_cache.pull_process()
-    revalued = context.pm.reval_position(instrument)
+    revalued = round(context.pm.reval_position(instrument), 2)
     assert revalued == float(pnl), \
-        'position list has [%s] items, expecting [%s] units' % (revalued, pnl)
+        'position for instrument [%s] is [%s], expecting [%s] units' % (instrument, revalued, pnl)
 
 

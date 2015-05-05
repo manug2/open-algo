@@ -5,16 +5,16 @@ import unittest
 from com.open.algo.trading.fxPricesCache import FxPricesCache
 from com.open.algo.trading.fxEvents import TickEvent
 from com.open.algo.model import gettime
+from com.open.algo.utils import EventLoop
 
-import queue
+from queue import Queue
+import threading, time
 
 
 class TestFxPricesCache(unittest.TestCase):
 
     def setUp(self):
-        self.events = queue.Queue()
-        self.cache = FxPricesCache(0.5, self.events)
-        self.cache.started = True
+        pass
 
     def test_prices_cache_exists(self):
         self.assertIsNotNone(FxPricesCache())
@@ -65,17 +65,27 @@ class TestFxPricesCache(unittest.TestCase):
         except KeyError:
             pass
 
-    def test_should_give_correct_rates_after_event_is_queued(self):
-        tick = TickEvent('EUR_GBP', gettime(), 0.87, 0.88)
-        self.events.put(tick)
-        self.cache.pull_process()
-        rates = self.cache.get_rate('EUR_GBP')
+    def play_event_loop(self, tick):
+        events = Queue()
+        cache = FxPricesCache()
+        looper = EventLoop(events, cache)
+
+        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread.start()
+
+        events.put(tick)
+        time.sleep(0.2)
+        looper.stop()
+        price_thread.join(timeout=0.2)
+        return cache
+
+    def test_should_give_correct_rates_after_event_is_queued_using_event_loop(self):
+        cache = self.play_event_loop(TickEvent('EUR_GBP', gettime(), 0.87, 0.88))
+        rates = cache.get_rate('EUR_GBP')
         self.assertEqual(0.87, rates['bid'])
         self.assertEqual(0.88, rates['ask'])
 
-    def test_should_give_correct_rate_tuple_after_event_is_queued(self):
-        tick = TickEvent('EUR_GBP', gettime(), 0.87, 0.88)
-        self.events.put(tick)
-        self.cache.pull_process()
-        rates = self.cache.get_rate_tuple('EUR_GBP')
+    def test_should_give_correct_rate_tuple_after_event_is_queued_using_event_loop(self):
+        cache = self.play_event_loop(TickEvent('EUR_GBP', gettime(), 0.87, 0.88))
+        rates = cache.get_rate_tuple('EUR_GBP')
         self.assertEqual((0.87, 0.88), rates)

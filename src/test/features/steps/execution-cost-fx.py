@@ -63,11 +63,6 @@ def step_impl(context):
         (context.cost_predictor.get_last_spread(context.tick.instrument), context.tick.ask - context.tick.bid)
 
 
-@when('a price tick arrives for {instrument} {bid}/{ask}')
-def step_impl(context, instrument, bid, ask):
-    context.rates_events.put(TickEvent(instrument, gettime(), float(bid), float(ask)))
-
-
 @then('Cost Predictor can evaluate cost = {cost}')
 def step_impl(context, cost):
     context.cost_predictor.pull_process()

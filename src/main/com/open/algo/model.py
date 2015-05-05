@@ -29,14 +29,18 @@ class Event:
 
 
 class ExceptionEvent(Event):
-    def __init__(self, caller, message):
+    def __init__(self, caller, message, orig_event=None):
         self.TYPE = 'EXCEPTION'
         self.caller = caller
         self.message = message
         self.time = gettime()
+        self.orig_event = orig_event
 
     def __str__(self):
-        return '%s(%s) from "%s"' % (self.TYPE, self.message, self.caller)
+        if self.orig_event is None:
+            return '%s(%s) from "%s"' % (self.TYPE, self.message, self.caller)
+        else:
+            return '%s(%s) from "%s" while processing event [%s]' % (self.TYPE, self.message, self.caller, self.orig_event)
 
 
 # Classes that can log stuff
