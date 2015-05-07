@@ -57,15 +57,32 @@ Feature: trading system a has portfolio management module
           and portfolio has an executed order to buy 100 CHF_USD units at 1.04
          when a price tick arrives for CHF_USD 1.05/1.1
           and market rate cache stops
-         then Portfolio Manager evaluates CHF_USD PnL = 1
+         then Portfolio Manager evaluates CHF_USD PnL = 6
 
 
-    Scenario: Portfolio Manager can evaluate unrealized loss using latest market price
+    Scenario: Portfolio Manager can evaluate unrealized loss using latest market price 2
         Given market rate cache is listening to ticks
           and Portfolio Manager is initialized with base currency USD, market rate cache
           and portfolio has an executed order to buy 100 CHF_USD units at 1.05
-         when a price tick arrives for CHF_USD 1.04/1.1
+         when a price tick arrives for CHF_USD 1.04/1.08
           and market rate cache stops
-         then Portfolio Manager evaluates CHF_USD PnL = -1
+         then Portfolio Manager evaluates CHF_USD PnL = 3
+
+
+    Scenario Outline: Portfolio Manager can evaluate unrealized PnL using latest market price
+        Given market rate cache is listening to ticks
+          and Portfolio Manager is initialized with base currency <base ccy>, market rate cache
+          and portfolio has an executed order to <exec side> <exec units> <instrument> units at <exec price>
+         when a price tick arrives for <instrument> <bid>/<ask>
+          and market rate cache stops
+         then Portfolio Manager evaluates <instrument> PnL = <pnl>
+        Examples: long short position, rates up and down
+            | base ccy  | exec side | exec units  | instrument  | exec price  | bid | ask | pnl | NOTES
+            | USD       | buy       | 100         | CHF_USD     | 1.04        | 1.05| 1.1 |  6  | long, bid/ask goes up, stays above
+            | USD       | buy       | 100         | CHF_USD     | 1.05        | 1.04| 1.08|  3  | long, bid goes under, ask stay above
+            | USD       | buy       | 100         | CHF_USD     | 1.05        | 1.00| 1.01| -4  | long, bid/ask go under
+            | USD       | sell      | 100         | CHF_USD     | 1.05        | 1.08| 1.09| -3  | short, bid/ask goes up, stays above
+            | USD       | sell      | 100         | CHF_USD     | 1.05        | 1.01| 1.07|  4  | short, bid goes under, ask stay above
+            | USD       | sell      | 100         | CHF_USD     | 1.05        | 1.00| 1.01|  5  | short, bid/ask go under
 
 
