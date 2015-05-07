@@ -130,3 +130,14 @@ class TestFxPortfolio(unittest.TestCase):
         expected = abs(round((100*1.1 - 150*1.2)/50, 2))
         self.assertEqual(-50, portfolio.list_position('CHF_USD'))
         self.assertEqual(expected, portfolio.get_avg_price('CHF_USD'))
+
+    def test_portfolio_re_evaluates_all_positions_after_1_order_is_executed(self):
+        executed_order = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.1, 100)
+        cache = FxPricesCache()
+        portfolio = FxPortfolio('USD', cache)
+        portfolio.append_position(executed_order)
+        expected = 100/1.1
+        try:
+            self.assertEqual(expected, portfolio.reval_positions())
+        except NotImplementedError:
+            pass

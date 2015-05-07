@@ -78,3 +78,7 @@ class FxPortfolio(Portfolio):
 
     def get_avg_price(self, instrument):
         return self.positions_avg_price[instrument]
+
+    def reval_positions(self):
+        # should use ccy exposure manager to evaluate net ccy exposure in base currency
+        raise NotImplementedError("Should implement 'reval_positions()' method to calculate net exposure in base ccy")
