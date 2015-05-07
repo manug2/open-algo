@@ -1,8 +1,8 @@
 import unittest
 
-from com.open.algo.trading.eventTrading import ListenAndTradeBot
+from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.trading.fxEvents import *
-from com.open.algo.utils import Journaler
+from com.open.algo.utils import Journaler, EventLoop
 from com.open.algo.dummy import *
 import queue
 from datetime import datetime
@@ -13,8 +13,9 @@ class TestStreamTrading(unittest.TestCase):
         self.events = queue.Queue()
         self.journaler = Journaler()
         self.strategy = DummyBuyStrategy(self.events, 100, self.journaler)
-        self.trader = ListenAndTradeBot(0.5, self.events, None, self.strategy, DummyExecutor())
-        self.trader.trading = True
+        self.algo_trader = AlgoTrader(None, self.strategy, DummyExecutor())
+        self.trader = EventLoop(self.events, self.algo_trader, 0.3, self.journaler)
+        self.trader.started = True
 
     def testOrderGeneration(self):
         tick = TickEvent("EUR_GBP", str(datetime.now()), 0.87, 0.88)
@@ -32,12 +33,13 @@ class TestStreamTradingRandom(unittest.TestCase):
         self.events = queue.Queue()
         self.journaler = Journaler()
         self.strategy = BuyOrSellAt5thTickStrategy(self.events, 100, self.journaler)
-        self.trader = ListenAndTradeBot(0.5, self.events, None, self.strategy, DummyExecutor())
-        self.trader.trading = True
+        self.algo_trader = AlgoTrader(None, self.strategy, DummyExecutor())
+        self.trader = EventLoop(self.events, self.algo_trader, 0.5, self.journaler)
+        self.trader.started = True
 
     def testOrderGeneration(self):
         for i in range(1, 7):
-            tick = TickEvent("EUR_GBP", str(datetime.now()), 0.87 + (i / 100), 0.88 + (i / 100))
+            tick = TickEvent("EUR_GBP", str(datetime.now()), round(0.87 + (i / 100), 2), 0.88 + (i / 100))
             self.events.put(tick)
 
         self.trader.pull_process()

@@ -1,9 +1,9 @@
 from behave import *
 import queue, time, threading
 from datetime import datetime
-from com.open.algo.trading.eventTrading import ListenAndTradeBot
+from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.dummy import DummyBuyStrategy, DummyExecutor
-from com.open.algo.utils import Journaler
+from com.open.algo.utils import Journaler, EventLoop
 from com.open.algo.trading.fxEvents import *
 
 
@@ -31,30 +31,31 @@ def step_impl(context):
 
 @given('we have a trading bot')
 def step_impl(context):
-    context.trader = ListenAndTradeBot(0.5, context.events, None, context.strategy, context.executor)
+    context.trader = AlgoTrader(None, context.strategy, context.executor)
+    context.trader_bot = EventLoop(context.events, context.trader, 0.5)
 
 
 @given('bot is trading in a thread')
 def step_impl(context):
-    context.trade_thread = threading.Thread(target=context.trader.trade, args=[])
+    context.trade_thread = threading.Thread(target=context.trader_bot.start, args=[])
     context.trade_thread.start()
 
 
 @when('bot trading thread is stopped')
 def step_impl(context):
-    context.trader.stop()
+    context.trader_bot.stop()
     time.sleep(0.5)
 
 
 @when('bot trading is stopped')
 def step_impl(context):
-    context.trader.pull_process()
-    context.trader.trading = False
+    context.trader_bot.pull_process()
+    context.trader_bot.started = False
 
 
 @given('bot is trading')
 def step_impl(context):
-    context.trader.trading = True
+    context.trader_bot.started = True
 
 
 @when('no event occured')

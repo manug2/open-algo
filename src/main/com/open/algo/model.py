@@ -109,17 +109,6 @@ class ExecutionHandler(Loggables):
         raise NotImplementedError("Should implement 'stream()' method")
 
 
-# Generic trading engine
-class TradeBot(Loggables):
-    @abstractmethod
-    def trade(self):
-        raise NotImplementedError("Should implement 'obtain_connection()' method")
-
-    @abstractmethod
-    def stop(self):
-        raise NotImplementedError("Should implement 'obtain_connection()' method")
-
-
 # Portfolio management
 class Portfolio(Loggables):
     @abstractmethod

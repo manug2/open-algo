@@ -22,7 +22,7 @@ class TestModel(unittest.TestCase):
         self.assertEquals(Event().TYPE, None)
 
 
-    #DATA HANDLER
+    # DATA HANDLER
     def testDataHandlerClassExists(self):
         self.assertNotEquals(DataHandler(), None)
 
@@ -36,21 +36,16 @@ class TestModel(unittest.TestCase):
         self.assertEquals(StreamDataHandler().TYPE, None)
 
 
-    #EXECUTION HANDLER
+    # EXECUTION HANDLER
     def testExecutionHandlerClassExists(self):
         self.assertNotEquals(ExecutionHandler(), None)
 
 
-    #TRADEBOT HANDLER
-    def testTradeBotClassExists(self):
-        self.assertNotEquals(TradeBot(), None)
-
-
-    #PORTFOLIO HANDLER
+    # PORTFOLIO HANDLER
     def testPortfolioClassExists(self):
         self.assertNotEquals(Portfolio(), None)
 
 
-    #RISKMANAGER HANDLER
+    # RISKMANAGER HANDLER
     def testRiskManagerClassExists(self):
         self.assertNotEquals(RiskManager(), None)
