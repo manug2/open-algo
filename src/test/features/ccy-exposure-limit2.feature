@@ -1,5 +1,8 @@
 Feature: Risk Manager is available to pre check orders based on second currency exposure
 
+  Background:
+    Given market rate cache is initialized
+
     Scenario: Currency exposure manager does not filter order
         Given we have ccy exposure manager with base currency SGD, default ccy short limit
           and we want to buy 100 units of CHF_USD

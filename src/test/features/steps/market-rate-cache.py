@@ -34,3 +34,13 @@ def step_impl(context):
 @when('a price tick arrives for {instrument} {bid}/{ask}')
 def step_impl(context, instrument, bid, ask):
     context.rates_events.put(TickEvent(instrument, gettime(), float(bid), float(ask)))
+
+
+@given('market rate cache is initialized')
+def step_impl(context):
+    context.rates_cache = FxPricesCache()
+
+
+@given('market rate for {ccy} is {bid}/{ask} wrt {base_ccy}')
+def step_impl(context, ccy, bid, ask, base_ccy):
+    context.rates_cache.set_rate(TickEvent(ccy + '_' + base_ccy, gettime(), float(bid), float(ask)))

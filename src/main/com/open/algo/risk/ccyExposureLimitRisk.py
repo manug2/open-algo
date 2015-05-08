@@ -20,13 +20,16 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
         short limits are specified in -ve numbers, with a max of 0
     """
 
-    def __init__(self, base_ccy
+    def __init__(self, base_ccy, rates_cache
                  , ccy_limit=5000, ccy_limits=None
                  , ccy_limit_short=-5000, ccy_limits_short=None
                  , port_limit=100, port_limit_short=-100, rates=None):
 
         assert base_ccy is not None, '[%s] is None for [%s]' % ("base ccy", self.__class__.__name__)
         self.base_ccy = base_ccy
+
+        assert rates_cache is not None, '[%s] is None for [%s]' % ("rates cache", self.__class__.__name__)
+        self.rates_cache = rates_cache
 
         self.positions = {}
 
@@ -37,11 +40,6 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
         self.port_limit = port_limit  # ccy exposure limit for whole portfolio
         assert port_limit_short < 0, '[%s] is -ve for [%s]' % ("portfolio short limit", self.__class__.__name__)
         self.port_limit_short = port_limit_short  # ccy exposure limit for whole portfolio
-
-        if rates is None:
-            self.rates = {}
-        else:
-            self.rates = rates
 
         if ccy_limits is None:
             self.ccy_limits = {}
@@ -69,25 +67,25 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
                 if currencies[0] == self.base_ccy:
                     fx_rates_wrt_base_ccy.append(1)
                 else:
-                    fx_rates_wrt_base_ccy.append(self.rates[currencies[0]]['ask'])
+                    fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[0]+'_'+self.base_ccy)['ask'])
                 # currAmounts.append(order.units / fx_rates_wrt_base_ccy[0])
 
                 if currencies[1] == self.base_ccy:
                     fx_rates_wrt_base_ccy.append(1)
                 else:
-                    fx_rates_wrt_base_ccy.append(self.rates[currencies[1]]['bid'])
+                    fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[1]+'_'+self.base_ccy)['bid'])
                     # currAmounts.append(order.units * -1 / fx_rates_wrt_base_ccy[1])
             else:
                 if currencies[0] == self.base_ccy:
                     fx_rates_wrt_base_ccy.append(1)
                 else:
-                    fx_rates_wrt_base_ccy.append(self.rates[currencies[0]]['bid'])
+                    fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[0]+'_'+self.base_ccy)['bid'])
                 # currAmounts.append(order.units/ fx_rates_wrt_base_ccy[0])
 
                 if currencies[1] == self.base_ccy:
                     fx_rates_wrt_base_ccy.append(1)
                 else:
-                    fx_rates_wrt_base_ccy.append(self.rates[currencies[1]]['ask'])
+                    fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[1]+'_'+self.base_ccy)['ask'])
                     # currAmounts.append(order.units * -1 / fx_rates_wrt_base_ccy[1])
         except KeyError as e:
             raise AssertionError('Could not find rate for evaluating [%s] - [%s]' % (order.instrument, str(e)))
@@ -166,17 +164,6 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
 
     def reval_positions_internal(self, instrument, bid, ask):
         raise NotImplementedError("Should implement 'reval_positions()' method")
-
-    def set_rate(self, tick):
-        assert tick is not None
-        assert tick.instrument is not None
-        assert tick.bid is not None
-        assert tick.ask is not None
-
-        if tick.instrument not in self.rates:
-            self.rates[tick.instrument] = {}
-        self.rates[tick.instrument]['bid'] = tick.bid
-        self.rates[tick.instrument]['ask'] = tick.ask
 
     def set_limit(self, instrument, ccy_limit=None, ccy_limit_short=None):
         if ccy_limit:

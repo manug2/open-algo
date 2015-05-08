@@ -1,5 +1,8 @@
 Feature: Risk Manager is available to pre check orders based on first currency exposure
 
+  Background:
+    Given market rate cache is initialized
+
     Scenario: There is a RiskManager to evaluate currency exposure
         Given we want to trade
          then we use RiskManager to evaluate currency exposure
