@@ -3,6 +3,8 @@ __author__ = 'ManuGarg'
 import unittest
 from com.open.algo.trading.fxPortfolio import *
 from com.open.algo.trading.fxEvents import *
+from com.open.algo.trading.fxPricesCache import FxPricesCache
+from com.open.algo.model import gettime
 
 
 class TestFxPortfolio(unittest.TestCase):
@@ -85,6 +87,76 @@ class TestFxPortfolio(unittest.TestCase):
         portfolio.append_position(executed_order2)
         self.assertEqual(-50, portfolio.list_position('CHF_USD'))
 
+    def test_portfolio_should_give_average_execution_price_long_short(self):
+        executed_order1 = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.1, 100)
+        cache = FxPricesCache()
+        portfolio = FxPortfolio('USD', cache)
+        portfolio.append_position(executed_order1)
+        executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 50, 'sell'), 1.2, 50)
+        portfolio.append_position(executed_order2)
+        expected = round((100*1.1 - 50*1.2)/50, 2)
+        self.assertEqual(50, portfolio.list_position('CHF_USD'))
+        self.assertEqual(expected, portfolio.get_avg_price('CHF_USD'))
 
+    def test_portfolio_should_give_average_execution_price_short_long(self):
+        executed_order1 = ExecutedOrder(OrderEvent('CHF_USD', 50, 'sell'), 1.1, 50)
+        cache = FxPricesCache()
+        portfolio = FxPortfolio('USD', cache)
+        portfolio.append_position(executed_order1)
+        executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.2, 100)
+        portfolio.append_position(executed_order2)
+        expected = round((-50*1.1 + 100*1.2)/50, 2)
+        self.assertEqual(50, portfolio.list_position('CHF_USD'))
+        self.assertEqual(expected, portfolio.get_avg_price('CHF_USD'))
+
+    def test_portfolio_should_give_average_execution_price_long_less_than_short(self):
+        executed_order1 = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.1, 100)
+        cache = FxPricesCache()
+        portfolio = FxPortfolio('USD', cache)
+        portfolio.append_position(executed_order1)
+        executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 150, 'sell'), 1.2, 150)
+        portfolio.append_position(executed_order2)
+        expected = abs(round((100*1.1 - 150*1.2)/50, 2))
+        self.assertEqual(-50, portfolio.list_position('CHF_USD'))
+        self.assertEqual(expected, portfolio.get_avg_price('CHF_USD'))
+
+    def test_portfolio_should_give_average_execution_price_short_only(self):
+        executed_order1 = ExecutedOrder(OrderEvent('CHF_USD', 100, 'sell'), 1.1, 100)
+        cache = FxPricesCache()
+        portfolio = FxPortfolio('USD', cache)
+        portfolio.append_position(executed_order1)
+        executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 100, 'sell'), 1.2, 100)
+        portfolio.append_position(executed_order2)
+        expected = abs(round((-100*1.1 - 100*1.2)/200, 2))
+        self.assertEqual(expected, portfolio.get_avg_price('CHF_USD'))
+
+    def test_portfolio_should_re_evaluate_short_position_when_new_market_rate_goes_up(self):
+        executed_order = ExecutedOrder(OrderEvent('CHF_USD', 100, 'sell'), 1.1, 100)
+        cache = FxPricesCache()
+        portfolio = FxPortfolio('USD', cache)
+        portfolio.append_position(executed_order)
+        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.2, 1.3))
+        revalued = portfolio.reval_position('CHF_USD')
+        self.assertEqual(-10, revalued)
+
+    def test_portfolio_should_re_evaluate_long_position_when_new_market_rate_goes_down(self):
+        executed_order = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.1, 100)
+        cache = FxPricesCache()
+        portfolio = FxPortfolio('USD', cache)
+        portfolio.append_position(executed_order)
+        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.051, 1.064))
+        revalued = portfolio.reval_position('CHF_USD')
+        expected = round(100 * (1.064-1.1), 2)
+        self.assertEqual(expected, revalued)
+
+    def test_portfolio_should_re_evaluate_short_position_when_new_market_rate_goes_down(self):
+        executed_order = ExecutedOrder(OrderEvent('CHF_USD', 100, 'sell'), 1.1, 100)
+        cache = FxPricesCache()
+        portfolio = FxPortfolio('USD', cache)
+        portfolio.append_position(executed_order)
+        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.051, 1.064))
+        revalued = portfolio.reval_position('CHF_USD')
+        expected = round(-100 * (1.051-1.1), 2)
+        self.assertEqual(expected, revalued)
 
 

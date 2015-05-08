@@ -100,3 +100,10 @@ def step_impl(context, instrument, pnl):
         'position for instrument [%s] is [%s], expecting [%s] units' % (instrument, revalued, pnl)
 
 
+@then('Portfolio\'s total PnL = {pnl}')
+def step_impl(context, pnl):
+    revalued = round(context.pm.reval_positions(), 2)
+    assert revalued == float(pnl), \
+        'net pnl for all positions is [%s], expecting [%s] units' % (revalued, pnl)
+
+

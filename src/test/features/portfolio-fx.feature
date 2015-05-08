@@ -51,7 +51,7 @@ Feature: trading system a has portfolio management module
          then Portfolio Manager yields positions list with CHF_USD units = 40
 
 
-    Scenario: Portfolio Manager can re-evaluate unrealized profit using latest market price
+    Scenario: Portfolio Manager can re-evaluate unrealized profit using latest market price going up
         Given market rate cache is listening to ticks
           and Portfolio Manager is initialized with base currency USD, market rate cache
           and portfolio has an executed order to buy 100 CHF_USD units at 1.04
@@ -60,7 +60,7 @@ Feature: trading system a has portfolio management module
          then Portfolio Manager evaluates CHF_USD PnL = 6
 
 
-    Scenario: Portfolio Manager can evaluate unrealized loss using latest market price 2
+    Scenario: Portfolio Manager can evaluate unrealized loss using latest market price
         Given market rate cache is listening to ticks
           and Portfolio Manager is initialized with base currency USD, market rate cache
           and portfolio has an executed order to buy 100 CHF_USD units at 1.05
@@ -85,4 +85,13 @@ Feature: trading system a has portfolio management module
             | USD       | sell      | 100         | CHF_USD     | 1.05        | 1.01| 1.07|  4  | short, bid goes under, ask stay above
             | USD       | sell      | 100         | CHF_USD     | 1.05        | 1.00| 1.01|  5  | short, bid/ask go under
 
+
+
+    Scenario: Portfolio Manager can evaluate unrealized loss for whole portfolio
+        Given market rate cache is listening to ticks
+          and Portfolio Manager is initialized with base currency USD, market rate cache
+          and portfolio has an executed order to buy 100 CHF_USD units at 1.05
+         when a price tick arrives for CHF_USD 1.04/1.08
+          and market rate cache stops
+         then Portfolio's total PnL = 3
 
