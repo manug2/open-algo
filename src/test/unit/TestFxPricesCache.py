@@ -14,7 +14,7 @@ import threading, time
 class TestFxPricesCache(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self.cache = FxPricesCache()
 
     def test_prices_cache_exists(self):
         self.assertIsNotNone(FxPricesCache())
@@ -89,3 +89,9 @@ class TestFxPricesCache(unittest.TestCase):
         cache = self.play_event_loop(TickEvent('EUR_GBP', gettime(), 0.87, 0.88))
         rates = cache.get_rate_tuple('EUR_GBP')
         self.assertEqual((0.87, 0.88), rates)
+
+    def test_give_unity_for_same_ccy(self):
+        self.assertEqual(self.cache.get_rate('CHF_CHF'), {'bid': 1.0, 'ask': 1.0})
+
+    def test_give_unity_tuple_for_same_ccy(self):
+        self.assertEqual(self.cache.get_rate_tuple('CHF_CHF'), (1.0, 1.0))

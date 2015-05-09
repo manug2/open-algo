@@ -10,6 +10,9 @@ class FxPricesCache(MarketRateCache):
         self.rates_tuples = {}
         self.started = False
 
+        self.SAME_CCY_RATE = {'bid': 1.0, 'ask': 1.0}
+        self.SAME_CCY_RATE_TUPLE = (1.0, 1.0)
+
     def set_rate(self, tick):
         assert tick is not None
         assert tick.instrument is not None
@@ -25,13 +28,27 @@ class FxPricesCache(MarketRateCache):
 
     def get_rate(self, instrument):
         assert instrument is not None
-        rates = self.rates[instrument]
-        return rates
+        try:
+            return self.rates[instrument]
+        except KeyError as ke:
+            currencies = instrument.split('_')
+            if currencies[0] == currencies[1]:
+                self.rates[instrument] = self.SAME_CCY_RATE
+                return self.SAME_CCY_RATE
+            else:
+                raise ke
 
     def get_rate_tuple(self, instrument):
         assert instrument is not None
-        rates = self.rates_tuples[instrument]
-        return rates
+        try:
+            return self.rates_tuples[instrument]
+        except KeyError as ke:
+            currencies = instrument.split('_')
+            if currencies[0] == currencies[1]:
+                self.rates[instrument] = self.SAME_CCY_RATE
+                return self.SAME_CCY_RATE_TUPLE
+            else:
+                raise ke
 
     def start(self):
         pass

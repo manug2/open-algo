@@ -38,9 +38,6 @@ class TestRiskManager(unittest.TestCase):
     def test_should_have_currency_exposure_limit(self):
         self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC', self.cache).ccy_limit)
 
-    def test_should_have_portfolio_limit(self):
-        self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC', self.cache).port_limit)
-
     def test_should_have_default_ccy_exposure_limit(self):
         rm = CcyExposureLimitRiskEvaluator('BC', self.cache)
         self.assertTrue(rm.ccy_limit > 0)
@@ -54,14 +51,6 @@ class TestRiskManager(unittest.TestCase):
             CcyExposureLimitRiskEvaluator('BC', self.cache, ccy_limit=-123)
         except AssertionError:
             pass
-
-    def test_should_have_default_portfolio_limit(self):
-        rm = CcyExposureLimitRiskEvaluator('BC', self.cache)
-        self.assertTrue(rm.port_limit > 0)
-
-    def test_should_have_preset_portfolio_limit(self):
-        rm = CcyExposureLimitRiskEvaluator('BC', self.cache, port_limit=1230)
-        self.assertEquals(rm.port_limit, 1230)
 
     def test_should_have_specific_ccy_exposure_limits(self):
         self.assertIsNotNone(CcyExposureLimitRiskEvaluator('BC', self.cache).ccy_limits)

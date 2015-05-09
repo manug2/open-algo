@@ -10,7 +10,7 @@ from com.open.algo.model import gettime
 class TestFxPortfolio(unittest.TestCase):
 
     def setUp(self):
-        pass
+        self.portfolio = FxPortfolio('USD')
 
     def test_portfolio_module_exists(self):
         FxPortfolio('USD')
@@ -158,5 +158,15 @@ class TestFxPortfolio(unittest.TestCase):
         revalued = portfolio.reval_position('CHF_USD')
         expected = round(-100 * (1.051-1.1), 2)
         self.assertEqual(expected, revalued)
+
+    def test_should_have_portfolio_limit(self):
+        self.assertIsNotNone(self.portfolio)
+
+    def test_should_have_default_portfolio_limit(self):
+        self.assertTrue(self.portfolio.port_limit > 0)
+
+    def test_should_have_preset_portfolio_limit(self):
+        portfolio = FxPortfolio('USD', port_limit=1230)
+        self.assertEquals(portfolio.port_limit, 1230)
 
 

@@ -93,5 +93,5 @@ Feature: trading system a has portfolio management module
           and portfolio has an executed order to buy 100 CHF_USD units at 1.05
          when a price tick arrives for CHF_USD 1.04/1.08
           and market rate cache stops
-         then Portfolio's total PnL = 3
+         then Portfolio's total PnL = -7.41
 
