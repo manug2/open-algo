@@ -51,34 +51,16 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
     def filter_order(self, order):
 
         currencies = order.instrument.split('_')
-        # currAmounts = []
         fx_rates_wrt_base_ccy = []
 
         try:
             if order.side == 'buy':
-                if currencies[0] == self.base_ccy:
-                    fx_rates_wrt_base_ccy.append(1)
-                else:
-                    fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[0]+'_'+self.base_ccy)['ask'])
-                # currAmounts.append(order.units / fx_rates_wrt_base_ccy[0])
-
-                if currencies[1] == self.base_ccy:
-                    fx_rates_wrt_base_ccy.append(1)
-                else:
-                    fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[1]+'_'+self.base_ccy)['bid'])
-                    # currAmounts.append(order.units * -1 / fx_rates_wrt_base_ccy[1])
+                fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[0]+'_'+self.base_ccy)['ask'])
+                fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[1]+'_'+self.base_ccy)['bid'])
             else:
-                if currencies[0] == self.base_ccy:
-                    fx_rates_wrt_base_ccy.append(1)
-                else:
-                    fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[0]+'_'+self.base_ccy)['bid'])
-                # currAmounts.append(order.units/ fx_rates_wrt_base_ccy[0])
+                fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[0]+'_'+self.base_ccy)['bid'])
+                fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[1]+'_'+self.base_ccy)['ask'])
 
-                if currencies[1] == self.base_ccy:
-                    fx_rates_wrt_base_ccy.append(1)
-                else:
-                    fx_rates_wrt_base_ccy.append(self.rates_cache.get_rate(currencies[1]+'_'+self.base_ccy)['ask'])
-                    # currAmounts.append(order.units * -1 / fx_rates_wrt_base_ccy[1])
         except KeyError as e:
             raise AssertionError('Could not find rate for evaluating [%s] - [%s]' % (order.instrument, str(e)))
 
