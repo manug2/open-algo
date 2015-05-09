@@ -12,8 +12,6 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
 
         ccy_limit  - default individual ccy exposure limit for per ccy
         ccy_limits  - specific individual position limits in terms of units
-        port_limit - ccy exposure limit for whole portfolio
-        port_limit_short - ccy exposure limit for whole portfolio
         ccy_limit_short  - default individual short position limit in terms of units
         ccy_limits_short  - specific individual short position limits in terms of units
         short limits are specified in -ve numbers, with a max of 0
@@ -22,8 +20,7 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
 
     def __init__(self, base_ccy, rates_cache
                  , ccy_limit=5000, ccy_limits=None
-                 , ccy_limit_short=-5000, ccy_limits_short=None
-                 , port_limit=100, port_limit_short=-100, rates=None):
+                 , ccy_limit_short=-5000, ccy_limits_short=None):
 
         assert base_ccy is not None, '[%s] is None for [%s]' % ("base ccy", self.__class__.__name__)
         self.base_ccy = base_ccy
@@ -35,11 +32,6 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
 
         assert ccy_limit > 0, '[%s] is [%s] for [%s]' % ("position limit", ccy_limit, self.__class__.__name__)
         self.ccy_limit = ccy_limit  # default individual position limit in terms of units
-
-        assert port_limit > 0, '[%s] is [%s] for [%s]' % ("portfolio limit", port_limit, self.__class__.__name__)
-        self.port_limit = port_limit  # ccy exposure limit for whole portfolio
-        assert port_limit_short < 0, '[%s] is -ve for [%s]' % ("portfolio short limit", self.__class__.__name__)
-        self.port_limit_short = port_limit_short  # ccy exposure limit for whole portfolio
 
         if ccy_limits is None:
             self.ccy_limits = {}
@@ -152,12 +144,12 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
     def reval_positions(self):
         raise NotImplementedError("Should implement 'reval_positions()' method")
 
-    def append_position(self, instrument, units):
-        if instrument in self.positions:
-            curr = self.positions[instrument]
+    def append_position(self, ccy, units):
+        if ccy in self.positions:
+            curr = self.positions[ccy]
         else:
             curr = 0
-        self.positions[instrument] = curr + units
+        self.positions[ccy] = curr + units
 
     def append_positions(self, positions):
         raise NotImplementedError("Should implement 'append_positions()' method")
@@ -177,4 +169,5 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
             if instrument in self.ccy_limits_short:
                 del self.ccy_limits_short[instrument]
 
-
+    def list_ccy_position_map(self):
+        return self.positions
