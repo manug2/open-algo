@@ -1,8 +1,8 @@
 import copy
-from com.open.algo.model import RiskManager
+from com.open.algo.model import CurrencyRiskManager
 
 
-class CcyExposureLimitRiskEvaluator(RiskManager):
+class CcyExposureLimitRiskEvaluator(CurrencyRiskManager):
     """CcyExposureLimitRiskEvaluator helps pre check and orders against limits
         #limits:
         #1. ccy exposure per traded ccy expressed in terms of base currency
@@ -153,3 +153,6 @@ class CcyExposureLimitRiskEvaluator(RiskManager):
 
     def list_ccy_position_map(self):
         return self.positions
+
+    def get_base_ccy(self):
+        return self.base_ccy

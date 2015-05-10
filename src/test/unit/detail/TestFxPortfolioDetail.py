@@ -169,4 +169,3 @@ class TestFxPortfolio(unittest.TestCase):
         portfolio = FxPortfolio('USD', port_limit=1230)
         self.assertEquals(portfolio.port_limit, 1230)
 
-

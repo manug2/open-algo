@@ -143,6 +143,10 @@ class Portfolio(Loggables):
     def list_position(self, instrument):
         raise NotImplementedError("Should implement 'list_positions()' method")
 
+    @abstractmethod
+    def get_base_ccy(self):
+        raise NotImplementedError("Should implement 'get_base_ccy()' method")
+
 
 class RiskManager(Loggables):
     def filter_order(self, order):
@@ -170,3 +174,11 @@ class MarketRateCache(Loggables):
     @abstractmethod
     def stop(self):
         raise NotImplementedError("Should implement 'stop()' method")
+
+
+class CurrencyRiskManager(RiskManager):
+    def get_base_ccy(self):
+        raise NotImplementedError("Should implement 'get_base_ccy()' method")
+
+
+

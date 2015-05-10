@@ -12,6 +12,7 @@ class TestFxPortfolio(unittest.TestCase):
 
     def setUp(self):
         self.portfolio = FxPortfolio('USD')
+        self.cache = FxPricesCache()
 
     def test_portfolio_yields_positions_list_with_1_item_when_appended_executed_order(self):
         executed_order = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.1, 100)
@@ -114,3 +115,9 @@ class TestFxPortfolio(unittest.TestCase):
         cache.set_rate(TickEvent('CHF_USD', gettime(), 1.21, 1.22))
         expected = round(-50/1.21 + 50, 2)
         self.assertEqual(expected, portfolio.reval_positions())
+
+    def test_should_not_allow_ccy_exposure_manager_of_different_base_ccy(self):
+        try:
+            FxPortfolio('USD', ccy_exposure_manager=CcyExposureLimitRiskEvaluator('CHF', self.cache))
+        except ValueError:
+            pass

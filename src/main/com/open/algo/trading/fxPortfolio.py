@@ -22,6 +22,9 @@ class FxPortfolio(Portfolio):
         self.base_ccy = base_ccy
         self.price_cache = prices_cache
         self.positions_avg_price = {}   # used to capture avg price of open positions per instrument
+        if ccy_exposure_manager is not None and base_ccy != ccy_exposure_manager.get_base_ccy():
+            raise ValueError('portfolio base currency [%s] does not match ccy exposure manager base currency [%s]'
+                             % (base_ccy, ccy_exposure_manager.get_base_ccy()))
         self.ccy_exposure_manager = ccy_exposure_manager
         self.decimals = decimals
 
@@ -126,3 +129,6 @@ class FxPortfolio(Portfolio):
                 value += cv
 
         return round(value, self.decimals)
+
+    def get_base_ccy(self):
+        return self.base_ccy
