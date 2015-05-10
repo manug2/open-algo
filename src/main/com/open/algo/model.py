@@ -1,14 +1,6 @@
 from abc import ABCMeta, abstractmethod
-import datetime
 
-
-def gettime(offset=None):
-    now = datetime.datetime.now()
-    if offset is None:
-        return now.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
-    else:
-        now = now + datetime.timedelta(seconds=offset)
-        return now.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
+from com.open.algo.utils import get_time
 
 
 # FX Events Abstract Class
@@ -33,7 +25,7 @@ class ExceptionEvent(Event):
         self.TYPE = 'EXCEPTION'
         self.caller = caller
         self.message = message
-        self.time = gettime()
+        self.time = get_time()
         self.orig_event = orig_event
 
     def __str__(self):

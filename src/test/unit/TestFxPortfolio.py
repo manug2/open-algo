@@ -4,7 +4,7 @@ import unittest
 from com.open.algo.trading.fxPortfolio import *
 from com.open.algo.trading.fxEvents import *
 from com.open.algo.trading.fxPricesCache import FxPricesCache
-from com.open.algo.model import gettime
+from com.open.algo.utils import get_time
 from com.open.algo.risk.ccyExposureLimitRisk import CcyExposureLimitRiskEvaluator
 
 
@@ -47,7 +47,7 @@ class TestFxPortfolio(unittest.TestCase):
         cache = FxPricesCache()
         portfolio = FxPortfolio('USD', cache)
         portfolio.append_position(executed_order)
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.2, 1.3))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.2, 1.3))
         revalued = portfolio.reval_position('CHF_USD')
         self.assertEqual(20, revalued)
 
@@ -64,7 +64,7 @@ class TestFxPortfolio(unittest.TestCase):
     def test_portfolio_re_evaluates_all_positions_after_1_order_is_executed(self):
         executed_order = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.1, 100)
         cache = FxPricesCache()
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.21, 1.22))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.21, 1.22))
         portfolio = FxPortfolio('USD', cache, CcyExposureLimitRiskEvaluator('USD', cache))
         portfolio.append_position(executed_order)
         expected = round(100/1.22 - 100, 2)
@@ -77,7 +77,7 @@ class TestFxPortfolio(unittest.TestCase):
         portfolio.append_position(executed_order1)
         executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 50, 'sell'), 1.15, 50)
         portfolio.append_position(executed_order2)
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.21, 1.22))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.21, 1.22))
         expected = round(50/1.22 - 50, 2)
         self.assertEqual(expected, portfolio.reval_positions())
 
@@ -88,8 +88,8 @@ class TestFxPortfolio(unittest.TestCase):
         portfolio.append_position(executed_order1)
         executed_order2 = ExecutedOrder(OrderEvent('EUR_USD', 100, 'buy'), 0.9, 100)
         portfolio.append_position(executed_order2)
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.21, 1.22))
-        cache.set_rate(TickEvent('EUR_USD', gettime(), 0.91, 0.92))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.21, 1.22))
+        cache.set_rate(TickEvent('EUR_USD', get_time(), 0.91, 0.92))
         expected = round(100/1.22 + 100/0.92 - 200, 2)
         self.assertEqual(expected, portfolio.reval_positions())
 
@@ -100,8 +100,8 @@ class TestFxPortfolio(unittest.TestCase):
         portfolio.append_position(executed_order1)
         executed_order2 = ExecutedOrder(OrderEvent('EUR_USD', 50, 'sell'), 0.9, 50)
         portfolio.append_position(executed_order2)
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.21, 1.22))
-        cache.set_rate(TickEvent('EUR_USD', gettime(), 0.91, 0.92))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.21, 1.22))
+        cache.set_rate(TickEvent('EUR_USD', get_time(), 0.91, 0.92))
         expected = round(100/1.22 - 50/0.91 - 50, 2)
         self.assertEqual(expected, portfolio.reval_positions())
 
@@ -112,7 +112,7 @@ class TestFxPortfolio(unittest.TestCase):
         portfolio.append_position(executed_order1)
         executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 50, 'buy'), 1.15, 50)
         portfolio.append_position(executed_order2)
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.21, 1.22))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.21, 1.22))
         expected = round(-50/1.21 + 50, 2)
         self.assertEqual(expected, portfolio.reval_positions())
 

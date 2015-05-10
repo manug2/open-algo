@@ -6,19 +6,19 @@ import unittest
 from com.open.algo.risk.ccyExposureLimitRisk import CcyExposureLimitRiskEvaluator
 from com.open.algo.trading.fxEvents import TickEvent, OrderEvent
 from com.open.algo.trading.fxPricesCache import FxPricesCache
-from com.open.algo.model import gettime
+from com.open.algo.utils import get_time
 
 
 class TestRiskManager(unittest.TestCase):
     def assign_dummy_rates(self, rm):
-        now = gettime()
+        now = get_time()
         rm.rates_cache.set_rate(TickEvent('CHF_USD', now, 1.04, 1.05))
         rm.rates_cache.set_rate(TickEvent('EUR_USD', now, 1.08, 1.09))
         rm.rates_cache.set_rate(TickEvent('SGD_USD', now, 0.74, 0.75))
         rm.rates_cache.set_rate(TickEvent('CHF_SGD', now, 1.04, 1.05))
 
     def assign_unity_rates(self, rm):
-        now = gettime()
+        now = get_time()
         rm.rates_cache.set_rate(TickEvent('CHF_USD', now, 1.0, 1.0))
         rm.rates_cache.set_rate(TickEvent('EUR_USD', now, 1.0, 1.0))
         rm.rates_cache.set_rate(TickEvent('SGD_USD', now, 1.0, 1.0))

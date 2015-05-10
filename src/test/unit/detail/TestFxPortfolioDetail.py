@@ -4,7 +4,7 @@ import unittest
 from com.open.algo.trading.fxPortfolio import *
 from com.open.algo.trading.fxEvents import *
 from com.open.algo.trading.fxPricesCache import FxPricesCache
-from com.open.algo.model import gettime
+from com.open.algo.utils import get_time
 
 
 class TestFxPortfolio(unittest.TestCase):
@@ -135,7 +135,7 @@ class TestFxPortfolio(unittest.TestCase):
         cache = FxPricesCache()
         portfolio = FxPortfolio('USD', cache)
         portfolio.append_position(executed_order)
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.2, 1.3))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.2, 1.3))
         revalued = portfolio.reval_position('CHF_USD')
         self.assertEqual(-10, revalued)
 
@@ -144,7 +144,7 @@ class TestFxPortfolio(unittest.TestCase):
         cache = FxPricesCache()
         portfolio = FxPortfolio('USD', cache)
         portfolio.append_position(executed_order)
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.051, 1.064))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.051, 1.064))
         revalued = portfolio.reval_position('CHF_USD')
         expected = round(100 * (1.064-1.1), 2)
         self.assertEqual(expected, revalued)
@@ -154,7 +154,7 @@ class TestFxPortfolio(unittest.TestCase):
         cache = FxPricesCache()
         portfolio = FxPortfolio('USD', cache)
         portfolio.append_position(executed_order)
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.051, 1.064))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.051, 1.064))
         revalued = portfolio.reval_position('CHF_USD')
         expected = round(-100 * (1.051-1.1), 2)
         self.assertEqual(expected, revalued)

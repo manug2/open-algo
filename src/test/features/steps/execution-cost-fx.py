@@ -1,7 +1,7 @@
 from behave import *
 from com.open.algo.trading.fxCostPredictor import FxSpreadCostEvaluator
 from com.open.algo.trading.fxEvents import TickEvent, OrderEvent
-from com.open.algo.model import gettime
+from com.open.algo.utils import get_time
 import queue
 
 
@@ -33,7 +33,7 @@ def step_impl(context):
 @when('a new tick arrives')
 def step_impl(context):
     context.response = None
-    context.tick = TickEvent('CHF_USD', gettime(), 1.0, 1.0)
+    context.tick = TickEvent('CHF_USD', get_time(), 1.0, 1.0)
     context.rates_events.put(context.tick)
 
 

@@ -1,7 +1,7 @@
 
 from com.open.algo.trading.fxPricesCache import FxPricesCache
-from com.open.algo.utils import EventLoop
-from com.open.algo.model import gettime
+from com.open.algo.utils import get_time
+from com.open.algo.eventLoop import EventLoop
 from com.open.algo.trading.fxEvents import TickEvent
 
 from queue import Queue
@@ -31,7 +31,7 @@ def step_impl(context):
 
 @when('a price tick arrives for {instrument} {bid}/{ask}')
 def step_impl(context, instrument, bid, ask):
-    context.rates_events.put(TickEvent(instrument, gettime(), float(bid), float(ask)))
+    context.rates_events.put(TickEvent(instrument, get_time(), float(bid), float(ask)))
 
 
 @given('market rate cache is initialized')
@@ -41,4 +41,4 @@ def step_impl(context):
 
 @given('market rate for {ccy} is {bid}/{ask} wrt {base_ccy}')
 def step_impl(context, ccy, bid, ask, base_ccy):
-    context.rates_cache.set_rate(TickEvent(ccy + '_' + base_ccy, gettime(), float(bid), float(ask)))
+    context.rates_cache.set_rate(TickEvent(ccy + '_' + base_ccy, get_time(), float(bid), float(ask)))

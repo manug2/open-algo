@@ -7,7 +7,8 @@ import unittest
 
 import threading, time
 from queue import Queue
-from com.open.algo.utils import Journaler, EventLoop, EventHandler
+from com.open.algo.utils import Journaler, EventHandler
+from com.open.algo.eventLoop import EventLoop
 
 TARGET_ENV = "practice"
 

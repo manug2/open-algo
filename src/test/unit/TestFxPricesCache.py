@@ -4,8 +4,8 @@ __author__ = 'ManuGarg'
 import unittest
 from com.open.algo.trading.fxPricesCache import FxPricesCache
 from com.open.algo.trading.fxEvents import TickEvent
-from com.open.algo.model import gettime
-from com.open.algo.utils import EventLoop
+from com.open.algo.utils import get_time
+from com.open.algo.eventLoop import EventLoop
 
 from queue import Queue
 import threading, time
@@ -21,33 +21,33 @@ class TestFxPricesCache(unittest.TestCase):
 
     def test_can_append_rate(self):
         cache = FxPricesCache()
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.1, 1.2))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.1, 1.2))
 
     def test_should_have_appended_rate(self):
         cache = FxPricesCache()
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.1, 1.2))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.1, 1.2))
         rates = cache.get_rate('CHF_USD')
         self.assertEqual(1.1, rates['bid'])
         self.assertEqual(1.2, rates['ask'])
 
     def test_should_have_appended_rate_tuple(self):
         cache = FxPricesCache()
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.1, 1.2))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.1, 1.2))
         rates = cache.get_rate_tuple('CHF_USD')
         self.assertEqual((1.1, 1.2), rates)
 
     def test_should_have_latest_of_twice_appended_rate(self):
         cache = FxPricesCache()
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.1, 1.2))
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.15, 1.25))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.1, 1.2))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.15, 1.25))
         rates = cache.get_rate('CHF_USD')
         self.assertEqual(1.15, rates['bid'])
         self.assertEqual(1.25, rates['ask'])
 
     def test_should_have_latest_of_twice_appended_rate_tuple(self):
         cache = FxPricesCache()
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.1, 1.2))
-        cache.set_rate(TickEvent('CHF_USD', gettime(), 1.15, 1.25))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.1, 1.2))
+        cache.set_rate(TickEvent('CHF_USD', get_time(), 1.15, 1.25))
         rates = cache.get_rate_tuple('CHF_USD')
         self.assertEqual((1.15, 1.25), rates)
 
@@ -80,13 +80,13 @@ class TestFxPricesCache(unittest.TestCase):
         return cache
 
     def test_should_give_correct_rates_after_event_is_queued_using_event_loop(self):
-        cache = self.play_event_loop(TickEvent('EUR_GBP', gettime(), 0.87, 0.88))
+        cache = self.play_event_loop(TickEvent('EUR_GBP', get_time(), 0.87, 0.88))
         rates = cache.get_rate('EUR_GBP')
         self.assertEqual(0.87, rates['bid'])
         self.assertEqual(0.88, rates['ask'])
 
     def test_should_give_correct_rate_tuple_after_event_is_queued_using_event_loop(self):
-        cache = self.play_event_loop(TickEvent('EUR_GBP', gettime(), 0.87, 0.88))
+        cache = self.play_event_loop(TickEvent('EUR_GBP', get_time(), 0.87, 0.88))
         rates = cache.get_rate_tuple('EUR_GBP')
         self.assertEqual((0.87, 0.88), rates)
 

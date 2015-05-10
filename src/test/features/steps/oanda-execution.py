@@ -1,9 +1,8 @@
 import sys
 from com.open.algo.oanda.execution import *
-from com.open.algo.model import gettime
 from com.open.algo.trading.fxEvents import *
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_FEATURE_STEPS
-from com.open.algo.utils import read_settings
+from com.open.algo.utils import read_settings, get_time
 
 from behave import *
 import logging
@@ -102,7 +101,7 @@ def step_impl(context):
 
 @given('we put limit order to {side} {units} units of {instrument} at price {price} expiring in {expiry} minutes')
 def step_impl(context, side, units, instrument, price, expiry):
-    expiry_time = gettime(60 * int(expiry))
+    expiry_time = get_time(60 * int(expiry))
     context.orderEvent = \
         OrderEvent(instrument, int(units), side, order_type='limit', price=float(price), expiry=expiry_time)
 
