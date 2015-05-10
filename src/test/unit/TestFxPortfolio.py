@@ -86,11 +86,11 @@ class TestFxPortfolio(unittest.TestCase):
         portfolio = FxPortfolio('USD', cache, CcyExposureLimitRiskEvaluator('USD', cache))
         executed_order1 = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.1, 100)
         portfolio.append_position(executed_order1)
-        executed_order2 = ExecutedOrder(OrderEvent('EUR_USD', 50, 'buy'), 0.9, 50)
+        executed_order2 = ExecutedOrder(OrderEvent('EUR_USD', 100, 'buy'), 0.9, 100)
         portfolio.append_position(executed_order2)
         cache.set_rate(TickEvent('CHF_USD', gettime(), 1.21, 1.22))
         cache.set_rate(TickEvent('EUR_USD', gettime(), 0.91, 0.92))
-        expected = round(100/1.22 + 50/0.92 - 150, 2)
+        expected = round(100/1.22 + 100/0.92 - 200, 2)
         self.assertEqual(expected, portfolio.reval_positions())
 
     def test_portfolio_re_evaluates_all_positions_after_2_orders_are_executed_in_diff_ccy_buy_sell(self):

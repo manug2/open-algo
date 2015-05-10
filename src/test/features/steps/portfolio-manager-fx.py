@@ -6,7 +6,8 @@ from behave import *
 
 from com.open.algo.trading.fxPortfolio import *
 from com.open.algo.trading.fxEvents import *
-from com.open.algo.trading.fxPricesCache import FxPricesCache
+from com.open.algo.risk.ccyExposureLimitRisk import CcyExposureLimitRiskEvaluator
+
 
 @given('Portfolio Manager is initialized')
 def step_impl(context):
@@ -107,3 +108,7 @@ def step_impl(context, pnl):
         'net pnl for all positions is [%s], expecting [%s] units' % (revalued, pnl)
 
 
+@given('Portfolio Manager is initialized with base currency {base_ccy}, market rate cache, ccy exposure manager')
+def step_impl(context, base_ccy):
+    context.pm = FxPortfolio(base_ccy, context.rates_cache, ccy_exposure_manager=
+                             CcyExposureLimitRiskEvaluator(base_ccy, context.rates_cache, ccy_limit=5000))

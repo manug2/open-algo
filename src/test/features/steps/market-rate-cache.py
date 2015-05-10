@@ -17,9 +17,7 @@ def step_impl(context):
 
 @given('market rate cache is listening to ticks')
 def step_impl(context):
-        context.rates_cache = FxPricesCache()
         context.looper = EventLoop(context.rates_events, context.rates_cache)
-
         context.price_thread = threading.Thread(target=context.looper.start, args=[])
         context.price_thread.start()
 
