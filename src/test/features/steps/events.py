@@ -53,17 +53,17 @@ def step_impl(context):
 
 @then('journaler can log event')
 def step_impl(context):
-    context.journaler.logEvent(context.event)
+    context.journaler.log_event(context.event)
 
 
 @when('we receive a tick')
 def step_impl(context):
     context.event = TickEvent('SGD_GBP', '', 1.0, 1.0)
-    context.journaler.logEvent(context.event)
+    context.journaler.log_event(context.event)
 
 
 @then('journaler logs show it as last event')
 def step_impl(context):
-    assert context.event == context.journaler.getLastEvent()
-    context.journaler.logEvent(context.event)
+    assert context.event == context.journaler.get_last_event()
+    context.journaler.log_event(context.event)
 

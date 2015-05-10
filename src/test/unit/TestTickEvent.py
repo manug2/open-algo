@@ -11,7 +11,7 @@ class TestTickEvents(unittest.TestCase):
         pass
 
     def testTickEventClassExists(self):
-        self.assertNotEquals(TickEvent(None, None, None, None), None)
+        self.assertIsNotNone(TickEvent(None, None, None, None), None)
 
     def testTickEventHasExpectedType(self):
         self.assertEquals(TickEvent(None, None, None, None).TYPE, "TICK")

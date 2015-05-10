@@ -19,6 +19,9 @@ class Event:
     def to_string(self):
         return self.__class__.__name__
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 
 class ExceptionEvent(Event):
     def __init__(self, caller, message, orig_event=None):

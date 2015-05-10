@@ -65,7 +65,7 @@ def step_impl(context):
 
 @then('trader generates no output')
 def step_impl(context):
-    le = context.journaler.getLastEvent()
+    le = context.journaler.get_last_event()
     assert le is None, 'journaler wrongly logged event when none was expected [%s]' % le
 
 
@@ -76,7 +76,7 @@ def step_impl(context):
 
 @then('bot generates an order')
 def step_impl(context):
-    assert context.journaler.getLastEvent() is not None, 'journaler did not log any event'
+    assert context.journaler.get_last_event() is not None, 'journaler did not log any event'
 
 
 @when('we input an invalid event')

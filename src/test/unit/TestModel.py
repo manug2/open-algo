@@ -16,7 +16,7 @@ class TestModel(unittest.TestCase):
         # EVENT
 
     def testEventClassExists(self):
-        self.assertNotEquals(Event(), None)
+        self.assertIsNotNone(Event())
 
     def testEventIsTypeNone(self):
         self.assertEquals(Event().TYPE, None)

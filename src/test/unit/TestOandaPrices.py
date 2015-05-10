@@ -38,7 +38,7 @@ class TestStreaming(unittest.TestCase):
         time.sleep(2.5)
         self.prices.stop()
         price_thread.join(timeout=2)
-        out_event = self.journaler.getLastEvent()
+        out_event = self.journaler.get_last_event()
         self.assertIsNotNone(out_event)
 
 

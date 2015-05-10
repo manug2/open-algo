@@ -29,7 +29,7 @@ def step_impl(context):
 
 @then('RiskManager returns filtered order')
 def step_impl(context):
-    assert context.filteredOrder != None, 'there is no filtered order'
+    assert context.filteredOrder is not None, 'there is no filtered order'
 
 
 @then('filtered order has {field}={value} and {field1}={value1}')

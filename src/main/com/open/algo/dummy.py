@@ -14,7 +14,7 @@ class DummyBuyStrategy(object):
     def calculate_signals(self, event):
         if event.TYPE == 'TICK':
             order = OrderEvent(event.instrument, self.units, 'buy')
-            self.journaler.logEvent(order)
+            self.journaler.log_event(order)
             self.events.put(order)
 
 
@@ -32,7 +32,7 @@ class BuyOrSellAt5thTickStrategy(object):
                 side = random.choice(["buy", "sell"])
                 order = OrderEvent(
                     event.instrument, self.units, side)
-                self.journaler.logEvent(order)
+                self.journaler.log_event(order)
                 self.events.put(order)
 
 

@@ -73,7 +73,7 @@ class TestRiskManager(unittest.TestCase):
 
     def test_should_filter_order(self):
         filtered = self.rm.filter_order(OrderEvent('CHF_USD', 1000, 'buy'))
-        self.assertNotEqual(None, filtered, 'Could not filter trade')
+        self.assertIsNotNone(filtered, 'Could not filter trade')
 
     def test_filtered_order_should_have_expected_instrument(self):
         filtered = self.rm.filter_order(OrderEvent('CHF_USD', 100, 'buy'))

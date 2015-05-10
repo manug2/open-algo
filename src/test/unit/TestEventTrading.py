@@ -22,7 +22,7 @@ class TestStreamTrading(unittest.TestCase):
         self.events.put(tick)
         self.trader.pull_process()
 
-        outEvent = self.journaler.getLastEvent()
+        outEvent = self.journaler.get_last_event()
         self.assertEquals(tick.instrument, outEvent.instrument)
         self.assertEquals(outEvent.TYPE, 'ORDER')
         self.assertEquals(self.strategy.units, outEvent.units)
@@ -44,7 +44,7 @@ class TestStreamTradingRandom(unittest.TestCase):
 
         self.trader.pull_process()
 
-        outEvent = self.journaler.getLastEvent()
+        outEvent = self.journaler.get_last_event()
         self.assertEquals(tick.instrument, outEvent.instrument)
         self.assertEquals(outEvent.TYPE, 'ORDER')
         self.assertEquals(self.strategy.units, outEvent.units)

@@ -96,7 +96,7 @@ def step_impl(context):
 
 @then('last tick was logged by the journaler as last event')
 def step_impl(context):
-    assert context.lastEvent == context.journaler.getLastEvent()
+    assert context.lastEvent == parse_tick_event(context.journaler.get_last_event())
 
 
 @given('using {field}={value}, {field1}={value1} and {field2}={value2}')
