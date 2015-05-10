@@ -2,8 +2,7 @@ import unittest
 
 from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.trading.fxEvents import *
-from com.open.algo.utils import Journaler
-from com.open.algo.eventLoop import EventLoop
+from com.open.algo.eventLoop import EventLoop, Journaler
 from com.open.algo.dummy import *
 import queue
 from datetime import datetime

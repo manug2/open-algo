@@ -1,11 +1,9 @@
 import datetime
 import importlib
 import os
-from time import gmtime, strftime
 from abc import ABCMeta, abstractmethod
 
 from configparser import ConfigParser
-from logging import DEBUG
 
 
 class DynamicLoader(object):
@@ -35,25 +33,6 @@ def read_settings(path, env):
     config.read(cf)
     settings = config['CONFIG']
     return settings
-
-
-# journaler
-class Journaler(object):
-    def __init__(self):
-        self.lastEvent = None
-
-    @abstractmethod
-    def logEvent(self, event):
-        print('%s -> %s' % (strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()), event))
-        self.lastEvent = event
-
-    @abstractmethod
-    def getLastEvent(self):
-        return self.lastEvent
-
-    @abstractmethod
-    def log_message(self, message, level=DEBUG):
-        print(message)
 
 
 class EventHandler(object):

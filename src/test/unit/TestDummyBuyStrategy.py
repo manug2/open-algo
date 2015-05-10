@@ -4,10 +4,10 @@ sys.path.append('../../main')
 import unittest
 import queue
 
-from com.open.algo.utils import *
+from com.open.algo.utils import get_time
 from com.open.algo.dummy import *
 from com.open.algo.trading.fxEvents import *
-
+from com.open.algo.eventLoop import Journaler
 
 class TestDummyBuyStrategy(unittest.TestCase):
     def setUp(self):

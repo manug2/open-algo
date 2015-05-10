@@ -1,5 +1,8 @@
+from abc import abstractmethod
+from logging import DEBUG
 from queue import Empty
 import sys
+from time import strftime, gmtime
 from com.open.algo.model import ExceptionEvent
 
 __author__ = 'ManuGarg'
@@ -74,3 +77,20 @@ class EventLoop(object):
     def __str__(self):
         return '%s[%s]' % (self.__class__.__name__, self.handler)
 
+
+class Journaler(object):
+    def __init__(self):
+        self.lastEvent = None
+
+    @abstractmethod
+    def logEvent(self, event):
+        print('%s -> %s' % (strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()), event))
+        self.lastEvent = event
+
+    @abstractmethod
+    def getLastEvent(self):
+        return self.lastEvent
+
+    @abstractmethod
+    def log_message(self, message, level=DEBUG):
+        print(message)

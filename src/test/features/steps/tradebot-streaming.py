@@ -3,8 +3,7 @@ import queue, time, threading
 from datetime import datetime
 from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.dummy import DummyBuyStrategy, DummyExecutor
-from com.open.algo.utils import Journaler
-from com.open.algo.eventLoop import EventLoop
+from com.open.algo.eventLoop import EventLoop, Journaler
 from com.open.algo.trading.fxEvents import *
 
 

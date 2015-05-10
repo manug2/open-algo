@@ -3,7 +3,7 @@ import sys
 sys.path.append('../main/')
 import queue, threading, time
 
-from com.open.algo.utils import Journaler
+from com.open.algo.eventLoop import Journaler
 from com.open.algo.oanda.streaming import *
 from com.open.algo.oanda.environments import ENVIRONMENTS
 
