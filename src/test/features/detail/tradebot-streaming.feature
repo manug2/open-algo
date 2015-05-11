@@ -16,5 +16,5 @@ Feature: detail - test algo trader using simulated events against expected outpu
 	  and we have a trading bot
 	  and bot is trading
          when we input an invalid event
-          and bot trading is stopped
+          and trading bot tries to process
          then trader generates no output

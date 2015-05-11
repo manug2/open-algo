@@ -13,7 +13,7 @@ JOURNAL_SEPARATOR = ' -> '
 
 
 class EventLoop(object):
-    def __init__(self, events_q, handler, heartbeat=0.1, journaler=None, exceptions_q=None):
+    def __init__(self, events_q, handler, heartbeat=0.1, exceptions_q=None, forward_q=None, processed_event_q=None):
         assert heartbeat > 0, 'Expecting [%s] to be > 0, found [%s]' % ('heartbeat', heartbeat)
         self.heartbeat = heartbeat
         assert events_q is not None, 'Expecting [%s] to be not None, found [%s]' % ('events queue', events_q)
@@ -21,8 +21,9 @@ class EventLoop(object):
         assert handler is not None, 'Expecting [%s] to be not None, found [%s]' % ('event handler', handler)
         self.handler = handler
         self.started = False
-        self.journaler = journaler
         self.exceptions_q = exceptions_q
+        self.forward_q = forward_q
+        self.processed_event_q = processed_event_q
 
     def start(self):
         """
@@ -47,17 +48,20 @@ class EventLoop(object):
             except Empty:
                 break
             else:
-                if self.journaler is not None:
-                    self.journaler.log_event(event)
-                if event is not None:
-                    try:
-                        self.handler.process(event)
-                    except:
+                try:
+                    processed_event = self.handler.process(event)
+                    if processed_event is not None and self.processed_event_q is not None:
+                        self.processed_event_q.put(processed_event)
+                except:
+                    if self.exceptions_q is not None:
                         err_msg = 'Unexpected error-%s' % sys.exc_info()[0]
-                        if self.exceptions_q is not None:
-                            self.exceptions_q.put(ExceptionEvent(str(self), err_msg, event))
-                        else:
-                            print(err_msg)
+                        self.exceptions_q.put(ExceptionEvent(str(self), err_msg, event))
+                    else:
+                        # self.stop()
+                        raise
+                finally:
+                    if self.forward_q is not None:
+                        self.forward_q.put(event)
         # end of while loop after collecting all events in queue
 
     def stop(self):
@@ -108,7 +112,7 @@ class FileJournaler(Journaler, EventHandler):
     def start(self):
         if self.writer is None:
             self.events = Queue()
-            self.looper = EventLoop(self.events, self, journaler=Journaler())
+            self.looper = EventLoop(self.events, self)
             loop_thread = Thread(target=self.looper.start, args=[])
             fp = self.full_path
             if fp is None:

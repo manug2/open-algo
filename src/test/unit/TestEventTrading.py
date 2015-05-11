@@ -14,7 +14,7 @@ class TestStreamTrading(unittest.TestCase):
         self.journaler = Journaler()
         self.strategy = DummyBuyStrategy(self.events, 100, self.journaler)
         self.algo_trader = AlgoTrader(None, self.strategy, DummyExecutor())
-        self.trader = EventLoop(self.events, self.algo_trader, 0.3, self.journaler)
+        self.trader = EventLoop(self.events, self.algo_trader, 0.3)
         self.trader.started = True
 
     def testOrderGeneration(self):
@@ -34,7 +34,7 @@ class TestStreamTradingRandom(unittest.TestCase):
         self.journaler = Journaler()
         self.strategy = BuyOrSellAt5thTickStrategy(self.events, 100, self.journaler)
         self.algo_trader = AlgoTrader(None, self.strategy, DummyExecutor())
-        self.trader = EventLoop(self.events, self.algo_trader, 0.5, self.journaler)
+        self.trader = EventLoop(self.events, self.algo_trader, 0.5)
         self.trader.started = True
 
     def testOrderGeneration(self):

@@ -5,6 +5,7 @@ from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.dummy import DummyBuyStrategy, DummyExecutor
 from com.open.algo.eventLoop import EventLoop, Journaler
 from com.open.algo.trading.fxEvents import *
+import sys
 
 
 @given('we have an event stream')
@@ -83,4 +84,16 @@ def step_impl(context):
 def step_impl(context):
     context.event = 'this is an invalid event'
     context.events.put(context.event)
+
+
+@when('trading bot tries to process')
+def step_impl(context):
+    try:
+        context.trader_bot.pull_process()
+    except:
+        print('Expected error-%s' % sys.exc_info()[0])
+    finally:
+        context.trader_bot.started = False
+
+
 

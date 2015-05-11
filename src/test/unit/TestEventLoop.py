@@ -13,63 +13,129 @@ import os
 class TestEventLoop(unittest.TestCase):
 
     def setUp(self):
-        self.journaler = Journaler()
         self.events = Queue()
         self.handler = EventHandler()
-        self.looper = EventLoop(self.events, self.handler, 0.3, self.journaler)
+        self.looper = EventLoop(self.events, self.handler, 0.3)
 
-    def test_journaler_should_not_get_event_when_none_is_present(self):
-        price_thread = threading.Thread(target=self.looper.start, args=[])
-        price_thread.start()
-        time.sleep(0.2)
-        self.looper.stop()
-        price_thread.join(timeout=0.2)
-        out_event = self.journaler.get_last_event()
-        self.assertIsNone(out_event)
-
-    def test_journaler_should_get_event_when_input_event(self):
+    def test_input_event_should_have_been_consumed_same_as_input_event(self):
         price_thread = threading.Thread(target=self.looper.start, args=[])
         price_thread.start()
         self.events.put('dummy event')
         time.sleep(0.2)
         self.looper.stop()
         price_thread.join(timeout=0.2)
-        out_event = self.journaler.get_last_event()
-        self.assertIsNotNone(out_event)
+        try:
+            ev = self.events.get_nowait()
+            self.fail('should have been empty, got event %s' % ev)
+        except Empty:
+            pass
 
-    def test_journaler_should_get_event_same_as_input_event(self):
+    def test_all_input_events_should_have_been_consumed_same_as_input_event(self):
         price_thread = threading.Thread(target=self.looper.start, args=[])
         price_thread.start()
-        self.events.put('dummy event')
+        self.events.put('dummy event #1')
+        self.events.put('dummy event #2')
+        self.events.put('dummy event #3')
         time.sleep(0.2)
         self.looper.stop()
         price_thread.join(timeout=0.2)
-        out_event = self.journaler.get_last_event()
-        self.assertEqual('dummy event', out_event)
+        try:
+            ev = self.events.get_nowait()
+            self.fail('should have been empty, got event %s' % ev)
+        except Empty:
+            pass
 
     def test_exception_queue_should_get_event_when_process_method_not_implemented(self):
         exceptions_q = Queue()
-        looper = EventLoop(self.events, self.handler, 0.3, self.journaler, exceptions_q)
+        looper = EventLoop(self.events, self.handler, 0.1, exceptions_q)
         price_thread = threading.Thread(target=looper.start, args=[])
         price_thread.start()
-        self.events.put('dummy event')
+        self.events.put(None)
         time.sleep(0.2)
         looper.stop()
         price_thread.join(timeout=0.2)
         out_event = exceptions_q.get_nowait()
-        self.assertEqual('dummy event', out_event.orig_event)
+        self.assertIsNone(out_event.orig_event)
 
     def test_exception_message_has_correct_caller(self):
         exceptions_q = Queue()
-        looper = EventLoop(self.events, self.handler, 0.3, self.journaler, exceptions_q)
+        looper = EventLoop(self.events, self.handler, 0.1, exceptions_q)
         price_thread = threading.Thread(target=looper.start, args=[])
         price_thread.start()
-        self.events.put('dummy event')
-        time.sleep(0.2)
+        self.events.put(None)
+        time.sleep(2*looper.heartbeat)
         looper.stop()
-        price_thread.join(timeout=0.2)
+        price_thread.join(timeout=2*looper.heartbeat)
         out_event = exceptions_q.get_nowait()
         self.assertEqual('EventLoop[EventHandler]', out_event.caller)
+
+    def test_forwarded_event_should_be_same_as_input_event(self):
+        events = Queue()
+        forward_q = Queue()
+        looper = EventLoop(events, EventHandler(), forward_q=forward_q)
+        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread.start()
+        events.put('dummy event')
+        time.sleep(2*looper.heartbeat)
+        looper.stop()
+        price_thread.join(timeout=2*looper.heartbeat)
+        out_event = forward_q.get_nowait()
+        self.assertEqual('dummy event', out_event)
+
+    def test_processed_event_should_be_same_as_input_event_when_dummy_handler(self):
+        events = Queue()
+        processed_event_q = Queue()
+        looper = EventLoop(events, EventHandler(), processed_event_q=processed_event_q)
+        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread.start()
+        ev = 'dummy event'
+        events.put(ev)
+        time.sleep(2*looper.heartbeat)
+        looper.stop()
+        price_thread.join(timeout=2*looper.heartbeat)
+        out_event = processed_event_q.get_nowait()
+        self.assertEqual(ev, out_event)
+
+    def test_forwarded_and_processed_event_should_be_same_as_input_event_when_dummy_handler(self):
+        events = Queue()
+        forward_q = Queue()
+        processed_event_q = Queue()
+        looper = EventLoop(events, EventHandler(), forward_q=forward_q, processed_event_q=processed_event_q)
+        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread.start()
+        ev = 'dummy event'
+        events.put(ev)
+        time.sleep(2*looper.heartbeat)
+        looper.stop()
+        price_thread.join(timeout=2*looper.heartbeat)
+        self.assertEqual(ev, forward_q.get_nowait())
+        self.assertEqual(ev, processed_event_q.get_nowait())
+
+    def test_exception_and_forwarded_and_processed_queues_behave_correctly_when_dummy_handler_and_bad_event(self):
+        events = Queue()
+        exceptions_q = Queue()
+        forward_q = Queue()
+        processed_event_q = Queue()
+        looper = EventLoop(events, EventHandler(), exceptions_q=exceptions_q,
+                           forward_q=forward_q, processed_event_q=processed_event_q)
+        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread.start()
+        ev = None
+        events.put(ev)
+        time.sleep(2*looper.heartbeat)
+        looper.stop()
+        price_thread.join(timeout=2*looper.heartbeat)
+
+        out_event = exceptions_q.get_nowait()
+        self.assertIsNone(out_event.orig_event)
+
+        self.assertIsNone(ev, forward_q.get_nowait())
+
+        try:
+            processed_event_q.get_nowait()
+            self.fail('got processed event when exception happened')
+        except Empty:
+            pass
 
 
 class TestFileJounaler(unittest.TestCase):
@@ -143,7 +209,6 @@ class TestFileJounaler(unittest.TestCase):
     def test_scheme_should_give_correct_name_for_specific_path_with_prefix(self):
         scheme = FileJournalerNamingScheme(path='/tmp', name='jjj', prefix='aaa', suffix='qqq', ext='.lst')
         self.assertEqual('/tmp/aaajjjqqq.lst', scheme.get_file_name())
-
 
     def test_should_allow_creation_of_journal_file_using_name_scheme(self):
         scheme = FileJournalerNamingScheme(name='journal_ut')
