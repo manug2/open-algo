@@ -58,8 +58,13 @@ class StreamingForexPrices(StreamDataHandler):
         for line in response.iter_lines(1):
             if line:
                 try:
-                    msg = json.loads(line.decode("utf-8"))
-                    self.journaler.log_event(msg)
+                    line_str = line.decode("utf-8")
+                    #if line_str.find('instrument') < 0 and line_str.find('tick') < 0:
+                    #    continue
+                    #else:
+                    #re-connect if no heartbeat for long time
+                    self.journaler.log_event(line_str)
+                    msg = json.loads(line_str)
                 except Exception as e:
                     exm = 'Cannot convert response to json - [%s], error [%s]' % (line, e)
                     try:

@@ -1,11 +1,10 @@
 __author__ = 'ManuGarg'
 
 from abc import abstractmethod
-from queue import Empty, Queue
+from queue import Empty, Queue, Full
 import sys
 from com.open.algo.model import ExceptionEvent
 from com.open.algo.utils import EventHandler, get_time
-from threading import Thread
 import json
 
 
@@ -95,14 +94,16 @@ class FileJournaler(Journaler, EventHandler):
     def __init__(self, full_path=None, name_scheme=None):
         self.lastEvent = None
         self.writer = None
-        self.looper = None
         self.events = None
         assert full_path is not None or name_scheme is not None, 'both full path and name scheme cannot be None'
         self.full_path = full_path
         self.name_scheme = name_scheme
 
     def log_event(self, event):
-        self.events.put(event, self.looper.heartbeat)
+        try:
+            self.events.put_nowait(event)
+        except Full:
+            print('WARNING: Count not journal event [%s] as queue is full' % event)
         self.lastEvent = event
 
     def process(self, event):
@@ -112,18 +113,13 @@ class FileJournaler(Journaler, EventHandler):
     def start(self):
         if self.writer is None:
             self.events = Queue()
-            self.looper = EventLoop(self.events, self)
-            loop_thread = Thread(target=self.looper.start, args=[])
             fp = self.full_path
             if fp is None:
                 fp = self.name_scheme.get_file_name()
             self.writer = open(fp, 'a')
-            loop_thread.start()
 
     def stop(self):
-        if self.looper.started:
-            self.looper.stop()
-        elif self.writer is not None:
+        if self.writer is not None:
             if not self.writer.closed:
                 self.writer.close()
             self.writer = None
@@ -149,10 +145,11 @@ class FileJournalerReader():
         self.reader = open(fp, 'r')
         for line in self.reader.readlines():
             msg = json.loads(line)
-            ev_str = msg['event'].strip()
-            if ev_str.find('{') == 0:
-                ev_str = json.loads(ev_str)
-            self.events.put(ev_str)
+            ev_str = msg['event']
+            try:
+                self.events.put_nowait(ev_str)
+            except Full:
+                print('WARNING: Could not put event read from file to queue as it is full. File[%s] Event[%s]' % (fp, ev_str))
             self.lastEvent = ev_str
 
 

@@ -171,7 +171,8 @@ class TestFileJounaler(unittest.TestCase):
         print('writing..')
         journaler = FileJournaler(full_path=filename)
         journaler.start()
-        journaler.log_event('this is a test event #1')
+        event = 'this is a test event #1'
+        journaler.log_event(event)
 
         time.sleep(0.2)
         journaler.stop()
@@ -181,8 +182,8 @@ class TestFileJounaler(unittest.TestCase):
         reader = FileJournalerReader(eq, full_path=filename)
         reader.read_events()
         try:
-            message = eq.get()
-            self.assertEqual('this is a test event #1', message)
+            message = eq.get_nowait()
+            self.assertEqual(event, message)
         except Empty:
             pass
 
@@ -222,3 +223,24 @@ class TestFileJounaler(unittest.TestCase):
         journaler.start()
         journaler.stop()
         self.assertTrue(os.path.exists(filename))
+
+    def test_should_allow_running_journal_in_an_event_loop(self):
+        scheme = FileJournalerNamingScheme(name='journal_ut')
+        filename = scheme.get_file_name()
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+
+        eq = Queue()
+        journaler = FileJournaler(name_scheme=scheme)
+        looper = EventLoop(eq, journaler)
+        loop_thread = Thread(target=looper.start, args=[])
+        loop_thread.start()
+        event = 'this is a dummy event for running journaler in a evnt loop'
+        journaler.log_event(event)
+        time.sleep(looper.heartbeat*2)
+        journaler.stop()
+        looper.stop()
+        loop_thread.join(looper.heartbeat*2)
+        self.assertTrue(event, journaler.get_last_event())
