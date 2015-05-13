@@ -22,5 +22,12 @@ Feature: Oanda provides streaming rates capability
 		  and using streaming connection
 		 when i say stream
 		 then we received few ticks for this instrument
-		  and last tick was logged by the journaler as last event
+		  and journaler logs input events
+
+	Scenario: Oanda sends heartbeats
+		Given we want to stream ticks from Oanda sandbox
+		  and using account_id=1234567, instrument=EUR_USD and token=abcdef0123456abcdef0123456-abcdef0123456abcdef0123456
+		  and using streaming connection
+		 when i say stream
+		 then Oanda sends heartbeats
 

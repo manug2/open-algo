@@ -2,23 +2,39 @@ import requests
 import json
 
 from com.open.algo.trading.fxEvents import TickEvent
-from com.open.algo.model import StreamDataHandler, ExceptionEvent
+from com.open.algo.model import StreamDataHandler, ExceptionEvent, Heartbeat
 from queue import Full
 
 
-def parse_tick_event(msg):
-    instrument = msg["tick"]["instrument"]
-    time = msg["tick"]["time"]
-    bid = msg["tick"]["bid"]
-    ask = msg["tick"]["ask"]
+def parse_tick(msg):
+    tick = msg["tick"]
+    instrument = tick["instrument"]
+    time = tick["time"]
+    bid = tick["bid"]
+    ask = tick["ask"]
     tev = TickEvent(instrument, time, bid, ask)
     return tev
+
+
+def parse_heartbeat(msg):
+    hb_info = msg["heartbeat"]
+    hb = Heartbeat('oanda-stream')
+    return hb
+
+
+def parse_event(msg):
+    if "tick" in msg:
+        return parse_tick(msg)
+    elif "heartbeat" in msg:
+        return parse_heartbeat(msg)
+    else:
+        raise ValueError('Unexpected message received')
 
 
 class StreamingForexPrices(StreamDataHandler):
     def __init__(
             self, domain, access_token
-            , account_id, instruments, events_queue, journaler
+            , account_id, instruments, events_queue, heartbeat_queue, journaler
             , exception_queue
     ):
         self.TYPE = "streaming/json"
@@ -27,6 +43,7 @@ class StreamingForexPrices(StreamDataHandler):
         self.account_id = account_id
         self.instruments = instruments
         self.events_queue = events_queue
+        self.heartbeat_queue = heartbeat_queue
         self.streaming = False
         self.session = None
         self.journaler = journaler
@@ -57,24 +74,27 @@ class StreamingForexPrices(StreamDataHandler):
             return
         for line in response.iter_lines(1):
             if line:
+                parsed_event = None
                 try:
                     line_str = line.decode("utf-8")
-                    #if line_str.find('instrument') < 0 and line_str.find('tick') < 0:
-                    #    continue
-                    #else:
-                    #re-connect if no heartbeat for long time
                     self.journaler.log_event(line_str)
                     msg = json.loads(line_str)
+                    parsed_event = parse_event(msg)
                 except Exception as e:
-                    exm = 'Cannot convert response to json - [%s], error [%s]' % (line, e)
+                    exm = 'Cannot parse line from streaming response - [%s], error [%s]' % (line, e)
                     try:
                         self.exception_queue.put_nowait(ExceptionEvent(self, exm))
                     except Full:
                         print(exm)
 
-                if "instrument" in msg or "tick" in msg:
-                    tev = parse_tick_event(msg)
-                    self.events_queue.put_nowait(tev)
+                if parsed_event is not None:
+                    try:
+                        if isinstance(parsed_event, TickEvent):
+                            self.events_queue.put_nowait(parsed_event)
+                        elif isinstance(parsed_event, Heartbeat):
+                            self.heartbeat_queue.put_nowait(parsed_event)
+                    except Full:
+                        print('WARNING: queue is full, could not put event [%s]' % parsed_event)
 
             if not self.streaming:
                 break

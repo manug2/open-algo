@@ -41,7 +41,7 @@ def step_impl(context):
     domain = ENVIRONMENTS[context.connection][context.env]
     context.prices = StreamingForexPrices(
         domain, context.token, context.account_id,
-        context.instrument, None, None, None
+        context.instrument, None, None, None, None
     )
     print(str(context.prices))
     context.response = context.prices.connect()
@@ -60,18 +60,21 @@ def step_impl(context, domainAlias):
 
 @when('i say stream')
 def step_impl(context):
+    context.last_tick = None
+    context.last_hb = None
     context.response = None
     context.journaler = Journaler()
     domain = ENVIRONMENTS[context.connection][context.env]
     context.events = queue.Queue()
+    context.heartbeat_events = queue.Queue()
     context.exceptions = queue.Queue()
     context.prices = StreamingForexPrices(
         domain, context.token, context.account_id,
-        context.instrument, context.events, context.journaler, context.exceptions
+        context.instrument, context.events, context.heartbeat_events, context.journaler, context.exceptions
     )
     price_thread = threading.Thread(target=context.prices.stream, args=[])
     price_thread.start()
-    time.sleep(1.5)
+    time.sleep(2.5)
     context.prices.stop()
 
 
@@ -84,19 +87,24 @@ def step_impl(context):
 
 @then('we received few ticks for this instrument')
 def step_impl(context):
-    while True:
-        try:
-            context.lastEvent = context.events.get(False)
-        except queue.Empty:
-            break
+    try:
+        while True:
+            context.last_tick = context.events.get_nowait()
+    except queue.Empty:
+        pass
 
-    assert context.lastEvent.TYPE == 'TICK'
-    assert context.lastEvent.instrument == context.instrument
+    assert context.last_tick.TYPE == 'TICK'
+    assert context.last_tick.instrument == context.instrument
 
 
-@then('last tick was logged by the journaler as last event')
+@then('journaler logs input events')
 def step_impl(context):
-    assert context.lastEvent == parse_tick_event(context.journaler.get_last_event())
+    last_event_str = context.journaler.get_last_event()
+    last_event = json.loads(last_event_str)
+    print ('last event = %s' % last_event)
+    assert last_event is not None
+    parsed = parse_event(last_event)
+    assert isinstance(parsed, TickEvent) or isinstance(parsed, Heartbeat)
 
 
 @given('using {field}={value}, {field1}={value1} and {field2}={value2}')
@@ -105,3 +113,14 @@ def step_impl(context, field, value, field1, value1, field2, value2):
     setattr(context, field1, value1)
     setattr(context, field2, value2)
 
+
+@then('Oanda sends heartbeats')
+def step_impl(context):
+    try:
+        while True:
+            context.last_hb = context.heartbeat_events.get_nowait()
+    except queue.Empty:
+        pass
+
+    assert context.last_hb.TYPE == 'HB'
+    assert context.last_hb.alias == 'oanda-stream'

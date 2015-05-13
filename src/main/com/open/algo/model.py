@@ -176,4 +176,12 @@ class CurrencyRiskManager(RiskManager):
         raise NotImplementedError("Should implement 'get_base_ccy()' method")
 
 
+class Heartbeat(Event):
+    def __init__(self, alias):
+        self.TYPE = 'HB'
+        self.alias = alias
+
+    def to_string(self):
+        return '%s[%s]' % (self.__class__.__name__, self.alias)
+
 

@@ -9,6 +9,6 @@ domain = "stream-fxpractice.oanda.com"
 
 prices = StreamingForexPrices(
     domain, token, account_id,
-    instrument, None, None
+    instrument, None, None, None
 )
 

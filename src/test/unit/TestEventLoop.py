@@ -5,7 +5,8 @@ import sys
 sys.path.append('../../main')
 import unittest
 
-import threading, time
+from threading import Thread
+import time
 from com.open.algo.eventLoop import *
 import os
 
@@ -18,7 +19,7 @@ class TestEventLoop(unittest.TestCase):
         self.looper = EventLoop(self.events, self.handler, 0.3)
 
     def test_input_event_should_have_been_consumed_same_as_input_event(self):
-        price_thread = threading.Thread(target=self.looper.start, args=[])
+        price_thread = Thread(target=self.looper.start, args=[])
         price_thread.start()
         self.events.put('dummy event')
         time.sleep(0.2)
@@ -31,7 +32,7 @@ class TestEventLoop(unittest.TestCase):
             pass
 
     def test_all_input_events_should_have_been_consumed_same_as_input_event(self):
-        price_thread = threading.Thread(target=self.looper.start, args=[])
+        price_thread = Thread(target=self.looper.start, args=[])
         price_thread.start()
         self.events.put('dummy event #1')
         self.events.put('dummy event #2')
@@ -48,7 +49,7 @@ class TestEventLoop(unittest.TestCase):
     def test_exception_queue_should_get_event_when_process_method_not_implemented(self):
         exceptions_q = Queue()
         looper = EventLoop(self.events, self.handler, 0.1, exceptions_q)
-        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread = Thread(target=looper.start, args=[])
         price_thread.start()
         self.events.put(None)
         time.sleep(0.2)
@@ -60,7 +61,7 @@ class TestEventLoop(unittest.TestCase):
     def test_exception_message_has_correct_caller(self):
         exceptions_q = Queue()
         looper = EventLoop(self.events, self.handler, 0.1, exceptions_q)
-        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread = Thread(target=looper.start, args=[])
         price_thread.start()
         self.events.put(None)
         time.sleep(2*looper.heartbeat)
@@ -73,7 +74,7 @@ class TestEventLoop(unittest.TestCase):
         events = Queue()
         forward_q = Queue()
         looper = EventLoop(events, EventHandler(), forward_q=forward_q)
-        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread = Thread(target=looper.start, args=[])
         price_thread.start()
         events.put('dummy event')
         time.sleep(2*looper.heartbeat)
@@ -86,7 +87,7 @@ class TestEventLoop(unittest.TestCase):
         events = Queue()
         processed_event_q = Queue()
         looper = EventLoop(events, EventHandler(), processed_event_q=processed_event_q)
-        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread = Thread(target=looper.start, args=[])
         price_thread.start()
         ev = 'dummy event'
         events.put(ev)
@@ -101,7 +102,7 @@ class TestEventLoop(unittest.TestCase):
         forward_q = Queue()
         processed_event_q = Queue()
         looper = EventLoop(events, EventHandler(), forward_q=forward_q, processed_event_q=processed_event_q)
-        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread = Thread(target=looper.start, args=[])
         price_thread.start()
         ev = 'dummy event'
         events.put(ev)
@@ -118,7 +119,7 @@ class TestEventLoop(unittest.TestCase):
         processed_event_q = Queue()
         looper = EventLoop(events, EventHandler(), exceptions_q=exceptions_q,
                            forward_q=forward_q, processed_event_q=processed_event_q)
-        price_thread = threading.Thread(target=looper.start, args=[])
+        price_thread = Thread(target=looper.start, args=[])
         price_thread.start()
         ev = None
         events.put(ev)

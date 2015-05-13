@@ -5,10 +5,8 @@ import sys
 sys.path.append('../../main')
 import unittest
 from com.open.algo.eventLoop import *
-import time, os
+import os
 from threading import Thread
-from com.open.algo.utils import read_settings
-from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
 import queue, threading, time
 from com.open.algo.oanda.streaming import *
 
@@ -27,7 +25,7 @@ class TestPriceJournals(unittest.TestCase):
         self.tick_str = \
             '{"tick": {"instrument": "EUR_USD", "time": "2015-05-08T20:59:45.031348Z", "bid": 1.11975, "ask": 1.12089}}'
         self.tick_json = json.loads(self.tick_str)
-        self.tick_event = parse_tick_event(self.tick_json)
+        self.tick_event = parse_tick(self.tick_json)
 
         self.write_q = Queue()
         self.journaler = FileJournaler(full_path=self.filename)
@@ -83,38 +81,8 @@ class TestPriceJournals(unittest.TestCase):
         try:
             ev_str = self.read_q.get_nowait()
             ev_json = json.loads(ev_str)
-            ev_tick = parse_tick_event(ev_json)
+            ev_tick = parse_tick(ev_json)
             self.assertEqual(self.tick_event, ev_tick)
         except Empty:
             self.fail('expecting a message from read queue')
 
-    def test_should_log_oanda_streaming_ticks_to_journal_file(self):
-        domain = ENVIRONMENTS['streaming'][TARGET_ENV]
-        settings = read_settings(CONFIG_PATH_FOR_UNIT_TESTS, TARGET_ENV)
-
-        ticks_q = Queue()
-        prices = StreamingForexPrices(
-            domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'],
-            'EUR_USD', ticks_q, self.journaler, None)
-
-        self.loop_thread.start()
-        price_thread = threading.Thread(target=prices.stream, args=[])
-        price_thread.start()
-        time.sleep(2.5)
-        prices.stop()
-        price_thread.join(timeout=2)
-        self.looper.stop()
-        self.loop_thread.join(2*self.looper.heartbeat)
-
-        out_str = self.journaler.get_last_event()
-        self.assertIsNotNone(out_str)
-        out_json = json.loads(out_str)
-        out_tick = parse_tick_event(out_json)
-
-        while True:
-            try:
-                tick = ticks_q.get_nowait()
-            except Empty:
-                pass
-        self.assertIsNotNone(tick)
-        self.assertEqual(tick, out_tick)
