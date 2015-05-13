@@ -1,12 +1,10 @@
-import sys
 
-sys.path.append('../main/')
 import queue, threading, time
 
 from com.open.algo.eventLoop import Journaler
 from com.open.algo.oanda.streaming import *
-from com.open.algo.oanda.environments import ENVIRONMENTS
-
+from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_FEATURE_STEPS
+from com.open.algo.utils import read_settings
 from behave import *
 
 
@@ -38,11 +36,8 @@ def step_impl(context, connection):
 @when('i say connect')
 def step_impl(context):
     context.response = None
-    domain = ENVIRONMENTS[context.connection][context.env]
-    context.prices = StreamingForexPrices(
-        domain, context.token, context.account_id,
-        context.instrument, None, None, None, None
-    )
+    context.prices = \
+        get_price_streamer(context, context.connection, context.env, context.token, context.account_id, 'EUR_USD')
     print(str(context.prices))
     context.response = context.prices.connect()
 
@@ -60,29 +55,21 @@ def step_impl(context, domainAlias):
 
 @when('i say stream')
 def step_impl(context):
-    context.last_tick = None
-    context.last_hb = None
-    context.response = None
-    context.journaler = Journaler()
-    domain = ENVIRONMENTS[context.connection][context.env]
-    context.events = queue.Queue()
-    context.heartbeat_events = queue.Queue()
-    context.exceptions = queue.Queue()
-    context.prices = StreamingForexPrices(
-        domain, context.token, context.account_id,
-        context.instrument, context.events, context.heartbeat_events, context.journaler, context.exceptions
-    )
+
+    context.prices = \
+        get_price_streamer(context, context.connection, context.env, context.token, context.account_id, 'EUR_USD')
+
     price_thread = threading.Thread(target=context.prices.stream, args=[])
     price_thread.start()
-    time.sleep(2.5)
+    time.sleep(3)
     context.prices.stop()
 
 
-@then('we received a tick for this instrument')
+@then('we received a tick')
 def step_impl(context):
     event = context.events.get(True, 0.5)
     assert event.TYPE == 'TICK'
-    assert event.instrument == context.instrument
+    assert event.instrument is not None
 
 
 @then('we received few ticks for this instrument')
@@ -124,3 +111,32 @@ def step_impl(context):
 
     assert context.last_hb.TYPE == 'HB'
     assert context.last_hb.alias == 'oanda-stream'
+
+
+def get_price_streamer(context, connection, env, token, account_id, instruments):
+    context.last_tick = None
+    context.last_hb = None
+    context.response = None
+    context.journaler = Journaler()
+
+    context.events = queue.Queue()
+    context.heartbeat_events = queue.Queue()
+    context.exceptions = queue.Queue()
+
+    domain = ENVIRONMENTS[connection][env]
+    pricer = StreamingForexPrices(
+        domain, token, account_id,
+        instruments, context.events, context.heartbeat_events, context.journaler, context.exceptions
+    )
+    return pricer
+
+@given('System is connected to Oanda {env} using {connection} connection for {instrument} prices')
+def step_impl(context, env, connection, instrument):
+    context.instrument = instrument
+    settings = read_settings(CONFIG_PATH_FOR_FEATURE_STEPS, env)
+    context.streamer = \
+        get_price_streamer(context, connection, env, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], 'EUR_USD')
+    price_thread = threading.Thread(target=context.streamer.stream, args=[])
+    price_thread.start()
+    time.sleep(3)
+    context.streamer.stop()

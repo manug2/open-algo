@@ -13,21 +13,15 @@ Feature: Oanda provides streaming rates capability
 		  and using account_id=1234567, instrument=EUR_USD and token=abcdef0123456abcdef0123456-abcdef0123456abcdef0123456
 		  and using streaming connection
 		 when i say stream
-		 then we received a tick for this instrument
+		 then we received a tick
 
 
 	Scenario: Sample ticks can be received from Oanda if connection is available and logged by journaler
-		Given we want to stream ticks from Oanda sandbox
-		  and using account_id=1234567, instrument=EUR_USD and token=abcdef0123456abcdef0123456-abcdef0123456abcdef0123456
-		  and using streaming connection
-		 when i say stream
+		Given System is connected to Oanda sandbox using streaming connection for EUR_USD prices
 		 then we received few ticks for this instrument
 		  and journaler logs input events
 
 	Scenario: Oanda sends heartbeats
-		Given we want to stream ticks from Oanda sandbox
-		  and using account_id=1234567, instrument=EUR_USD and token=abcdef0123456abcdef0123456-abcdef0123456abcdef0123456
-		  and using streaming connection
-		 when i say stream
+		Given System is connected to Oanda sandbox using streaming connection for EUR_USD prices
 		 then Oanda sends heartbeats
 
