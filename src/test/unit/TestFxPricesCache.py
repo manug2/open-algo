@@ -95,3 +95,6 @@ class TestFxPricesCache(unittest.TestCase):
 
     def test_give_unity_tuple_for_same_ccy(self):
         self.assertEqual(self.cache.get_rate_tuple('CHF_CHF'), (1.0, 1.0))
+
+    def test_can_warn_if_rates_are_not_current_in_live_trading_mode(self):
+        self.fail('Not implemented')

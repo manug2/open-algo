@@ -133,3 +133,18 @@ Feature: trading system a has portfolio management module
             | USD     | buy   | 100    | CHF_USD | 1.04   | 1.21 | 1.22 | buy   | 100    | EUR_USD | 0.95   | 0.91 | 0.92 | -9.34  | long long diff instr
 
 
+    @wip
+    Scenario: Portfolio can issue order to close specific position
+
+    @wip
+    Scenario: Portfolio can issue order to close all positions
+
+    @wip
+    Scenario: Portfolio can be sent message to  order to close specific position
+
+    @wip
+    Scenario: Portfolio can be sent message to  order to close all positions
+
+
+
+
