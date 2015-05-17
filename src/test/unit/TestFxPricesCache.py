@@ -1,6 +1,9 @@
 __author__ = 'ManuGarg'
 
 
+import sys
+sys.path.append('../../main')
+
 import unittest
 from com.open.algo.trading.fxPricesCache import FxPricesCache
 from com.open.algo.trading.fxEvents import TickEvent
