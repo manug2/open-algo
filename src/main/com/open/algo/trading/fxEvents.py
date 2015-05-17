@@ -14,6 +14,7 @@ class TickEvent(Event):
         msg = msg + str(self.bid) + "," + str(self.ask) + "," + self.time + ")"
         return msg
 
+
 class OrderEvent(Event):
     def __init__(self, instrument, units, side, order_type='market', price=None, lowerBound=None, upperBound=None,
                  stopLoss=None, takeProfit=None, expiry=None, trailingStop=None):
@@ -53,7 +54,7 @@ class OrderEvent(Event):
 
 class ExecutedOrder(Event):
     def __init__(self, order_event, execution_price, execution_units):
-        self.TYPE = 'EXECUTED ORDER'
+        self.TYPE = 'FILL'
         self.order = order_event
         assert isinstance(execution_price, float), \
             'executed order can be made with decimal "units" only, found %s' % execution_price

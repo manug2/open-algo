@@ -9,6 +9,7 @@ from threading import Thread
 import time
 from com.open.algo.eventLoop import *
 import os
+OUTPUT_DIR = '../output/'
 
 
 class TestEventLoop(unittest.TestCase):
@@ -144,7 +145,7 @@ class TestFileJounaler(unittest.TestCase):
         pass
 
     def test_should_allow_logging_file_journaler(self):
-        filename = 'journal_ut.txt'
+        filename = os.path.join(OUTPUT_DIR, 'journal_ut.txt')
         try:
             os.remove(filename)
         except OSError:
@@ -163,7 +164,7 @@ class TestFileJounaler(unittest.TestCase):
         print('exit')
 
     def test_should_allow_to_read_string_journals(self):
-        filename = 'journal_read_ut.txt'
+        filename = os.path.join(OUTPUT_DIR, 'journal_read_ut.txt')
         try:
             os.remove(filename)
         except OSError:
@@ -189,7 +190,7 @@ class TestFileJounaler(unittest.TestCase):
             pass
 
     def test_should_allow_creation_of_journal_file_using_full_path(self):
-        filename = 'journal_ut.txt'
+        filename = os.path.join(OUTPUT_DIR, 'journal_ut.txt')
         try:
             os.remove(filename)
         except OSError:
@@ -201,19 +202,19 @@ class TestFileJounaler(unittest.TestCase):
         self.assertTrue(os.path.exists(filename))
 
     def test_scheme_should_give_correct_name_for_default_path(self):
-        scheme = FileJournalerNamingScheme()
+        scheme = JournalNamingScheme()
         self.assertEqual('journal.txt', scheme.get_file_name())
 
     def test_scheme_should_give_correct_name_for_specific_path(self):
-        scheme = FileJournalerNamingScheme(path='/tmp')
+        scheme = JournalNamingScheme(path='/tmp')
         self.assertEqual('/tmp/journal.txt', scheme.get_file_name())
 
     def test_scheme_should_give_correct_name_for_specific_path_with_prefix(self):
-        scheme = FileJournalerNamingScheme(path='/tmp', name='jjj', prefix='aaa', suffix='qqq', ext='.lst')
+        scheme = JournalNamingScheme(path='/tmp', name='jjj', prefix='aaa', suffix='qqq', ext='.lst')
         self.assertEqual('/tmp/aaajjjqqq.lst', scheme.get_file_name())
 
     def test_should_allow_creation_of_journal_file_using_name_scheme(self):
-        scheme = FileJournalerNamingScheme(name='journal_ut')
+        scheme = JournalNamingScheme(path=OUTPUT_DIR, name='journal_ut')
         filename = scheme.get_file_name()
         try:
             os.remove(filename)
@@ -226,7 +227,7 @@ class TestFileJounaler(unittest.TestCase):
         self.assertTrue(os.path.exists(filename))
 
     def test_should_allow_running_journal_in_an_event_loop(self):
-        scheme = FileJournalerNamingScheme(name='journal_ut')
+        scheme = JournalNamingScheme(path=OUTPUT_DIR, name='journal_ut')
         filename = scheme.get_file_name()
         try:
             os.remove(filename)

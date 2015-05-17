@@ -2,17 +2,20 @@ from behave import *
 from com.open.algo.trading.fxCostPredictor import FxSpreadCostEvaluator
 from com.open.algo.trading.fxEvents import TickEvent, OrderEvent
 from com.open.algo.utils import get_time
-import queue
+from com.open.algo.eventLoop import EventLoop
+from queue import Queue
 
 
 @given('Queue for market rates is initialized')
 def step_impl(context):
-    context.rates_events = queue.Queue()
+    context.rates_events = Queue()
 
 
 @given('Cost Predictor is initialized')
 def step_impl(context):
     context.cost_predictor = FxSpreadCostEvaluator(context.rates_events)
+    context.looper = EventLoop(context.rates_events, context.cost_predictor)
+    context.looper.started = True
 
 
 @when('a new order arrives')
@@ -23,7 +26,7 @@ def step_impl(context):
 
 @then('Cost Predictor gives error')
 def step_impl(context):
-    context.cost_predictor.pull_process()
+    context.looper.pull_process()
     try:
         context.cost_predictor.eval_cost(context.order)
         assert False, 'there should not be any tick read received by cost evaluator hence no spreads to calculate cost'
@@ -39,7 +42,7 @@ def step_impl(context):
 
 @then('Cost Predictor has last event same as arrived tick')
 def step_impl(context):
-    context.cost_predictor.pull_process()
+    context.looper.pull_process()
     assert context.cost_predictor.get_last_tick() == context.tick
 
 
@@ -57,7 +60,7 @@ def step_impl(context):
 
 @then('Cost Predictor has last spread based on last tick')
 def step_impl(context):
-    context.cost_predictor.pull_process()
+    context.looper.pull_process()
     assert context.cost_predictor.get_last_spread(context.tick.instrument) == context.tick.ask - context.tick.bid, \
         'expecting last spread [%s] found [%s]' % \
         (context.cost_predictor.get_last_spread(context.tick.instrument), context.tick.ask - context.tick.bid)
@@ -65,7 +68,7 @@ def step_impl(context):
 
 @then('Cost Predictor can evaluate cost = {cost}')
 def step_impl(context, cost):
-    context.cost_predictor.pull_process()
+    context.looper.pull_process()
     order = context.orderEvent
     evaluated = context.cost_predictor.eval_cost(order)
     assert evaluated == float(cost), 'wrongly evaluated cost to be [%s], expected [%s]' % (evaluated, cost)

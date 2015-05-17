@@ -37,6 +37,7 @@ def read_settings(path, env):
     return settings
 
 
+# class that handles events run by EventLoop
 class EventHandler(object):
     __metaclass__ = ABCMeta
 

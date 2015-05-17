@@ -6,6 +6,7 @@ import sys
 from com.open.algo.model import ExceptionEvent
 from com.open.algo.utils import EventHandler, get_time
 import json
+import os
 
 
 JOURNAL_SEPARATOR = ' -> '
@@ -153,7 +154,7 @@ class FileJournalerReader():
             self.lastEvent = ev_str
 
 
-class FileJournalerNamingScheme():
+class JournalNamingScheme():
     def __init__(self, path='', name='journal', prefix='', suffix='', ext='.txt'):
         self.path = path
         self.name = name
@@ -162,8 +163,9 @@ class FileJournalerNamingScheme():
         self.ext = ext
 
     def get_file_name(self):
-        if self.path == '':
-            return '%s%s%s%s' % (self.prefix, self.name, self.suffix, self.ext)
+        file_name = '%s%s%s%s' % (self.prefix, self.name, self.suffix, self.ext)
+        if self.path == '' or self.path is None:
+            return file_name
         else:
-            return '%s%s%s%s%s%s' % (self.path, '/', self.prefix, self.name, self.suffix, self.ext)
+            return os.path.join(self.path, file_name)
 

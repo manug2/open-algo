@@ -17,6 +17,7 @@ from com.open.algo.model import Heartbeat
 from com.open.algo.eventLoop import *
 
 TARGET_ENV = "practice"
+OUTPUT_DIR = '../../output/'
 
 
 class TestStreaming(unittest.TestCase):
@@ -73,7 +74,7 @@ class TestStreaming(unittest.TestCase):
         self.assertTrue(isinstance(out_event, Heartbeat))
 
     def test_should_log_oanda_streaming_ticks_to_journal_file(self):
-        filename = 'journal_oanda_tick_ut.txt'
+        filename = os.path.join(OUTPUT_DIR, 'journal_oanda_tick_ut.txt')
         try:
             os.remove(filename)
         except OSError:

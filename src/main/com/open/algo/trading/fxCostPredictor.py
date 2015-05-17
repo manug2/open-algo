@@ -1,9 +1,11 @@
 from com.open.algo.model import ExecutionCostPredictor
-from queue import Empty
 
 from com.open.algo.calcs.ma import sma as ma
+from com.open.algo.utils import EventHandler
 
-class FxSpreadCostEvaluator(ExecutionCostPredictor):
+
+class FxSpreadCostEvaluator(ExecutionCostPredictor, EventHandler):
+
     def __init__(self, events, period=14, heart_beat=0.5, decimals=5):
         self.TYPE = 'TICK'
         self.rates = {}
@@ -36,26 +38,11 @@ class FxSpreadCostEvaluator(ExecutionCostPredictor):
     def get_last_spread(self, instrument):
         return self.spreads[instrument][0]
 
-    def run_in_loop(self):
-        while self.trading:
-            # outer while loop will trigger inner while loop after 'heart_beat'
-            self.logger.info('run_in_loop..')
-            self.pull_process()
+    def process(self, event):
+        self.append_rate(event)
 
-    def pull_process(self):
-        while self.trading:
-            # while loop to poll for events
-            try:
-                event = self.events.get(True, self.heart_beat)
-            except Empty:
-                break
-            else:
-                if event is not None:
-                    try:
-                        if event.TYPE == 'TICK':
-                            self.append_rate(event)
-                        else:
-                            print('Not designed to handle event "%s"' % event)
-                    except AttributeError as e:
-                        print('Ignoring event without attribute [%s] : %s' % (e.args, event))
-                        # end of while loop after collecting all events in queue
+    def start(self):
+        super().start()
+
+    def stop(self):
+        super().stop()

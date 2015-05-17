@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-from com.open.algo.utils import get_time
+from com.open.algo.utils import get_time, EventHandler
 
 
 # FX Events Abstract Class
@@ -38,29 +38,8 @@ class ExceptionEvent(Event):
             return '%s(%s) from "%s" while processing event [%s]' % (self.TYPE, self.message, self.caller, self.orig_event)
 
 
-# Classes that can log stuff
-class Loggables:
-    __metaclass__ = ABCMeta
-
-    def __init__(self):
-        self.logger = None
-
-    def __str__(self):
-        return self.__class__.__name__
-
-    def startLogging(self):
-        if self.logger == None:
-            import logging
-
-            self.logger = logging.getLogger(self.__class__.__name__)
-
-    def stopLogging(self):
-        if self.logger != None:
-            self.logger = None
-
-
 # DataHandler Abstract Classes
-class DataHandler(Loggables):
+class DataHandler():
     def __init__(self):
         self.TYPE = None
 
@@ -86,7 +65,7 @@ class StreamDataHandler(DataHandler):
 
 
 # Execution Handler Abstract Class
-class ExecutionHandler(Loggables):
+class ExecutionHandler():
     @abstractmethod
     def execute_order(self, event):
         raise NotImplementedError("Should implement 'execute_order()' method")
@@ -99,13 +78,9 @@ class ExecutionHandler(Loggables):
     def get_order(self, order_id):
         raise NotImplementedError("Should implement 'get_orders()' method")
 
-    @abstractmethod
-    def stop(self):
-        raise NotImplementedError("Should implement 'stream()' method")
-
 
 # Portfolio management
-class Portfolio(Loggables):
+class Portfolio():
     @abstractmethod
     def manage(self):
         raise NotImplementedError("Should implement 'manage()' method")
@@ -143,7 +118,7 @@ class Portfolio(Loggables):
         raise NotImplementedError("Should implement 'get_base_ccy()' method")
 
 
-class RiskManager(Loggables):
+class RiskManager():
     def filter_order(self, order):
         raise NotImplementedError("Should implement 'filter_order()' method")
 
@@ -154,12 +129,12 @@ class RiskManager(Loggables):
         raise NotImplementedError("Should implement 'append_position()' method")
 
 
-class ExecutionCostPredictor(Loggables):
+class ExecutionCostPredictor():
     def eval_cost(self, order):
         raise NotImplementedError("Should implement 'eval_cost()' method")
 
 
-class MarketRateCache(Loggables):
+class MarketRateCache():
     def get_rate(self, instrument):
         raise NotImplementedError("Should implement 'get_rate()' method")
 
@@ -185,3 +160,11 @@ class Heartbeat(Event):
         return '%s[%s]' % (self.__class__.__name__, self.alias)
 
 
+class Strategy(EventHandler):
+
+    @abstractmethod
+    def calculate_signals(self, event):
+        raise NotImplementedError('sub-classes should implement this')
+
+    def process(self, event):
+        self.evaluate_trading_signal(event)
