@@ -36,7 +36,7 @@ class HistoricForexPrices(DataHandler):
 
             req = requests.Request('GET', url, headers=headers, params=params)
             pre = req.prepare()
-            response = session.send(pre, stream=True, verify=False)
+            response = session.send(pre, stream=False, verify=False)
             if response.status_code != 200:
                 exm = 'Web response not OK (%d), "%s"' % (response.status_code, response.text)
                 raise ExceptionEvent(self, exm)

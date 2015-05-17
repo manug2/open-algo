@@ -5,6 +5,8 @@ from abc import ABCMeta, abstractmethod
 
 from configparser import ConfigParser
 
+OA_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.000000Z'
+
 
 class DynamicLoader(object):
     def load(self, realtivePath):
@@ -64,9 +66,25 @@ class EventHandler(object):
 def get_time(offset=None):
     now = datetime.datetime.now()
     if offset is None:
-        return now.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
+        return now.strftime(OA_TIME_FORMAT)
     else:
         now = now + datetime.timedelta(seconds=offset)
-        return now.strftime("%Y-%m-%dT%H:%M:%S.000000Z")
+        return now.strftime(OA_TIME_FORMAT)
+
+
+def get_age_seconds(old_time, new_time=None):
+    if old_time is None:
+        raise ValueError('old time cannot be None for getting age - found [%s]' % old_time)
+
+    datetime1 = datetime.datetime.strptime(old_time, OA_TIME_FORMAT)
+    if new_time is None:
+        datetime2 = datetime.datetime.now()
+    else:
+        datetime2 = datetime.datetime.strptime(new_time, OA_TIME_FORMAT)
+
+    timedelta = datetime1 - datetime2
+    return timedelta.total_seconds()
+
+
 
 

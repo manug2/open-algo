@@ -1,11 +1,11 @@
 __author__ = 'ManuGarg'
 
 from com.open.algo.model import MarketRateCache
-
+from com.open.algo.utils import get_age_seconds
 
 class FxPricesCache(MarketRateCache):
 
-    def __init__(self):
+    def __init__(self, max_tick_age=(16*60*60 + 2*60)):
         self.rates = {}
         self.rates_tuples = {}
         self.started = False
@@ -13,11 +13,19 @@ class FxPricesCache(MarketRateCache):
         self.SAME_CCY_RATE = {'bid': 1.0, 'ask': 1.0}
         self.SAME_CCY_RATE_TUPLE = (1.0, 1.0)
 
+        # self.max_tick_age -  represents oldest tick that cache will accept. default is 16 hours(EST) + few minutes
+        assert max_tick_age > 0, 'Maximum permissible age of ticks should be more than 0, found [%s]' % max_tick_age
+        self.max_tick_age = max_tick_age
+
     def set_rate(self, tick):
         assert tick is not None
         assert tick.instrument is not None
         assert tick.bid is not None
         assert tick.ask is not None
+
+        age = -1 * get_age_seconds(tick.time)
+        assert age > 0, 'Future tick is not allowed - [%s]' % tick
+        assert age < self.max_tick_age, 'Tick too old, age[%s], max allowed[%s] - [%s]' % (age, self.max_tick_age, tick)
 
         if tick.instrument not in self.rates:
             self.rates[tick.instrument] = {}
