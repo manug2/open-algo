@@ -38,8 +38,8 @@ class ExceptionEvent(Event):
             return '%s(%s) from "%s" while processing event [%s]' % (self.TYPE, self.message, self.caller, self.orig_event)
 
 
-# DataHandler Abstract Classes
-class DataHandler():
+# DataProvider Abstract Classes
+class DataProvider():
     def __init__(self):
         self.TYPE = None
 
@@ -48,7 +48,7 @@ class DataHandler():
         raise NotImplementedError("Should implement 'connect()' method")
 
 
-class StreamDataHandler(DataHandler):
+class StreamDataProvider(DataProvider):
     @abstractmethod
     def stream(self):
         raise NotImplementedError("Should implement 'stream()' method")
@@ -167,4 +167,4 @@ class Strategy(EventHandler):
         raise NotImplementedError('sub-classes should implement this')
 
     def process(self, event):
-        self.evaluate_trading_signal(event)
+        self.calculate_signals(event)

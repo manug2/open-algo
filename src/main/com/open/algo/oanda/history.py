@@ -2,10 +2,10 @@ import requests
 import json
 
 from com.open.algo.trading.fxEvents import TickEvent
-from com.open.algo.model import DataHandler, ExceptionEvent
+from com.open.algo.model import DataProvider, ExceptionEvent
 
 
-class HistoricForexPrices(DataHandler):
+class HistoricForexPrices(DataProvider):
     def __init__(
             self, domain, access_token, account_id):
         self.TYPE = "streaming/json"

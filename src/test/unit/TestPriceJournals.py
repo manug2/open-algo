@@ -11,12 +11,13 @@ import queue, threading, time
 from com.open.algo.oanda.streaming import *
 
 TARGET_ENV = "practice"
+OA_OUTPUT_DIR = '../output/'
 
 
 class TestPriceJournals(unittest.TestCase):
 
     def setUp(self):
-        self.filename = 'journal_oanda_tick_ut.txt'
+        self.filename = os.path.join(OA_OUTPUT_DIR, 'journal_oanda_tick_ut.txt')
         try:
             os.remove(self.filename)
         except OSError:

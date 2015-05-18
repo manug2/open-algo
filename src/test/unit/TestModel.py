@@ -24,16 +24,16 @@ class TestModel(unittest.TestCase):
 
     # DATA HANDLER
     def testDataHandlerClassExists(self):
-        self.assertNotEquals(DataHandler(), None)
+        self.assertNotEquals(DataProvider(), None)
 
     def testDataHandlerIsTypeNone(self):
-        self.assertEquals(DataHandler().TYPE, None)
+        self.assertEquals(DataProvider().TYPE, None)
 
     def testRStreamDataHandlerClassExists(self):
-        self.assertNotEquals(StreamDataHandler(), None)
+        self.assertNotEquals(StreamDataProvider(), None)
 
     def testStreamDataHandlerIsTypeNone(self):
-        self.assertEquals(StreamDataHandler().TYPE, None)
+        self.assertEquals(StreamDataProvider().TYPE, None)
 
 
     # EXECUTION HANDLER

@@ -2,7 +2,7 @@ import requests
 import json
 
 from com.open.algo.trading.fxEvents import TickEvent
-from com.open.algo.model import StreamDataHandler, ExceptionEvent, Heartbeat
+from com.open.algo.model import StreamDataProvider, ExceptionEvent, Heartbeat
 from queue import Full
 
 
@@ -31,7 +31,7 @@ def parse_event(msg):
         raise ValueError('Unexpected message received')
 
 
-class StreamingForexPrices(StreamDataHandler):
+class StreamingForexPrices(StreamDataProvider):
     def __init__(
             self, domain, access_token
             , account_id, instruments, events_queue, heartbeat_queue, journaler
