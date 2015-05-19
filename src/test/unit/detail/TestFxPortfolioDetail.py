@@ -169,3 +169,5 @@ class TestFxPortfolio(unittest.TestCase):
         portfolio = FxPortfolio('USD', port_limit=1230)
         self.assertEquals(portfolio.port_limit, 1230)
 
+    def test_should_give_realized_pnl(self):
+        self.assertIsNotNone(self.portfolio.get_realized_pnl())
