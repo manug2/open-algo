@@ -112,9 +112,16 @@ class TestFxPortfolio(unittest.TestCase):
         except ValueError:
             pass
 
-    def test_should_update_realized_pnl_when_appending_an_execution_that_is_opposite_of_previously_open_position(self):
+    def test_should_update_realized_pnl_when_appending_long_first_and_equal_short_second(self):
         executed_order = ExecutedOrder(OrderEvent('EUR_USD', 100, 'buy'), 1.4, 100)
         executed_order2 = ExecutedOrder(OrderEvent('EUR_USD', 100, 'sell'), 1.5, 100)
+        self.portfolio.append_position(executed_order)
+        self.portfolio.append_position(executed_order2)
+        self.assertEqual(10, self.portfolio.get_realized_pnl())
+
+    def test_should_update_realized_pnl_when_appending_short_first_and_equal_long_second(self):
+        executed_order = ExecutedOrder(OrderEvent('EUR_USD', 100, 'sell'), 1.4, 100)
+        executed_order2 = ExecutedOrder(OrderEvent('EUR_USD', 100, 'buy'), 1.5, 100)
         self.portfolio.append_position(executed_order)
         self.portfolio.append_position(executed_order2)
         self.assertEqual(10, self.portfolio.get_realized_pnl())
@@ -125,3 +132,19 @@ class TestFxPortfolio(unittest.TestCase):
         self.portfolio.append_position(executed_order)
         self.portfolio.append_position(executed_order2)
         self.assertEqual(0, self.portfolio.get_realized_pnl())
+
+    def test_should_update_realized_pnl_when_closing_one_position_while_another_open_position_in_diff_instrument_exists(self):
+        executed_order = ExecutedOrder(OrderEvent('EUR_USD', 100, 'buy'), 1.4, 100)
+        executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 100, 'sell'), 1.1, 100)
+        executed_order3 = ExecutedOrder(OrderEvent('EUR_USD', 100, 'sell'), 1.45, 100)
+        self.portfolio.append_position(executed_order)
+        self.portfolio.append_position(executed_order2)
+        self.portfolio.append_position(executed_order3)
+        self.assertEqual(5, self.portfolio.get_realized_pnl())
+
+    def test_should_update_negative_realized_pnl_when_appending_closing_position_at_loss(self):
+        executed_order = ExecutedOrder(OrderEvent('EUR_USD', 100, 'buy'), 1.4, 100)
+        executed_order2 = ExecutedOrder(OrderEvent('EUR_USD', 100, 'sell'), 1.3, 100)
+        self.portfolio.append_position(executed_order)
+        self.portfolio.append_position(executed_order2)
+        self.assertEqual(-10, self.portfolio.get_realized_pnl())

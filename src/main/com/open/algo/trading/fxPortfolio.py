@@ -13,27 +13,26 @@ class FxPortfolio(Portfolio):
         short limits are specified in -ve numbers, with a max of 0
     """
 
-    def __init__(self, base_ccy, balance, decimals=2
-                 , port_limit=100, port_limit_short=-100):
+    def __init__(self, base_ccy, balance, decimals=2, port_limit=100, port_limit_short=-100):
         self.positions = {}         # used to capture total number of open positions per instrument
         self.executions = []        # used to capture all executions
         self.positions_avg_price = {}   # used to capture avg price of open positions per instrument
         self.realized_pnl = 0.0     # captures realized pnl
         self.opening_balance = balance
         self.balance = balance
+        self.decimals = decimals
 
         assert base_ccy is not None, 'portfolio manager needs a base currency'
         assert base_ccy != '', 'portfolio manager needs a base currency'
         self.base_ccy = base_ccy
-        self.price_cache = None
-
-        self.ccy_exposure_manager = None
-        self.decimals = decimals
 
         assert port_limit > 0, '[%s] is [%s] for [%s]' % ("portfolio limit", port_limit, self.__class__.__name__)
         self.port_limit = port_limit  # ccy exposure limit for whole portfolio
         assert port_limit_short < 0, '[%s] is -ve for [%s]' % ("portfolio short limit", self.__class__.__name__)
         self.port_limit_short = port_limit_short  # ccy exposure limit for whole portfolio
+
+        self.price_cache = None
+        self.ccy_exposure_manager = None
 
     def set_price_cache(self, prices_cache):
         if self.price_cache is None:
@@ -45,12 +44,11 @@ class FxPortfolio(Portfolio):
     def set_ccy_exposure_manager(self, ccy_exposure_manager):
         if self.ccy_exposure_manager is None:
             if ccy_exposure_manager is None:
-                raise ValueError('ccy exposure manager is None')
-            if self.base_ccy != ccy_exposure_manager.get_base_ccy():
+                raise ValueError('portfolio ccy exposure manager is None')
+            if ccy_exposure_manager is not None and self.base_ccy != ccy_exposure_manager.get_base_ccy():
                 raise ValueError('portfolio base currency [%s] does not match ccy exposure manager base currency [%s]'
                                  % (self.base_ccy, ccy_exposure_manager.get_base_ccy()))
-            else:
-                self.ccy_exposure_manager = ccy_exposure_manager
+            self.ccy_exposure_manager = ccy_exposure_manager
         else:
             raise RuntimeError('[%s] can be only assigned once, cannot be re-assigned' % 'ccy_exposure_manager')
         return self
@@ -59,42 +57,30 @@ class FxPortfolio(Portfolio):
         return self.positions
 
     def append_position(self, executed_order):
+        nett_units = executed_order.units
         self.executions.append(executed_order)
         if executed_order.order.side == 'buy':
-            if executed_order.order.instrument not in self.positions:
-                self.positions[executed_order.order.instrument] = executed_order.units
-                self.positions_avg_price[executed_order.order.instrument] = executed_order.price
-            else:
-                old_units = self.positions[executed_order.order.instrument]
-                new_units = old_units + executed_order.units
-                if new_units == 0:
-                    self.positions[executed_order.order.instrument] = 0
-                    self.positions_avg_price[executed_order.order.instrument] = 0
-                else:
-                    old_avg_price = self.positions_avg_price[executed_order.order.instrument]
-                    new_avg_price = round((old_units * old_avg_price + executed_order.units * executed_order.price)
-                                          / new_units, self.decimals)
-                    self.positions[executed_order.order.instrument] = new_units
-                    self.positions_avg_price[executed_order.order.instrument] = abs(new_avg_price)
+            multiplier = 1
         else:
-            if executed_order.order.instrument not in self.positions:
-                self.positions[executed_order.order.instrument] = -executed_order.units
-                self.positions_avg_price[executed_order.order.instrument] = executed_order.price
+            multiplier = -1
+
+        if executed_order.order.instrument not in self.positions:
+            self.positions[executed_order.order.instrument] = multiplier * executed_order.units
+            self.positions_avg_price[executed_order.order.instrument] = executed_order.price
+        else:
+            old_units = self.positions[executed_order.order.instrument]
+            nett_units = old_units + multiplier * executed_order.units
+            if nett_units == 0:
+                self.close_out_position(executed_order)
             else:
-                old_units = self.positions[executed_order.order.instrument]
-                new_units = old_units - executed_order.units
-                if new_units == 0:
-                    self.positions[executed_order.order.instrument] = 0
-                    self.positions_avg_price[executed_order.order.instrument] = 0
-                else:
-                    old_avg_price = self.positions_avg_price[executed_order.order.instrument]
-                    new_avg_price = round((old_units * old_avg_price - executed_order.units * executed_order.price)
-                                          / new_units, self.decimals)
-                    self.positions[executed_order.order.instrument] = new_units
-                    self.positions_avg_price[executed_order.order.instrument] = abs(new_avg_price)
+                old_avg_price = self.positions_avg_price[executed_order.order.instrument]
+                new_avg_price1 = (old_units * old_avg_price + multiplier * executed_order.units * executed_order.price)
+                new_avg_price = round(new_avg_price1 / nett_units, self.decimals)
+                self.positions[executed_order.order.instrument] = nett_units
+                self.positions_avg_price[executed_order.order.instrument] = abs(new_avg_price)
 
         # now append individual currency positions
-        if self.ccy_exposure_manager is not None:
+        if nett_units != 0 and self.ccy_exposure_manager is not None:
             currencies = executed_order.order.instrument.split('_')
             if executed_order.order.side == 'buy':
                 self.ccy_exposure_manager.append_position(currencies[0],  executed_order.units)
@@ -158,3 +144,11 @@ class FxPortfolio(Portfolio):
 
     def get_balance(self):
         return self.balance
+
+    def close_out_position(self, executed_order):
+        old_avg_price = self.positions_avg_price[executed_order.order.instrument]
+        position_pnl = executed_order.units * (executed_order.price - old_avg_price)
+        position_pnl_in_port_ccy = position_pnl
+        self.realized_pnl += round(position_pnl_in_port_ccy, self.decimals)
+        self.positions[executed_order.order.instrument] = 0
+        self.positions_avg_price[executed_order.order.instrument] = 0
