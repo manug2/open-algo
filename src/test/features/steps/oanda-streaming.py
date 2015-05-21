@@ -61,7 +61,7 @@ def step_impl(context):
 
     price_thread = threading.Thread(target=context.prices.stream, args=[])
     price_thread.start()
-    time.sleep(3)
+    time.sleep(2.5)
     context.prices.stop()
 
 
