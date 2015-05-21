@@ -11,7 +11,7 @@ from com.open.algo.risk.ccyExposureLimitRisk import CcyExposureLimitRiskEvaluato
 
 @given('Portfolio Manager is initialized')
 def step_impl(context):
-    context.pm = FxPortfolio('USD')
+    context.pm = FxPortfolio('USD', 10000)
 
 
 @then('Portfolio Manager yields empty position list')
@@ -85,7 +85,8 @@ def step_impl(context, instrument, units):
 
 @given('Portfolio Manager is initialized with base currency {base_ccy}, market rate cache')
 def step_impl(context, base_ccy):
-    context.pm = FxPortfolio(base_ccy, context.rates_cache)
+    context.pm = FxPortfolio(base_ccy, 10000)
+    context.pm.set_price_cache(context.rates_cache)
 
 
 @given('portfolio has an executed order to {side} {units} {instrument} units at {price}')
@@ -94,14 +95,14 @@ def step_impl(context, side, units, instrument, price):
     context.pm.append_position(executed_order)
 
 
-@then('Portfolio Manager evaluates {instrument} PnL = {pnl}')
+@then('Portfolio Manager evaluates {instrument} unrealized PnL = {pnl}')
 def step_impl(context, instrument, pnl):
     revalued = round(context.pm.reval_position(instrument), 2)
     assert revalued == float(pnl), \
         'position for instrument [%s] is [%s], expecting [%s] units' % (instrument, revalued, pnl)
 
 
-@then('Portfolio\'s total PnL = {pnl}')
+@then('Portfolio\'s unrealized PnL = {pnl}')
 def step_impl(context, pnl):
     revalued = round(context.pm.reval_positions(), 2)
     assert revalued == float(pnl), \
@@ -110,5 +111,6 @@ def step_impl(context, pnl):
 
 @given('Portfolio Manager is initialized with base currency {base_ccy}, market rate cache, ccy exposure manager')
 def step_impl(context, base_ccy):
-    context.pm = FxPortfolio(base_ccy, context.rates_cache, ccy_exposure_manager=
-                             CcyExposureLimitRiskEvaluator(base_ccy, context.rates_cache, ccy_limit=5000))
+    context.pm = FxPortfolio(base_ccy, 10000)
+    context.pm.set_price_cache(context.rates_cache)
+    context.pm.set_ccy_exposure_manager(CcyExposureLimitRiskEvaluator(base_ccy, context.rates_cache, ccy_limit=5000))

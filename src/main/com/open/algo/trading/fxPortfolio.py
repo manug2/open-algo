@@ -13,28 +13,47 @@ class FxPortfolio(Portfolio):
         short limits are specified in -ve numbers, with a max of 0
     """
 
-    def __init__(self, base_ccy, prices_cache=None, ccy_exposure_manager=None, decimals=2
+    def __init__(self, base_ccy, balance, decimals=2
                  , port_limit=100, port_limit_short=-100):
         self.positions = {}         # used to capture total number of open positions per instrument
         self.executions = []        # used to capture all executions
         self.positions_avg_price = {}   # used to capture avg price of open positions per instrument
         self.realized_pnl = 0.0     # captures realized pnl
+        self.opening_balance = balance
+        self.balance = balance
 
         assert base_ccy is not None, 'portfolio manager needs a base currency'
         assert base_ccy != '', 'portfolio manager needs a base currency'
         self.base_ccy = base_ccy
-        self.price_cache = prices_cache
+        self.price_cache = None
 
-        if ccy_exposure_manager is not None and base_ccy != ccy_exposure_manager.get_base_ccy():
-            raise ValueError('portfolio base currency [%s] does not match ccy exposure manager base currency [%s]'
-                             % (base_ccy, ccy_exposure_manager.get_base_ccy()))
-        self.ccy_exposure_manager = ccy_exposure_manager
+        self.ccy_exposure_manager = None
         self.decimals = decimals
 
         assert port_limit > 0, '[%s] is [%s] for [%s]' % ("portfolio limit", port_limit, self.__class__.__name__)
         self.port_limit = port_limit  # ccy exposure limit for whole portfolio
         assert port_limit_short < 0, '[%s] is -ve for [%s]' % ("portfolio short limit", self.__class__.__name__)
         self.port_limit_short = port_limit_short  # ccy exposure limit for whole portfolio
+
+    def set_price_cache(self, prices_cache):
+        if self.price_cache is None:
+            self.price_cache = prices_cache
+        else:
+            raise RuntimeError('[%s] can be only assigned once, cannot be re-assigned' % 'prices_cache')
+        return self
+
+    def set_ccy_exposure_manager(self, ccy_exposure_manager):
+        if self.ccy_exposure_manager is None:
+            if ccy_exposure_manager is None:
+                raise ValueError('ccy exposure manager is None')
+            if self.base_ccy != ccy_exposure_manager.get_base_ccy():
+                raise ValueError('portfolio base currency [%s] does not match ccy exposure manager base currency [%s]'
+                                 % (self.base_ccy, ccy_exposure_manager.get_base_ccy()))
+            else:
+                self.ccy_exposure_manager = ccy_exposure_manager
+        else:
+            raise RuntimeError('[%s] can be only assigned once, cannot be re-assigned' % 'ccy_exposure_manager')
+        return self
 
     def list_positions(self):
         return self.positions
@@ -136,3 +155,6 @@ class FxPortfolio(Portfolio):
 
     def get_realized_pnl(self):
         return self.realized_pnl
+
+    def get_balance(self):
+        return self.balance

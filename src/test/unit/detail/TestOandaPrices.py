@@ -61,7 +61,7 @@ class TestStreaming(unittest.TestCase):
     def test_should_receive_streaming_heartbeat_events(self):
         price_thread = Thread(target=self.prices.stream, args=[])
         price_thread.start()
-        time.sleep(2.5)
+        time.sleep(3)
         self.prices.stop()
         price_thread.join(timeout=2)
         out_event = None

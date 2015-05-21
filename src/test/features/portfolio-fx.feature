@@ -58,7 +58,7 @@ Feature: trading system a has portfolio management module
           and portfolio has an executed order to buy 100 CHF_USD units at 1.04
          when a price tick arrives for CHF_USD 1.05/1.1
           and market rate cache stops
-         then Portfolio Manager evaluates CHF_USD PnL = 6
+         then Portfolio Manager evaluates CHF_USD unrealized PnL = 6
 
 
     Scenario: Portfolio Manager can evaluate unrealized loss using latest market price
@@ -67,7 +67,7 @@ Feature: trading system a has portfolio management module
           and portfolio has an executed order to buy 100 CHF_USD units at 1.05
          when a price tick arrives for CHF_USD 1.04/1.08
           and market rate cache stops
-         then Portfolio Manager evaluates CHF_USD PnL = 3
+         then Portfolio Manager evaluates CHF_USD unrealized PnL = 3
 
 
     Scenario Outline: Portfolio Manager can evaluate unrealized PnL using latest market price
@@ -76,7 +76,7 @@ Feature: trading system a has portfolio management module
           and portfolio has an executed order to <exec side> <exec units> <instrument> units at <exec price>
          when a price tick arrives for <instrument> <bid>/<ask>
           and market rate cache stops
-         then Portfolio Manager evaluates <instrument> PnL = <pnl>
+         then Portfolio Manager evaluates <instrument> unrealized PnL = <pnl>
         Examples: long or short position, rates up and down
             | base ccy  | exec side | exec units  | instrument  | exec price  | bid | ask | pnl | NOTES
             | USD       | buy       | 100         | CHF_USD     | 1.04        | 1.05| 1.1 |  6  | long, bid/ask goes up, stays above
@@ -94,7 +94,7 @@ Feature: trading system a has portfolio management module
           and portfolio has an executed order to buy 100 CHF_USD units at 1.05
          when a price tick arrives for CHF_USD 1.04/1.08
           and market rate cache stops
-         then Portfolio's total PnL = -7.41
+         then Portfolio's unrealized PnL = -7.41
 
 
     Scenario: Portfolio Manager can evaluate unrealized loss for whole portfolio with two long positions
@@ -104,7 +104,7 @@ Feature: trading system a has portfolio management module
           and portfolio has an executed order to buy 30 CHF_USD units at 1.07
          when a price tick arrives for CHF_USD 1.2/1.3
           and market rate cache stops
-         then Portfolio's total PnL = -30
+         then Portfolio's unrealized PnL = -30
 
 
     Scenario: Portfolio Manager can evaluate unrealized loss for whole portfolio with two long and short positions
@@ -114,7 +114,7 @@ Feature: trading system a has portfolio management module
           and portfolio has an executed order to sell 30 CHF_USD units at 1.07
          when a price tick arrives for CHF_USD 1.09/1.10
           and market rate cache stops
-         then Portfolio's total PnL = -10
+         then Portfolio's unrealized PnL = -10
 
 
     Scenario Outline: Portfolio Manager can evaluate unrealized loss for whole portfolio with two positions
@@ -125,7 +125,7 @@ Feature: trading system a has portfolio management module
          when a price tick arrives for <instr1> <bid1>/<ask1>
          when a price tick arrives for <instr2> <bid2>/<ask2>
           and market rate cache stops
-         then Portfolio's total PnL = <pnl>
+         then Portfolio's unrealized PnL = <pnl>
         Examples: two long short position, rates up and down
             | base ccy| side1 | units1 | instr1  | price1 | bid1 | ask1 | side2 | units2 | instr2  | price2 | bid2 | ask2 | pnl    | NOTES
             | USD     | buy   | 100    | CHF_USD | 1.04   | 1.05 | 1.1  | buy   | 100    | CHF_USD | 1.04   | 1.05 | 1.1  | -18.18 | long long same instr
