@@ -58,7 +58,7 @@ class EventHandler(object):
             return event
 
     def __init__(self):
-        self.logger = None
+        pass
 
     def __str__(self):
         return self.__class__.__name__

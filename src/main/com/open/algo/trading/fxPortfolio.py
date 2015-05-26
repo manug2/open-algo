@@ -2,9 +2,10 @@ __author__ = 'ManuGarg'
 
 
 from com.open.algo.model import Portfolio
+from com.open.algo.eventLoop import EventHandler
+from queue import Full
 
-
-class FxPortfolio(Portfolio):
+class FxPortfolio(Portfolio, EventHandler):
     """
         port_limit - ccy exposure limit for whole portfolio
         port_limit_short - ccy exposure limit for whole portfolio
@@ -33,6 +34,7 @@ class FxPortfolio(Portfolio):
 
         self.price_cache = None
         self.ccy_exposure_manager = None
+        self.order_q = None
 
     def set_price_cache(self, prices_cache):
         if self.price_cache is None:
@@ -169,3 +171,34 @@ class FxPortfolio(Portfolio):
         new_avg_price = round(new_avg_price1 / nett_units, self.decimals)
         self.positions[executed_order.order.instrument] = nett_units
         self.positions_avg_price[executed_order.order.instrument] = abs(new_avg_price)
+
+    def start(self):
+        # read state from journals
+        pass
+
+    def stop(self):
+        # write state from journals
+        pass
+
+    def process(self, order):
+        self.execute_order(order)
+
+    def set_order_q(self, order_q):
+        self.order_q = order_q
+
+    def check_and_issue_order(self, order):
+        filtered_order = self.check_order(order)
+        try:
+            self.order_q.put_nowait(filtered_order)
+        except Full:
+            raise RuntimeError('order execution queue is full, cannot submit order - [%s] filtered units [%s]'
+                               % (order, filtered_order.units))
+    # end of check_and_issue_order
+
+    def check_order(self, order):
+        filtered_order = self.ccy_exposure_manager.filter_order(order)
+        if filtered_order.units == 0:
+            raise RuntimeError('order is filtered completely by currency exposure manager - [%s]' % order)
+        return filtered_order
+    # end of check_order
+

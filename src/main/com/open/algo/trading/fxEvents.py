@@ -46,7 +46,7 @@ class OrderEvent(Event):
                                   , self.order_type, self.side)
         for attr in ['price', 'lowerBound', 'upperBound', 'stopLoss', 'takeProfit', 'trailingStop', 'expiry']:
             value = getattr(self, attr)
-            if value is None:
+            if value is not None:
                 msg = '%s, %s=%s' % (msg, attr, value)
         msg += ')'
         return msg

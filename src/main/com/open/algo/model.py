@@ -117,6 +117,8 @@ class Portfolio():
     def get_base_ccy(self):
         raise NotImplementedError("Should implement 'get_base_ccy()' method")
 
+    def check_and_issue_order(self, order):
+        raise NotImplementedError("Should implement 'check_and_issue_order()' method")
 
 class RiskManager():
     def filter_order(self, order):
