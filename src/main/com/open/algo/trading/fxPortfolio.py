@@ -80,12 +80,8 @@ class FxPortfolio(Portfolio):
         # now append individual currency positions
         if self.ccy_exposure_manager is not None:
             currencies = executed_order.order.instrument.split('_')
-            if executed_order.order.side == 'buy':
-                self.ccy_exposure_manager.append_position(currencies[0],  executed_order.units)
-                self.ccy_exposure_manager.append_position(currencies[1], -executed_order.units)
-            else:
-                self.ccy_exposure_manager.append_position(currencies[0], -executed_order.units)
-                self.ccy_exposure_manager.append_position(currencies[1],  executed_order.units)
+            self.ccy_exposure_manager.append_position(currencies[0],  new_units)
+            self.ccy_exposure_manager.append_position(currencies[1], -new_units)
 
     # end of append
 
