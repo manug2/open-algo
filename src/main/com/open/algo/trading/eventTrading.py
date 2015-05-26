@@ -1,3 +1,5 @@
+from com.open.algo.trading.fxEvents import EVENT_TYPES_ORDER, EVENT_TYPES_FILL, EVENT_TYPES_TICK
+
 
 class AlgoTrader:
     def __init__(self, prices, strategy, executor):
@@ -7,9 +9,9 @@ class AlgoTrader:
 
     def process(self, event):
         try:
-            if event.TYPE == 'TICK':
+            if event.TYPE == EVENT_TYPES_TICK:
                 self.strategy.calculate_signals(event)
-            elif event.TYPE == 'ORDER':
+            elif event.TYPE == EVENT_TYPES_ORDER:
                 self.executor.execute_order(event)
             else:
                 raise TypeError('Not designed to handle event : [%s]' % event)

@@ -3,6 +3,7 @@ __author__ = 'ManuGarg'
 
 from com.open.algo.model import Portfolio
 from com.open.algo.eventLoop import EventHandler
+from com.open.algo.trading.fxEvents import EVENT_TYPES_ORDER, EVENT_TYPES_FILL
 
 
 class FxPortfolio(Portfolio, EventHandler):
@@ -181,7 +182,16 @@ class FxPortfolio(Portfolio, EventHandler):
         pass
 
     def process(self, order):
-        return self.check_order(order)
+        if order is None:
+            raise ValueError('Found "None", was expecting to process order')
+        elif not hasattr(order, 'TYPE'):
+            raise TypeError('Cannot evaluate input event as it does not have field "%s" - [%s]' % ('TYPE', order))
+
+        if order.TYPE == EVENT_TYPES_ORDER:
+            return self.check_order(order)
+        elif order.TYPE == EVENT_TYPES_FILL:
+            self.append_position(order)
+        # end of process
 
     def check_order(self, order):
         filtered_order = self.ccy_exposure_manager.filter_order(order)

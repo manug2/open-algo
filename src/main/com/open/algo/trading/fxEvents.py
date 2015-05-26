@@ -1,9 +1,13 @@
 from com.open.algo.model import Event
 
 
+EVENT_TYPES_TICK = 'TICK'
+EVENT_TYPES_ORDER = 'ORDER'
+EVENT_TYPES_FILL = 'FILL'
+
 class TickEvent(Event):
     def __init__(self, instrument, time, bid, ask):
-        self.TYPE = 'TICK'
+        self.TYPE = EVENT_TYPES_TICK
         self.instrument = instrument
         self.time = time
         self.bid = bid
@@ -18,7 +22,7 @@ class TickEvent(Event):
 class OrderEvent(Event):
     def __init__(self, instrument, units, side, order_type='market', price=None, lowerBound=None, upperBound=None,
                  stopLoss=None, takeProfit=None, expiry=None, trailingStop=None):
-        self.TYPE = 'ORDER'
+        self.TYPE = EVENT_TYPES_ORDER
         assert instrument is not None, 'order cannot be made with none "instrument"'
         assert len(instrument) > 0, 'order cannot be made with empty "instrument" string'
         self.instrument = instrument
@@ -54,7 +58,7 @@ class OrderEvent(Event):
 
 class ExecutedOrder(Event):
     def __init__(self, order_event, execution_price, execution_units):
-        self.TYPE = 'FILL'
+        self.TYPE = EVENT_TYPES_FILL
         self.order = order_event
         assert isinstance(execution_price, float), \
             'executed order can be made with decimal "units" only, found %s' % execution_price
