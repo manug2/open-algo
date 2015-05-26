@@ -78,6 +78,10 @@ class ExecutionHandler():
     def get_order(self, order_id):
         raise NotImplementedError("Should implement 'get_orders()' method")
 
+    @abstractmethod
+    def close_position(self, instrument):
+        raise NotImplementedError("Should implement 'close_position()' method")
+
 
 # Portfolio management
 class Portfolio():
@@ -92,13 +96,13 @@ class Portfolio():
     def list_positions(self):
         raise NotImplementedError("Should implement 'list_positions()' method")
 
-    def close_all_positions(self):
+    def close_all_positions(self, executor):
         raise NotImplementedError("Should implement 'close_all_positions()' method")
 
-    def close_position(self, instrument):
+    def close_position(self, executor, instrument):
         raise NotImplementedError("Should implement 'close_positions()' method")
 
-    def close_position_id(self, position_id):
+    def close_position_id(self, executor, position_id):
         raise NotImplementedError("Should implement 'close_position()' method")
 
     def reval_position(self, instrument):

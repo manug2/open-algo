@@ -34,7 +34,7 @@ class FxPortfolio(Portfolio, EventHandler):
 
         self.price_cache = None
         self.ccy_exposure_manager = None
-        self.order_q = None
+        self.risk_managers = list()
 
     def set_price_cache(self, prices_cache):
         if self.price_cache is None:
@@ -187,6 +187,17 @@ class FxPortfolio(Portfolio, EventHandler):
         filtered_order = self.ccy_exposure_manager.filter_order(order)
         if filtered_order.units == 0:
             raise RuntimeError('order is filtered completely by currency exposure manager - [%s]' % order)
+        for rm in self.risk_managers:
+            filtered_order = rm.filter_order(filtered_order)
+            if filtered_order.units == 0:
+                raise RuntimeError('order is filtered completely by risk manager [%s] - [%s]' % (rm, order))
         return filtered_order
     # end of check_order
+
+    def add_risk_manager(self, risk_manager):
+        if risk_manager in self.risk_managers:
+            raise ValueError('risk manager has already been added to portfolio - [%s]' % risk_manager)
+        else:
+            self.risk_managers.append(risk_manager)
+        return self
 
