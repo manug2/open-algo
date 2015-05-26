@@ -3,7 +3,7 @@ __author__ = 'ManuGarg'
 
 from com.open.algo.model import Portfolio
 from com.open.algo.eventLoop import EventHandler
-from queue import Full
+
 
 class FxPortfolio(Portfolio, EventHandler):
     """
@@ -181,19 +181,7 @@ class FxPortfolio(Portfolio, EventHandler):
         pass
 
     def process(self, order):
-        self.execute_order(order)
-
-    def set_order_q(self, order_q):
-        self.order_q = order_q
-
-    def check_and_issue_order(self, order):
-        filtered_order = self.check_order(order)
-        try:
-            self.order_q.put_nowait(filtered_order)
-        except Full:
-            raise RuntimeError('order execution queue is full, cannot submit order - [%s] filtered units [%s]'
-                               % (order, filtered_order.units))
-    # end of check_and_issue_order
+        return self.check_order(order)
 
     def check_order(self, order):
         filtered_order = self.ccy_exposure_manager.filter_order(order)
