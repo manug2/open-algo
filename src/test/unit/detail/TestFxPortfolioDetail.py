@@ -80,7 +80,7 @@ class TestFxPortfolio(unittest.TestCase):
         self.portfolio.append_position(executed_order1)
         executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 50, 'sell'), 1.2, 50)
         self.portfolio.append_position(executed_order2)
-        expected = round((100*1.1 - 50*1.2)/50, 2)
+        expected = 1.1
         self.assertEqual(50, self.portfolio.list_position('CHF_USD'))
         self.assertEqual(expected, self.portfolio.get_avg_price('CHF_USD'))
 
@@ -89,7 +89,7 @@ class TestFxPortfolio(unittest.TestCase):
         self.portfolio.append_position(executed_order1)
         executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 100, 'buy'), 1.2, 100)
         self.portfolio.append_position(executed_order2)
-        expected = round((-50*1.1 + 100*1.2)/50, 2)
+        expected = 1.2
         self.assertEqual(50, self.portfolio.list_position('CHF_USD'))
         self.assertEqual(expected, self.portfolio.get_avg_price('CHF_USD'))
 
@@ -98,7 +98,7 @@ class TestFxPortfolio(unittest.TestCase):
         self.portfolio.append_position(executed_order1)
         executed_order2 = ExecutedOrder(OrderEvent('CHF_USD', 150, 'sell'), 1.2, 150)
         self.portfolio.append_position(executed_order2)
-        expected = abs(round((100*1.1 - 150*1.2)/50, 2))
+        expected = 1.2
         self.assertEqual(-50, self.portfolio.list_position('CHF_USD'))
         self.assertEqual(expected, self.portfolio.get_avg_price('CHF_USD'))
 

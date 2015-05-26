@@ -148,3 +148,11 @@ class TestFxPortfolio(unittest.TestCase):
         self.portfolio.append_position(executed_order)
         self.portfolio.append_position(executed_order2)
         self.assertEqual(-10, self.portfolio.get_realized_pnl())
+
+    def test_should_have_zero_unrealized_pnl_after_closing_position(self):
+        executed_order = ExecutedOrder(OrderEvent('EUR_USD', 100, 'buy'), 1.4, 100)
+        executed_order2 = ExecutedOrder(OrderEvent('EUR_USD', 100, 'sell'), 1.3, 100)
+        self.portfolio.append_position(executed_order)
+        self.portfolio.append_position(executed_order2)
+        self.cache.set_rate(TickEvent('EUR_USD', get_time(), 0.91, 0.92))
+        self.assertEqual(0, self.portfolio.reval_positions())

@@ -60,27 +60,25 @@ class FxPortfolio(Portfolio):
         nett_units = executed_order.units
         self.executions.append(executed_order)
         if executed_order.order.side == 'buy':
-            multiplier = 1
+            new_units = executed_order.units
         else:
-            multiplier = -1
+            new_units = -executed_order.units
 
         if executed_order.order.instrument not in self.positions:
-            self.positions[executed_order.order.instrument] = multiplier * executed_order.units
+            self.positions[executed_order.order.instrument] = new_units
             self.positions_avg_price[executed_order.order.instrument] = executed_order.price
         else:
             old_units = self.positions[executed_order.order.instrument]
-            nett_units = old_units + multiplier * executed_order.units
+            nett_units = old_units + new_units
             if nett_units == 0:
                 self.close_out_position(executed_order)
+            elif abs(nett_units) < executed_order.units or abs(nett_units) < abs(old_units):
+                self.partial_close_position(executed_order, new_units, nett_units, old_units)
             else:
-                old_avg_price = self.positions_avg_price[executed_order.order.instrument]
-                new_avg_price1 = (old_units * old_avg_price + multiplier * executed_order.units * executed_order.price)
-                new_avg_price = round(new_avg_price1 / nett_units, self.decimals)
-                self.positions[executed_order.order.instrument] = nett_units
-                self.positions_avg_price[executed_order.order.instrument] = abs(new_avg_price)
+                self.extend_position(executed_order, new_units, nett_units, old_units)
 
         # now append individual currency positions
-        if nett_units != 0 and self.ccy_exposure_manager is not None:
+        if self.ccy_exposure_manager is not None:
             currencies = executed_order.order.instrument.split('_')
             if executed_order.order.side == 'buy':
                 self.ccy_exposure_manager.append_position(currencies[0],  executed_order.units)
@@ -152,3 +150,26 @@ class FxPortfolio(Portfolio):
         self.realized_pnl += round(position_pnl_in_port_ccy, self.decimals)
         self.positions[executed_order.order.instrument] = 0
         self.positions_avg_price[executed_order.order.instrument] = 0
+
+    def partial_close_position(self, executed_order, new_units, nett_units, old_units):
+        assert old_units * new_units < 0, \
+            'For partial close of position, new and old units must have opposite sign, found [%s, %s]' % \
+                (new_units, old_units)
+        old_avg_price = self.positions_avg_price[executed_order.order.instrument]
+        position_pnl = executed_order.units * (executed_order.price - old_avg_price)
+        position_pnl_in_port_ccy = position_pnl
+        self.realized_pnl += round(position_pnl_in_port_ccy, self.decimals)
+
+        if abs(old_units) > abs(new_units):
+            new_avg_price = old_avg_price
+        else:
+            new_avg_price = executed_order.price
+        self.positions[executed_order.order.instrument] = nett_units
+        self.positions_avg_price[executed_order.order.instrument] = abs(new_avg_price)
+
+    def extend_position(self, executed_order, new_units, nett_units, old_units):
+        old_avg_price = self.positions_avg_price[executed_order.order.instrument]
+        new_avg_price1 = (old_units * old_avg_price + new_units * executed_order.price)
+        new_avg_price = round(new_avg_price1 / nett_units, self.decimals)
+        self.positions[executed_order.order.instrument] = nett_units
+        self.positions_avg_price[executed_order.order.instrument] = abs(new_avg_price)
