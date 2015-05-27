@@ -60,7 +60,6 @@ class FxPortfolio(Portfolio, EventHandler):
         return self.positions
 
     def append_position(self, executed_order):
-        nett_units = executed_order.units
         self.executions.append(executed_order)
         if executed_order.order.side == 'buy':
             new_units = executed_order.units
@@ -68,8 +67,7 @@ class FxPortfolio(Portfolio, EventHandler):
             new_units = -executed_order.units
 
         if executed_order.order.instrument not in self.positions:
-            self.positions[executed_order.order.instrument] = new_units
-            self.positions_avg_price[executed_order.order.instrument] = executed_order.price
+            self.add_new_position(executed_order, new_units)
         else:
             old_units = self.positions[executed_order.order.instrument]
             nett_units = old_units + new_units
@@ -141,6 +139,10 @@ class FxPortfolio(Portfolio, EventHandler):
 
     def get_balance(self):
         return self.balance
+
+    def add_new_position(self, executed_order, new_units):
+        self.positions[executed_order.order.instrument] = new_units
+        self.positions_avg_price[executed_order.order.instrument] = executed_order.price
 
     def close_out_position(self, executed_order):
         old_avg_price = self.positions_avg_price[executed_order.order.instrument]
