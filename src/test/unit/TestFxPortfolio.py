@@ -16,8 +16,7 @@ class TestFxPortfolio(unittest.TestCase):
         self.cache = FxPricesCache()
         self.ccy_exposure_manager = \
             CcyExposureLimitRiskEvaluator('USD', self.cache, ccy_limit=5000, ccy_limit_short=-5000)
-        self.portfolio.set_price_cache(self.cache)
-        self.portfolio.set_ccy_exposure_manager(self.ccy_exposure_manager)
+        self.portfolio.set_price_cache(self.cache).set_ccy_exposure_manager(self.ccy_exposure_manager)
 
         self.large_buy_order = OrderEvent('EUR_USD', 1000000000, 'buy')
         self.large_sell_order = OrderEvent('EUR_USD', 1000000000, 'sell')
@@ -105,4 +104,35 @@ class TestFxPortfolio(unittest.TestCase):
         except RuntimeError as e:
             self.fail('Expecting a filtered order per currency manager\'s limit, but got exception - [%s]' % e)
 
+    def test_should_be_able_to_process_fills(self):
+        self.cache.set_rate(TickEvent('EUR_USD', get_time(), 1.11, 1.15))
+        executed_order = ExecutedOrder(self.buy_order, 1.12, 100)
 
+        processed_value = self.portfolio.process(executed_order)
+        self.assertIsNone(processed_value)
+        self.assertEqual({'EUR_USD': 100}, self.portfolio.list_positions())
+
+    def test_should_be_able_to_process_fills_or_signals(self):
+        self.cache.set_rate(TickEvent('EUR_USD', get_time(), 1.11, 1.15))
+
+        # process a signal first
+        processed_value = self.portfolio.process(self.buy_order)
+        self.assertEqual(self.buy_order.units, processed_value.units)
+        self.assertEqual(self.buy_order.instrument, processed_value.instrument)
+        self.assertEqual(self.buy_order.side, processed_value.side)
+        self.assertEqual(self.buy_order.order_type, processed_value.order_type)
+
+        # process a fill now
+        executed_order = ExecutedOrder(processed_value, 1.12, 100)
+        processed_value = self.portfolio.process(executed_order)
+        self.assertIsNone(processed_value)
+        self.assertEqual({'EUR_USD': 100}, self.portfolio.list_positions())
+
+    def test_should_not_allow_to_add_same_risk_manager(self):
+        rm = FxPositionLimitRiskEvaluator(posLimitShort=-1000000)
+        self.portfolio.add_risk_manager(rm)
+        try:
+            self.portfolio.add_risk_manager(rm)
+            self.fail('Should have failed while adding same risk manager')
+        except:
+            pass
