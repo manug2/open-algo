@@ -60,13 +60,13 @@ class OrderEvent(Event):
         msg += ')'
         return msg
 
-    def get_units_from_order(self):
+    def get_signed_units(self):
         if self.side == ORDER_SIDE_BUY:
             return self.units
         else:
             return -self.units
 
-    def get_orig_units_from_order(self):
+    def get_signed_orig_units(self):
         if self.side == ORDER_SIDE_BUY:
             return self.orig_units
         else:
@@ -85,3 +85,8 @@ class ExecutedOrder(Event):
         assert execution_units >= 0, 'executed order cannot be made with amount less than zero'
         self.units = execution_units
 
+    def get_signed_units(self):
+        if self.order.side == ORDER_SIDE_BUY:
+            return self.units
+        else:
+            return -self.units
