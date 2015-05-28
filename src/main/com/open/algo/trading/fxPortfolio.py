@@ -177,11 +177,11 @@ class FxPortfolio(Portfolio, EventHandler):
 
     def start(self):
         # read state from journals
-        pass
+        super.start()
 
     def stop(self):
         # write state from journals
-        pass
+        super.stop()
 
     def process(self, order):
         if order is None:

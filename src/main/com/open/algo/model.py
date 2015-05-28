@@ -1,6 +1,11 @@
 from abc import ABCMeta, abstractmethod
 
 from com.open.algo.utils import get_time, EventHandler
+EVENT_TYPES_TICK = 'TICK'
+EVENT_TYPES_ORDER = 'ORDER'
+EVENT_TYPES_FILL = 'FILL'
+EVENT_TYPES_FILTERED = 'FILTERED'
+EVENT_TYPES_REJECTED = 'REJECTED'
 
 
 # FX Events Abstract Class
@@ -172,5 +177,28 @@ class Strategy(EventHandler):
     def calculate_signals(self, event):
         raise NotImplementedError('sub-classes should implement this')
 
+    @abstractmethod
+    def get_open_interests(self):
+        raise NotImplementedError('sub-classes should implement this')
+
+    @abstractmethod
+    def get_open_interest(self, instrument):
+        raise NotImplementedError('sub-classes should implement this')
+
     def process(self, event):
-        self.calculate_signals(event)
+        if event.TYPE == EVENT_TYPES_TICK:
+            self.calculate_signals(event)
+        elif event.TYPE == EVENT_TYPES_FILL:
+            self.acknowledge_execution(event)
+        elif event.TYPE == EVENT_TYPES_FILTERED or event.TYPE == EVENT_TYPES_REJECTED:
+            self.acknowledge_rejection(event)
+        else:
+            raise ValueError('Don\'t know how to handle event of type "%s" - [%s]' % (event.TYPE, event))
+
+    @abstractmethod
+    def acknowledge_execution(self, event):
+        raise NotImplementedError('sub-classes should implement this')
+
+    @abstractmethod
+    def acknowledge_rejection(self, event):
+        raise NotImplementedError('sub-classes should implement this')

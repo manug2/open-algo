@@ -1,9 +1,26 @@
 from com.open.algo.model import Event
+from com.open.algo.model import EVENT_TYPES_FILL, EVENT_TYPES_FILTERED, EVENT_TYPES_TICK, EVENT_TYPES_REJECTED, EVENT_TYPES_ORDER
+
+ORDER_SIDE_BUY = 'buy'
+ORDER_SIDE_SELL = 'sell'
+
+ORDER_TYPE_MARKET = 'market'
+ORDER_TYPE_LIMIT = 'limit'
 
 
-EVENT_TYPES_TICK = 'TICK'
-EVENT_TYPES_ORDER = 'ORDER'
-EVENT_TYPES_FILL = 'FILL'
+def get_units_from_order(order):
+    if order.side == ORDER_SIDE_BUY:
+        return order.units
+    else:
+        return -order.units
+
+
+def get_orig_units_from_order(order):
+    if order.side == ORDER_SIDE_BUY:
+        return order.orig_units
+    else:
+        return -order.orig_units
+
 
 class TickEvent(Event):
     def __init__(self, instrument, time, bid, ask):
@@ -20,7 +37,7 @@ class TickEvent(Event):
 
 
 class OrderEvent(Event):
-    def __init__(self, instrument, units, side, order_type='market', price=None, lowerBound=None, upperBound=None,
+    def __init__(self, instrument, units, side, order_type=ORDER_TYPE_MARKET, price=None, lowerBound=None, upperBound=None,
                  stopLoss=None, takeProfit=None, expiry=None, trailingStop=None):
         self.TYPE = EVENT_TYPES_ORDER
         assert instrument is not None, 'order cannot be made with none "instrument"'
@@ -29,10 +46,12 @@ class OrderEvent(Event):
         assert isinstance(units, int), 'order can be made with integral "units" only, found %s' % units
         assert units > 0, 'order cannot be made with "units" less than or equal to zero, found %s' % units
         self.units = units
-        assert order_type == 'market' or order_type == 'limit', \
-            'side can be only "market" or "limit", found %s' % order_type
+        self.orig_units = units
+        assert order_type == ORDER_TYPE_MARKET or order_type == ORDER_TYPE_LIMIT, \
+            'order type can be only "%s" or "%s", found "%s"' % (ORDER_TYPE_MARKET, ORDER_TYPE_LIMIT, order_type)
         self.order_type = order_type
-        assert side == 'buy' or side == 'sell', 'side can be only "buy" or "sell", found %s' % side
+        assert side == ORDER_SIDE_BUY or side == ORDER_SIDE_SELL, \
+            'side can be only "%s" or "%s", found "%s"' % (ORDER_SIDE_BUY, ORDER_SIDE_SELL, side)
         self.side = side
 
         if price is not None:
@@ -46,7 +65,7 @@ class OrderEvent(Event):
         self.trailingStop = trailingStop
 
     def to_string(self):
-        msg = '%s(%s,%s,%s,%s' % (self.__class__.__name__, self.instrument, self.units
+        msg = '%s(%s,%s,%s,%s,%s' % (self.__class__.__name__, self.TYPE, self.instrument, self.units
                                   , self.order_type, self.side)
         for attr in ['price', 'lowerBound', 'upperBound', 'stopLoss', 'takeProfit', 'trailingStop', 'expiry']:
             value = getattr(self, attr)
