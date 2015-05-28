@@ -7,6 +7,12 @@ from configparser import ConfigParser
 
 OA_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.000000Z'
 
+EVENT_TYPES_TICK = 'TICK'
+EVENT_TYPES_ORDER = 'ORDER'
+EVENT_TYPES_FILL = 'FILL'
+EVENT_TYPES_FILTERED = 'FILTERED'
+EVENT_TYPES_REJECTED = 'REJECTED'
+
 
 class DynamicLoader(object):
     def load(self, realtivePath):
@@ -38,7 +44,7 @@ def read_settings(path, env):
 
 
 # class that handles events run by EventLoop
-class EventHandler(object):
+class EventHandler:
     __metaclass__ = ABCMeta
 
     @abstractmethod

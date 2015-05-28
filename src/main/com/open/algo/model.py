@@ -1,19 +1,14 @@
 from abc import ABCMeta, abstractmethod
 
-from com.open.algo.utils import get_time, EventHandler
-EVENT_TYPES_TICK = 'TICK'
-EVENT_TYPES_ORDER = 'ORDER'
-EVENT_TYPES_FILL = 'FILL'
-EVENT_TYPES_FILTERED = 'FILTERED'
-EVENT_TYPES_REJECTED = 'REJECTED'
+from com.open.algo.utils import get_time
 
 
 # FX Events Abstract Class
 class Event:
     __metaclass__ = ABCMeta
 
-    def __init__(self):
-        self.TYPE = None
+    def __init__(self, event_type):
+        self.TYPE = event_type
 
     def __str__(self):
         return self.to_string()
@@ -30,7 +25,7 @@ class Event:
 
 class ExceptionEvent(Event):
     def __init__(self, caller, message, orig_event=None):
-        self.TYPE = 'EXCEPTION'
+        super(ExceptionEvent, self).__init__('EXCEPTION')
         self.caller = caller
         self.message = message
         self.time = get_time()
@@ -45,6 +40,8 @@ class ExceptionEvent(Event):
 
 # DataProvider Abstract Classes
 class DataProvider():
+    __metaclass__ = ABCMeta
+
     def __init__(self):
         self.TYPE = None
 
@@ -70,7 +67,12 @@ class StreamDataProvider(DataProvider):
 
 
 # Execution Handler Abstract Class
-class ExecutionHandler():
+class ExecutionHandler:
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        pass
+
     @abstractmethod
     def execute_order(self, event):
         raise NotImplementedError("Should implement 'execute_order()' method")
@@ -89,7 +91,12 @@ class ExecutionHandler():
 
 
 # Portfolio management
-class Portfolio():
+class Portfolio:
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        pass
+
     @abstractmethod
     def manage(self):
         raise NotImplementedError("Should implement 'manage()' method")
@@ -129,7 +136,13 @@ class Portfolio():
     def check_and_issue_order(self, order):
         raise NotImplementedError("Should implement 'check_and_issue_order()' method")
 
-class RiskManager():
+
+class RiskManager:
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        pass
+
     def filter_order(self, order):
         raise NotImplementedError("Should implement 'filter_order()' method")
 
@@ -140,12 +153,22 @@ class RiskManager():
         raise NotImplementedError("Should implement 'append_position()' method")
 
 
-class ExecutionCostPredictor():
+class ExecutionCostPredictor:
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        pass
+
     def eval_cost(self, order):
         raise NotImplementedError("Should implement 'eval_cost()' method")
 
 
-class MarketRateCache():
+class MarketRateCache:
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        pass
+
     def get_rate(self, instrument):
         raise NotImplementedError("Should implement 'get_rate()' method")
 
@@ -164,49 +187,9 @@ class CurrencyRiskManager(RiskManager):
 
 class Heartbeat(Event):
     def __init__(self, alias):
-        self.TYPE = 'HB'
+        super(Heartbeat, self).__init__('HB')
         self.alias = alias
 
     def to_string(self):
         return '%s[%s]' % (self.__class__.__name__, self.alias)
 
-
-class Strategy(EventHandler):
-
-    @abstractmethod
-    def calculate_signals(self, event):
-        raise NotImplementedError('sub-classes should implement this')
-
-    @abstractmethod
-    def get_open_interests(self):
-        raise NotImplementedError('sub-classes should implement this')
-
-    @abstractmethod
-    def get_open_interest(self, instrument):
-        raise NotImplementedError('sub-classes should implement this')
-
-    @abstractmethod
-    def get_signaled_positions(self):
-        raise NotImplementedError('sub-classes should implement this')
-
-    @abstractmethod
-    def get_signaled_position(self, instrument):
-        raise NotImplementedError('sub-classes should implement this')
-
-    def process(self, event):
-        if event.TYPE == EVENT_TYPES_TICK:
-            self.calculate_signals(event)
-        elif event.TYPE == EVENT_TYPES_FILL:
-            self.acknowledge_execution(event)
-        elif event.TYPE == EVENT_TYPES_FILTERED or event.TYPE == EVENT_TYPES_REJECTED:
-            self.acknowledge_rejection(event)
-        else:
-            raise ValueError('Don\'t know how to handle event of type "%s" - [%s]' % (event.TYPE, event))
-
-    @abstractmethod
-    def acknowledge_execution(self, event):
-        raise NotImplementedError('sub-classes should implement this')
-
-    @abstractmethod
-    def acknowledge_rejection(self, event):
-        raise NotImplementedError('sub-classes should implement this')

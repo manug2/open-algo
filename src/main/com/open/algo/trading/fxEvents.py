@@ -1,5 +1,5 @@
 from com.open.algo.model import Event
-from com.open.algo.model import EVENT_TYPES_FILL, EVENT_TYPES_FILTERED, EVENT_TYPES_TICK, EVENT_TYPES_REJECTED, EVENT_TYPES_ORDER
+from com.open.algo.utils import EVENT_TYPES_FILL, EVENT_TYPES_FILTERED, EVENT_TYPES_TICK, EVENT_TYPES_REJECTED, EVENT_TYPES_ORDER
 
 ORDER_SIDE_BUY = 'buy'
 ORDER_SIDE_SELL = 'sell'
@@ -10,7 +10,7 @@ ORDER_TYPE_LIMIT = 'limit'
 
 class TickEvent(Event):
     def __init__(self, instrument, time, bid, ask):
-        self.TYPE = EVENT_TYPES_TICK
+        super(TickEvent, self).__init__(EVENT_TYPES_TICK)
         self.instrument = instrument
         self.time = time
         self.bid = bid
@@ -25,7 +25,9 @@ class TickEvent(Event):
 class OrderEvent(Event):
     def __init__(self, instrument, units, side, order_type=ORDER_TYPE_MARKET, price=None, lowerBound=None, upperBound=None,
                  stopLoss=None, takeProfit=None, expiry=None, trailingStop=None):
-        self.TYPE = EVENT_TYPES_ORDER
+
+        super(OrderEvent, self).__init__(EVENT_TYPES_ORDER)
+
         assert instrument is not None, 'order cannot be made with none "instrument"'
         assert len(instrument) > 0, 'order cannot be made with empty "instrument" string'
         self.instrument = instrument
@@ -75,7 +77,9 @@ class OrderEvent(Event):
 
 class ExecutedOrder(Event):
     def __init__(self, order_event, execution_price, execution_units):
-        self.TYPE = EVENT_TYPES_FILL
+
+        super(ExecutedOrder, self).__init__(EVENT_TYPES_FILL)
+
         self.order = order_event
         assert isinstance(execution_price, float), \
             'executed order can be made with decimal "units" only, found %s' % execution_price

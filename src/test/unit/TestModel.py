@@ -16,10 +16,10 @@ class TestModel(unittest.TestCase):
         # EVENT
 
     def testEventClassExists(self):
-        self.assertIsNotNone(Event())
+        self.assertIsNotNone(Event(None))
 
-    def testEventIsTypeNone(self):
-        self.assertEquals(Event().TYPE, None)
+    def testEventHasType(self):
+        self.assertEquals(Event('some').TYPE, 'some')
 
 
     # DATA HANDLER

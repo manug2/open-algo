@@ -2,20 +2,16 @@ import sys
 
 sys.path.append('../../main')
 import unittest
-import queue
 
 from com.open.algo.utils import get_time
 from com.open.algo.dummy import *
 from com.open.algo.trading.fxEvents import *
-from com.open.algo.eventLoop import Journaler
-from com.open.algo.model import EVENT_TYPES_ORDER
+from com.open.algo.utils import EVENT_TYPES_ORDER
 
 
 class TestDummyBuyStrategy(unittest.TestCase):
     def setUp(self):
-        self.events = queue.Queue()
-        self.journaler = Journaler()
-        self.strategy = DummyBuyStrategy(self.events, 100, self.journaler)
+        self.strategy = DummyBuyStrategy(100)
 
         # ticks and events for testing
         self.tick = TickEvent('EUR_GBP', get_time(), 0.87, 0.88)
@@ -26,11 +22,10 @@ class TestDummyBuyStrategy(unittest.TestCase):
         pass
 
     def test_should_calculate_signals(self):
-        self.strategy.calculate_signals(self.tick)
-        outEvent = self.journaler.get_last_event()
-        self.assertEquals(self.tick.instrument, outEvent.instrument)
-        self.assertEquals(outEvent.TYPE, EVENT_TYPES_ORDER)
-        self.assertEquals(self.strategy.units, outEvent.units)
+        order = self.strategy.calculate_signals(self.tick)
+        self.assertEquals(self.tick.instrument, order.instrument)
+        self.assertEquals(EVENT_TYPES_ORDER, order.TYPE)
+        self.assertEquals(self.strategy.units, order.units)
 
     def test_should_have_signaled_positions(self):
         self.assertIsNotNone(self.strategy.get_signaled_positions())
@@ -57,24 +52,24 @@ class TestDummyBuyStrategy(unittest.TestCase):
         self.assertDictEqual(
             {'EUR_GBP': self.strategy.units, 'EUR_USD': self.strategy.units}, self.strategy.get_signaled_positions())
 
-    def test_should_raise_error_when_rejected_with_wrong_event_type(self):
+    def test_should_raise_error_when_ack_with_wrong_event_type(self):
         self.strategy.calculate_signals(self.tick)
         self.assertEqual(self.strategy.units, self.strategy.get_signaled_position('EUR_GBP'))
         reject_order = OrderEvent('EUR_GBP', self.strategy.units, ORDER_SIDE_BUY)
         try:
-            self.strategy.acknowledge_rejection(reject_order)
+            self.strategy.acknowledge(reject_order)
             self.fail('should have failed as event\'s "%s" field should be "%s, found "%s"'
                       % ('TYPE', EVENT_TYPES_REJECTED, reject_order.TYPE))
         except ValueError:
             pass
         self.assertEqual(self.strategy.units, self.strategy.get_signaled_position('EUR_GBP'))
 
-    def test_should_maintain_signaled_position_when_rejected_with_wrong_event_type(self):
+    def test_should_maintain_signaled_position_when_ack_with_wrong_event_type(self):
         self.strategy.calculate_signals(self.tick)
         self.assertEqual(self.strategy.units, self.strategy.get_signaled_position('EUR_GBP'))
         reject_order = OrderEvent('EUR_GBP', self.strategy.units, ORDER_SIDE_BUY)
         try:
-            self.strategy.acknowledge_rejection(reject_order)
+            self.strategy.acknowledge(reject_order)
             self.fail('should have failed as event\'s "%s" field should be "%s, found "%s"'
                       % ('TYPE', EVENT_TYPES_REJECTED, reject_order.TYPE))
         except ValueError:
@@ -133,36 +128,44 @@ class TestDummyBuyStrategy(unittest.TestCase):
         self.assertDictEqual(
             {'EUR_GBP': self.strategy.units, 'EUR_USD': self.strategy.units}, self.strategy.get_open_interests())
 
+    def test_should_give_open_interest_for_instrument_when_acknowledge_with_executed_order(self):
+        self.strategy.calculate_signals(self.tick)
+        self.strategy.acknowledge(self.executed_order)
+        self.assertIsInstance(self.strategy.get_open_interest('EUR_GBP'), int, 'should have been "int" type')
+
+    def test_should_have_no_signaled_positions_when_acknowledged_with_rejection(self):
+        self.strategy.calculate_signals(self.tick)
+        self.assertEqual(self.strategy.units, self.strategy.get_signaled_position('EUR_GBP'))
+        reject_order = OrderEvent('EUR_GBP', self.strategy.units, ORDER_SIDE_BUY)
+        reject_order.TYPE = EVENT_TYPES_REJECTED
+        self.strategy.acknowledge(reject_order)
+        self.assertEqual(0, self.strategy.get_signaled_position('EUR_GBP'))
+
 
 class TestRandomStrategy(unittest.TestCase):
     def setUp(self):
-        self.events = queue.Queue()
-        self.journaler = Journaler()
-        self.strategy = BuyOrSellAt5thTickStrategy(self.events, 100, self.journaler)
+        self.strategy = BuyOrSellAt5thTickStrategy(100)
 
     def testSetup(self):
         pass
 
-    def testCalcSignalsWithOneEvent(self):
+    def test_should_not_give_order_on_first_tick(self):
         tick = TickEvent("EUR_GBP", get_time(), 0.87, 0.88)
-        self.strategy.calculate_signals(tick)
-        outEvent = self.journaler.get_last_event()
-        self.assertEquals(tick, outEvent)
+        order = self.strategy.calculate_signals(tick)
+        self.assertIsNone(order)
 
-    def testCalcSignalsWithOneEvent(self):
+    def test_should_give_order_when_calculating_5_ticks(self):
         for i in range(1, 5):
             tick = TickEvent("EUR_GBP", get_time(), 0.87 + i, 0.88 + i)
-            self.strategy.calculate_signals(tick)
-            outEvent = self.journaler.get_last_event()
-            self.assertEquals(None, outEvent)
+            order = self.strategy.calculate_signals(tick)
+            self.assertEquals(None, order)
 
         tick = TickEvent("EUR_GBP", get_time(), 0.874, 0.885)
-        self.strategy.calculate_signals(tick)
-        outEvent = self.journaler.get_last_event()
+        order = self.strategy.calculate_signals(tick)
 
-        self.assertIsNotNone(outEvent)
-        self.assertEquals(tick.instrument, outEvent.instrument)
-        self.assertEquals(outEvent.TYPE, EVENT_TYPES_ORDER)
-        self.assertEquals(self.strategy.units, outEvent.units)
+        self.assertIsNotNone(order)
+        self.assertEquals(tick.instrument, order.instrument)
+        self.assertEquals(order.TYPE, EVENT_TYPES_ORDER)
+        self.assertEquals(self.strategy.units, order.units)
 
 

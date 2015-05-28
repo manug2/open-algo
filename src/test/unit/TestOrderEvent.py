@@ -5,7 +5,7 @@ import unittest
 
 from com.open.algo.trading.fxEvents import OrderEvent, ExecutedOrder, ORDER_SIDE_BUY, ORDER_SIDE_SELL
 from com.open.algo.trading.fxEvents import ORDER_TYPE_LIMIT, ORDER_TYPE_MARKET
-from com.open.algo.model import EVENT_TYPES_ORDER, EVENT_TYPES_FILL
+from com.open.algo.utils import EVENT_TYPES_ORDER
 
 
 class TestOrderEvents(unittest.TestCase):

@@ -1,4 +1,4 @@
-from com.open.algo.trading.fxEvents import EVENT_TYPES_ORDER, EVENT_TYPES_FILL, EVENT_TYPES_TICK
+from com.open.algo.utils import EVENT_TYPES_ORDER, EVENT_TYPES_TICK
 
 
 class AlgoTrader:
@@ -10,7 +10,7 @@ class AlgoTrader:
     def process(self, event):
         try:
             if event.TYPE == EVENT_TYPES_TICK:
-                self.strategy.calculate_signals(event)
+                return self.strategy.calculate_signals(event)
             elif event.TYPE == EVENT_TYPES_ORDER:
                 self.executor.execute_order(event)
             else:
