@@ -105,3 +105,36 @@ class TestOrderEvents(unittest.TestCase):
 
     def test_should_have_orig_units(self):
         self.assertEquals(OrderEvent('ABC', 1, ORDER_SIDE_SELL, order_type='limit').orig_units, 1)
+
+    def test_should_have_orig_units_after_filter(self):
+        order = OrderEvent('ABC', 1, ORDER_SIDE_SELL, order_type='limit')
+        order.units = 0
+        self.assertEquals(order.orig_units, 1)
+
+    def test_should_get_units_with_sign_buy(self):
+        self.assertEquals(OrderEvent('ABC', 1, ORDER_SIDE_BUY, order_type='limit').get_units_from_order(), 1)
+
+    def test_should_get_units_with_sign_sell(self):
+        self.assertEquals(OrderEvent('ABC', 1, ORDER_SIDE_SELL, order_type='limit').get_units_from_order(), -1)
+
+    def test_should_get_orig_units_with_sign_buy(self):
+        self.assertEquals(OrderEvent('ABC', 1, ORDER_SIDE_BUY, order_type='limit').get_orig_units_from_order(), 1)
+
+    def test_should_get_orig_units_with_sign_sell(self):
+        self.assertEquals(OrderEvent('ABC', 1, ORDER_SIDE_SELL, order_type='limit').get_orig_units_from_order(), -1)
+
+    def test_should_get_orig_units_with_sign_buy(self):
+        self.assertEquals(OrderEvent('ABC', 1, ORDER_SIDE_BUY, order_type='limit').get_orig_units_from_order(), 1)
+
+    def test_should_get_orig_units_with_sign_sell(self):
+        self.assertEquals(OrderEvent('ABC', 1, ORDER_SIDE_SELL, order_type='limit').get_orig_units_from_order(), -1)
+
+    def test_should_get_orig_units_with_sign_buy_after_filter(self):
+        order = OrderEvent('ABC', 1, ORDER_SIDE_BUY, order_type='limit')
+        order.units = 0
+        self.assertEquals(order.get_orig_units_from_order(), 1)
+
+    def test_should_get_orig_units_with_sign_sell_after_filter(self):
+        order = OrderEvent('ABC', 1, ORDER_SIDE_SELL, order_type='limit')
+        order.units = 0
+        self.assertEquals(order.get_orig_units_from_order(), -1)

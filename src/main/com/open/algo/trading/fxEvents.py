@@ -8,20 +8,6 @@ ORDER_TYPE_MARKET = 'market'
 ORDER_TYPE_LIMIT = 'limit'
 
 
-def get_units_from_order(order):
-    if order.side == ORDER_SIDE_BUY:
-        return order.units
-    else:
-        return -order.units
-
-
-def get_orig_units_from_order(order):
-    if order.side == ORDER_SIDE_BUY:
-        return order.orig_units
-    else:
-        return -order.orig_units
-
-
 class TickEvent(Event):
     def __init__(self, instrument, time, bid, ask):
         self.TYPE = EVENT_TYPES_TICK
@@ -73,6 +59,18 @@ class OrderEvent(Event):
                 msg = '%s, %s=%s' % (msg, attr, value)
         msg += ')'
         return msg
+
+    def get_units_from_order(self):
+        if self.side == ORDER_SIDE_BUY:
+            return self.units
+        else:
+            return -self.units
+
+    def get_orig_units_from_order(self):
+        if self.side == ORDER_SIDE_BUY:
+            return self.orig_units
+        else:
+            return -self.orig_units
 
 
 class ExecutedOrder(Event):
