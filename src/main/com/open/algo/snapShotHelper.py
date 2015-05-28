@@ -10,15 +10,15 @@ class SnapShotHelper():
         pass
 
     def create_portfolio_snap_shot(self, portfolio):
-        portfolio_snap_shot = dict()
-        portfolio_snap_shot['base_ccy'] = portfolio.get_base_ccy()
-        portfolio_snap_shot['opening_balance'] = portfolio.opening_balance
-        portfolio_snap_shot['balance'] = portfolio.get_balance()
-        portfolio_snap_shot['realized_pnl'] = portfolio.get_realized_pnl()
-        portfolio_snap_shot['positions'] = portfolio.positions
-        portfolio_snap_shot['executions'] = portfolio.executions
-        portfolio_snap_shot['avg_price'] = portfolio.positions_avg_price
-        return portfolio_snap_shot
+        snap_shot = dict()
+        snap_shot['base_ccy'] = portfolio.get_base_ccy()
+        snap_shot['opening_balance'] = portfolio.opening_balance
+        snap_shot['balance'] = portfolio.get_balance()
+        snap_shot['realized_pnl'] = portfolio.get_realized_pnl()
+        snap_shot['positions'] = portfolio.positions
+        snap_shot['executions'] = portfolio.executions
+        snap_shot['avg_price'] = portfolio.positions_avg_price
+        return snap_shot
 
     def load_portfolio_snap_shot(self, snap_shot):
         if not isinstance(snap_shot, dict):
@@ -58,3 +58,25 @@ class SnapShotHelper():
 
         return portfolio
 
+    def create_snap_shot_from_strategy(self, strategy):
+        snap_shot = dict()
+        snap_shot['signaled_positions'] = strategy.get_signaled_positions()
+        snap_shot['open_interests'] = strategy.get_open_interests()
+        return snap_shot
+
+
+    def load_snap_shot_into_strategy(self, snap_shot, strategy):
+        if not isinstance(snap_shot, dict):
+            raise TypeError('Expecting dictionary to load strategy snap shot, found [%s]' % type(snap_shot))
+
+        if 'signaled_positions' not in snap_shot:
+            raise ValueError('Expecting [%s] key in load portfolio snap shot dictionary, not found in keys [%s]'
+                             % ('signaled_positions', snap_shot.keys()))
+        elif 'open_interests' not in snap_shot:
+            raise ValueError('Expecting [%s] key in load portfolio snap shot dictionary, not found in keys [%s]'
+                             % ('open_interests', snap_shot.keys()))
+
+        signaled_positions = snap_shot['signaled_positions']
+        strategy.signaled_positions = signaled_positions
+        open_interests = snap_shot['open_interests']
+        strategy.open_interests = open_interests
