@@ -185,6 +185,14 @@ class Strategy(EventHandler):
     def get_open_interest(self, instrument):
         raise NotImplementedError('sub-classes should implement this')
 
+    @abstractmethod
+    def get_signaled_positions(self):
+        raise NotImplementedError('sub-classes should implement this')
+
+    @abstractmethod
+    def get_signaled_position(self, instrument):
+        raise NotImplementedError('sub-classes should implement this')
+
     def process(self, event):
         if event.TYPE == EVENT_TYPES_TICK:
             self.calculate_signals(event)
