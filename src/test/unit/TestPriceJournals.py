@@ -7,7 +7,8 @@ import unittest
 from com.open.algo.eventLoop import *
 import os
 from threading import Thread
-import queue, threading, time
+import threading, time
+from queue import Queue
 from com.open.algo.oanda.streaming import *
 
 TARGET_ENV = "practice"
@@ -17,7 +18,7 @@ OA_OUTPUT_DIR = '../output/'
 class TestPriceJournals(unittest.TestCase):
 
     def setUp(self):
-        self.filename = os.path.join(OA_OUTPUT_DIR, 'journal_oanda_tick_ut.txt')
+        self.filename = os.path.join(OA_OUTPUT_DIR, 'journal_tick_ut.txt')
         try:
             os.remove(self.filename)
         except OSError:
@@ -29,8 +30,9 @@ class TestPriceJournals(unittest.TestCase):
         self.tick_event = parse_tick(self.tick_json)
 
         self.write_q = Queue()
-        self.journaler = FileJournaler(full_path=self.filename)
-        self.looper = EventLoop(self.write_q, self.journaler)
+        self.journal_q = Queue()
+        self.journaler = FileJournaler(self.journal_q, full_path=self.filename)
+        self.looper = EventLoop(self.journal_q, self.journaler)
         self.loop_thread = Thread(target=self.looper.start, args=[])
 
         self.read_q = Queue()
@@ -38,11 +40,27 @@ class TestPriceJournals(unittest.TestCase):
 
     def test_should_allow_to_read_oanda_tick_journals_from_file(self):
         print('writing..')
+        self.looper.started = True
+        self.journaler.start()
+        self.journaler.log_event(self.tick_str)
+        self.looper.pull_process()
+        self.journaler.stop()
+
+        print('reading..')
+        self.reader.read_events()
+        try:
+            ev_str = self.read_q.get_nowait()
+            self.assertEqual(self.tick_str, ev_str)
+        except Empty:
+            self.fail('expecting a message from read queue')
+
+    def test_should_allow_to_read_oanda_tick_journals_from_file_using_thread(self):
+        print('writing..')
         self.loop_thread.start()
-        self.write_q.put_nowait(self.tick_str)
-        time.sleep(2*self.looper.heartbeat)
+        self.journaler.log_event(self.tick_str)
+        time.sleep(3*self.looper.heartbeat)
         self.looper.stop()
-        self.loop_thread.join(2*self.looper.heartbeat)
+        self.loop_thread.join(3*self.looper.heartbeat)
 
         print('reading..')
         self.reader.read_events()
@@ -54,11 +72,11 @@ class TestPriceJournals(unittest.TestCase):
 
     def test_should_allow_to_read_oanda_tick_journals_from_file_when_loaded_as_json(self):
         print('writing..')
-        self.loop_thread.start()
-        self.write_q.put_nowait(self.tick_str)
-        time.sleep(2*self.looper.heartbeat)
-        self.looper.stop()
-        self.loop_thread.join(2*self.looper.heartbeat)
+        self.looper.started = True
+        self.journaler.start()
+        self.journaler.log_event(self.tick_str)
+        self.looper.pull_process()
+        self.journaler.stop()
 
         print('reading..')
         self.reader.read_events()
@@ -71,11 +89,11 @@ class TestPriceJournals(unittest.TestCase):
 
     def test_should_allow_to_read_oanda_tick_journals_from_file_when_loaded_as_tick_event(self):
         print('writing..')
-        self.loop_thread.start()
-        self.write_q.put_nowait(self.tick_str)
-        time.sleep(2*self.looper.heartbeat)
-        self.looper.stop()
-        self.loop_thread.join(2*self.looper.heartbeat)
+        self.looper.started = True
+        self.journaler.start()
+        self.journaler.log_event(self.tick_str)
+        self.looper.pull_process()
+        self.journaler.stop()
 
         print('reading..')
         self.reader.read_events()

@@ -1,7 +1,7 @@
 __author__ = 'ManuGarg'
 
 from abc import abstractmethod
-from queue import Empty, Queue, Full
+from queue import Empty, Full
 import sys
 from com.open.algo.model import ExceptionEvent
 from com.open.algo.utils import EventHandler, get_time
@@ -92,28 +92,29 @@ class Journaler(object):
 
 class FileJournaler(Journaler, EventHandler):
 
-    def __init__(self, full_path=None, name_scheme=None):
+    def __init__(self, events_q, full_path=None, name_scheme=None):
         self.lastEvent = None
         self.writer = None
-        self.events = None
+        self.events = events_q
         assert full_path is not None or name_scheme is not None, 'both full path and name scheme cannot be None'
         self.full_path = full_path
         self.name_scheme = name_scheme
 
     def log_event(self, event):
         try:
-            self.events.put_nowait(event)
+            msg = {'time': get_time(), 'event': event}
+            self.events.put_nowait(msg)
         except Full:
             print('WARNING: Count not journal event [%s] as queue is full' % event)
         self.lastEvent = event
 
     def process(self, event):
-        msg = {'time': get_time(), 'event': event}
-        json.dump(msg, self.writer)
+        json.dump(event, self.writer)
+        # self.writer.write(os.linesep)
+        self.writer.flush()
 
     def start(self):
         if self.writer is None:
-            self.events = Queue()
             fp = self.full_path
             if fp is None:
                 fp = self.name_scheme.get_file_name()

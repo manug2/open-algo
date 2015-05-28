@@ -79,7 +79,8 @@ class TestStreaming(unittest.TestCase):
             os.remove(filename)
         except OSError:
             pass
-        journaler = FileJournaler(full_path=filename)
+        journal_q = queue.Queue()
+        journaler = FileJournaler(journal_q, full_path=filename)
 
         domain = ENVIRONMENTS['streaming'][TARGET_ENV]
         settings = read_settings(CONFIG_PATH_FOR_DETAIL_UNIT_TESTS, TARGET_ENV)
@@ -90,8 +91,7 @@ class TestStreaming(unittest.TestCase):
             domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'],
             'EUR_USD', ticks_q, hb_q, journaler, None)
 
-        write_q = queue.Queue()
-        looper = EventLoop(write_q, journaler)
+        looper = EventLoop(journal_q, journaler)
         loop_thread = Thread(target=looper.start, args=[])
         loop_thread.start()
         price_thread = Thread(target=prices.stream, args=[])

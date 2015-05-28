@@ -4,7 +4,7 @@ import sys
 
 sys.path.append('../../main')
 import unittest
-
+from queue import Queue
 from threading import Thread
 import time
 from com.open.algo.eventLoop import *
@@ -151,7 +151,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(full_path=filename)
+        journaler = FileJournaler(Queue(), full_path=filename)
         journaler.start()
         journaler.log_event('this is a test event #1')
         journaler.log_event('this is a test event #2')
@@ -171,7 +171,7 @@ class TestFileJounaler(unittest.TestCase):
             pass
 
         print('writing..')
-        journaler = FileJournaler(full_path=filename)
+        journaler = FileJournaler(Queue(), full_path=filename)
         journaler.start()
         event = 'this is a test event #1'
         journaler.log_event(event)
@@ -196,7 +196,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(full_path=filename)
+        journaler = FileJournaler(Queue(), full_path=filename)
         journaler.start()
         journaler.stop()
         self.assertTrue(os.path.exists(filename))
@@ -221,7 +221,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(name_scheme=scheme)
+        journaler = FileJournaler(Queue(), name_scheme=scheme)
         journaler.start()
         journaler.stop()
         self.assertTrue(os.path.exists(filename))
@@ -235,7 +235,7 @@ class TestFileJounaler(unittest.TestCase):
             pass
 
         eq = Queue()
-        journaler = FileJournaler(name_scheme=scheme)
+        journaler = FileJournaler(eq, name_scheme=scheme)
         looper = EventLoop(eq, journaler)
         loop_thread = Thread(target=looper.start, args=[])
         loop_thread.start()
