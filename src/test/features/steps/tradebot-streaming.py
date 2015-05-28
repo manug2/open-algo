@@ -1,28 +1,22 @@
 from behave import *
-import queue, time, threading
-from datetime import datetime
+
+from com.open.algo.utils import get_time
 from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.dummy import DummyBuyStrategy, DummyExecutor
-from com.open.algo.eventLoop import EventLoop, Journaler
+from com.open.algo.eventLoop import EventLoop
 from com.open.algo.trading.fxEvents import *
 import sys
 
 
-@given('we have an event stream')
-def step_impl(context):
-    context.events = queue.Queue()
-    context.journaler = Journaler()
-
-
 @given('we are using a dummy strategy and executor')
 def step_impl(context):
-    context.strategy = DummyBuyStrategy(context.events, 100, context.journaler)
+    context.strategy = DummyBuyStrategy(100)
     context.executor = DummyExecutor()
 
 
 @given('we are using a dummy strategy')
 def step_impl(context):
-    context.strategy = DummyBuyStrategy(context.events, 100, context.journaler)
+    context.strategy = DummyBuyStrategy(100)
 
 
 @given('we are using a dummy executor')
@@ -33,24 +27,11 @@ def step_impl(context):
 @given('we have a trading bot')
 def step_impl(context):
     context.trader = AlgoTrader(None, context.strategy, context.executor)
-    context.trader_bot = EventLoop(context.events, context.trader, 0.5)
+    context.trader_bot = EventLoop(context.events, context.trader, processed_event_q=context.events)
 
 
-@given('bot is trading in a thread')
+@when('trading bot is stopped')
 def step_impl(context):
-    context.trade_thread = threading.Thread(target=context.trader_bot.start, args=[])
-    context.trade_thread.start()
-
-
-@when('bot trading thread is stopped')
-def step_impl(context):
-    context.trader_bot.stop()
-    time.sleep(0.5)
-
-
-@when('bot trading is stopped')
-def step_impl(context):
-    context.trader_bot.pull_process()
     context.trader_bot.started = False
 
 
@@ -64,20 +45,21 @@ def step_impl(context):
     pass
 
 
-@then('trader generates no output')
+@then('executor receives no order')
 def step_impl(context):
-    le = context.journaler.get_last_event()
-    assert le is None, 'journaler wrongly logged event when none was expected [%s]' % le
+    le = context.executor.get_last_event()
+    assert le is None, 'executor wrongly logged event when none was expected [%s]' % le
 
 
 @when('we input a price tick event')
 def step_impl(context):
-    context.events.put(TickEvent('EUR_GBP', str(datetime.now()), 0.87, 0.88))
+    context.events.put(TickEvent('EUR_GBP', get_time(), 0.87, 0.88))
 
 
-@then('bot generates an order')
+@then('executor receives an order')
 def step_impl(context):
-    assert context.journaler.get_last_event() is not None, 'journaler did not log any event'
+    le = context.executor.get_last_event()
+    assert le is not None, 'executor did not get any event'
 
 
 @when('we input an invalid event')
@@ -91,9 +73,4 @@ def step_impl(context):
     try:
         context.trader_bot.pull_process()
     except:
-        print('Expected error-%s' % sys.exc_info()[0])
-    finally:
-        context.trader_bot.started = False
-
-
-
+        print('Unexpected error-%s' % sys.exc_info()[0])

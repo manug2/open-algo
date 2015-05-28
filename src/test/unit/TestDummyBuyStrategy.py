@@ -145,6 +145,7 @@ class TestDummyBuyStrategy(unittest.TestCase):
 class TestRandomStrategy(unittest.TestCase):
     def setUp(self):
         self.strategy = BuyOrSellAt5thTickStrategy(100)
+        self.tick = TickEvent('EUR_GBP', get_time(), 0.87, 0.88)
 
     def testSetup(self):
         pass
@@ -156,11 +157,11 @@ class TestRandomStrategy(unittest.TestCase):
 
     def test_should_give_order_when_calculating_5_ticks(self):
         for i in range(1, 5):
-            tick = TickEvent("EUR_GBP", get_time(), 0.87 + i, 0.88 + i)
+            tick = TickEvent('EUR_GBP', get_time(), 0.87 + i, 0.88 + i)
             order = self.strategy.calculate_signals(tick)
             self.assertEquals(None, order)
 
-        tick = TickEvent("EUR_GBP", get_time(), 0.874, 0.885)
+        tick = TickEvent('EUR_GBP', get_time(), 0.874, 0.885)
         order = self.strategy.calculate_signals(tick)
 
         self.assertIsNotNone(order)
@@ -168,4 +169,32 @@ class TestRandomStrategy(unittest.TestCase):
         self.assertEquals(order.TYPE, EVENT_TYPES_ORDER)
         self.assertEquals(self.strategy.units, order.units)
 
+    def test_should_give_open_interest_for_instrument_when_acknowledge_with_executed_order(self):
+        for i in range(1, 5):
+            tick = TickEvent('EUR_GBP', get_time(), 0.87 + i, 0.88 + i)
+            order = self.strategy.calculate_signals(tick)
+            self.assertEquals(None, order)
+
+        order = self.strategy.calculate_signals(self.tick)
+        executed_order = ExecutedOrder(order, 1.1, self.strategy.units)
+        self.strategy.acknowledge(executed_order)
+        self.assertIsInstance(self.strategy.get_open_interest('EUR_GBP'), int, 'should have been "int" type')
+
+    def test_should_have_no_signaled_positions_when_acknowledged_with_rejection(self):
+        for i in range(1, 5):
+            tick = TickEvent('EUR_GBP', get_time(), 0.87 + i, 0.88 + i)
+            order = self.strategy.calculate_signals(tick)
+            self.assertEquals(None, order)
+
+        self.strategy.calculate_signals(self.tick)
+        units = self.strategy.get_signaled_position('EUR_GBP')
+        if units > 0:
+            side = ORDER_SIDE_BUY
+        else:
+            side = ORDER_SIDE_SELL
+        self.assertEqual(self.strategy.units, abs(units))
+        reject_order = OrderEvent('EUR_GBP', self.strategy.units, side)
+        reject_order.TYPE = EVENT_TYPES_REJECTED
+        self.strategy.acknowledge(reject_order)
+        self.assertEqual(0, self.strategy.get_signaled_position('EUR_GBP'))
 

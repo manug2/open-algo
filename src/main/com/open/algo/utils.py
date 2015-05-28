@@ -49,18 +49,18 @@ class EventHandler:
 
     @abstractmethod
     def start(self):
-        print('Nothing to start!')
+        print('Nothing to start! - [%s]' % str(self))
 
     @abstractmethod
     def stop(self):
-        print('Nothing to stop!')
+        print('Nothing to stop! - [%s]' % str(self))
 
     @abstractmethod
     def process(self, event):
         if event is None:
-            raise NotImplementedError('Cannot handle None event')
+            raise NotImplementedError('Cannot handle None event - [%s]' % str(self))
         else:
-            print('Nothing to do, ignoring all events [%s]!' % event)
+            print('I [%s] have nothing to do, ignoring all events [%s]!' % (str(self), event))
             return event
 
     def __init__(self):

@@ -5,7 +5,12 @@ sys.path.append('../main/')
 from com.open.algo.trading.fxEvents import *
 from com.open.algo.eventLoop import Journaler
 from behave import *
+from queue import Queue
 
+
+@given('we have an event stream')
+def step_impl(context):
+    context.events = Queue()
 # events
 @given('we want to trade')
 def step_impl(context):
@@ -42,7 +47,7 @@ def step_impl(context):
 
 @when('we want to log event')
 def step_impl(context):
-    context.event = Event()
+    context.event = Event('dummy')
 
 
 @then('there is a journaler')

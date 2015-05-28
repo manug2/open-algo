@@ -1,8 +1,9 @@
-from com.open.algo.utils import EVENT_TYPES_ORDER, EVENT_TYPES_TICK
+from com.open.algo.utils import EventHandler, EVENT_TYPES_ORDER, EVENT_TYPES_TICK
 
 
-class AlgoTrader:
+class AlgoTrader(EventHandler):
     def __init__(self, prices, strategy, executor):
+        super(AlgoTrader, self).__init__()
         self.prices = prices
         self.strategy = strategy
         self.executor = executor

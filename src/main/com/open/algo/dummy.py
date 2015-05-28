@@ -25,8 +25,8 @@ class BuyOrSellAt5thTickStrategy(AbstractStrategy):
         self.ticks += 1
         if self.ticks % 5 == 0:
             side = random.choice([ORDER_SIDE_BUY, ORDER_SIDE_SELL])
-            order = OrderEvent(
-                event.instrument, self.units, side)
+            order = OrderEvent(event.instrument, self.units, side)
+            self.update_signaled_position(order.instrument, order.get_signed_units())
             return order
 
 
