@@ -10,6 +10,7 @@ from threading import Thread
 import threading, time
 from queue import Queue
 from com.open.algo.oanda.streaming import *
+from com.open.algo.utils import get_time
 
 TARGET_ENV = "practice"
 OA_OUTPUT_DIR = '../output/'
@@ -27,7 +28,7 @@ class TestPriceJournals(unittest.TestCase):
         self.tick_str = \
             '{"tick": {"instrument": "EUR_USD", "time": "2015-05-08T20:59:45.031348Z", "bid": 1.11975, "ask": 1.12089}}'
         self.tick_json = json.loads(self.tick_str)
-        self.tick_event = parse_tick(self.tick_json)
+        self.tick_event = parse_tick(None, self.tick_json)
 
         self.write_q = Queue()
         self.journal_q = Queue()
@@ -42,9 +43,9 @@ class TestPriceJournals(unittest.TestCase):
         print('writing..')
         self.looper.started = True
         self.journaler.start()
-        self.journaler.log_event(self.tick_str)
+        self.journaler.log_event(get_time(), self.tick_str)
         self.looper.pull_process()
-        self.journaler.stop()
+        self.journaler.close()
 
         print('reading..')
         self.reader.read_events()
@@ -57,7 +58,7 @@ class TestPriceJournals(unittest.TestCase):
     def test_should_allow_to_read_oanda_tick_journals_from_file_using_thread(self):
         print('writing..')
         self.loop_thread.start()
-        self.journaler.log_event(self.tick_str)
+        self.journaler.log_event(get_time(), self.tick_str)
         time.sleep(3*self.looper.heartbeat)
         self.looper.stop()
         self.loop_thread.join(3*self.looper.heartbeat)
@@ -74,7 +75,7 @@ class TestPriceJournals(unittest.TestCase):
         print('writing..')
         self.looper.started = True
         self.journaler.start()
-        self.journaler.log_event(self.tick_str)
+        self.journaler.log_event(get_time(), self.tick_str)
         self.looper.pull_process()
         self.journaler.stop()
 
@@ -91,7 +92,7 @@ class TestPriceJournals(unittest.TestCase):
         print('writing..')
         self.looper.started = True
         self.journaler.start()
-        self.journaler.log_event(self.tick_str)
+        self.journaler.log_event(get_time(), self.tick_str)
         self.looper.pull_process()
         self.journaler.stop()
 
@@ -100,7 +101,7 @@ class TestPriceJournals(unittest.TestCase):
         try:
             ev_str = self.read_q.get_nowait()
             ev_json = json.loads(ev_str)
-            ev_tick = parse_tick(ev_json)
+            ev_tick = parse_tick(None, ev_json)
             self.assertEqual(self.tick_event, ev_tick)
         except Empty:
             self.fail('expecting a message from read queue')

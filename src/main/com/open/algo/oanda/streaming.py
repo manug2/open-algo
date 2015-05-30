@@ -4,29 +4,30 @@ import json
 from com.open.algo.trading.fxEvents import TickEvent
 from com.open.algo.model import StreamDataProvider, ExceptionEvent, Heartbeat
 from queue import Full
+from com.open.algo.utils import get_time
 
 
-def parse_tick(msg):
+def parse_tick(receive_time, msg):
     tick = msg["tick"]
     instrument = tick["instrument"]
     time = tick["time"]
     bid = tick["bid"]
     ask = tick["ask"]
-    tev = TickEvent(instrument, time, bid, ask)
+    tev = TickEvent(instrument, time, bid, ask, receive_time)
     return tev
 
 
-def parse_heartbeat(msg):
-    hb_info = msg["heartbeat"]
-    hb = Heartbeat('oanda-stream')
+def parse_heartbeat(receive_time, msg):
+    sent_time = msg["heartbeat"]["time"]
+    hb = Heartbeat('oanda-stream', receive_time, sent_time)
     return hb
 
 
-def parse_event(msg):
+def parse_event(receive_time, msg):
     if "tick" in msg:
-        return parse_tick(msg)
+        return parse_tick(receive_time, msg)
     elif "heartbeat" in msg:
-        return parse_heartbeat(msg)
+        return parse_heartbeat(receive_time, msg)
     else:
         raise ValueError('Unexpected message received')
 
@@ -76,10 +77,11 @@ class StreamingForexPrices(StreamDataProvider):
             if line:
                 parsed_event = None
                 try:
+                    receive_time = get_time()
                     line_str = line.decode("utf-8")
-                    self.journaler.log_event(line_str)
+                    self.journaler.log_event(receive_time, line_str)
                     msg = json.loads(line_str)
-                    parsed_event = parse_event(msg)
+                    parsed_event = parse_event(receive_time, msg)
                 except Exception as e:
                     exm = 'Cannot parse line from streaming response - [%s], error [%s]' % (line, e)
                     try:

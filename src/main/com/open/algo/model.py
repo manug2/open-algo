@@ -186,10 +186,12 @@ class CurrencyRiskManager(RiskManager):
 
 
 class Heartbeat(Event):
-    def __init__(self, alias):
+    def __init__(self, alias, receive_time, sent_time):
         super(Heartbeat, self).__init__('HB')
         self.alias = alias
+        self.receive_time = receive_time
+        self.sent_time = sent_time
 
     def to_string(self):
-        return '%s[%s]' % (self.__class__.__name__, self.alias)
+        return '%s[%s(received=%s, sent=%s)]' % (self.__class__.__name__, self.alias, self.receive_time, self.sent_time)
 

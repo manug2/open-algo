@@ -9,7 +9,7 @@ ORDER_TYPE_LIMIT = 'limit'
 
 
 class TickEvent(Event):
-    def __init__(self, instrument, time, bid, ask):
+    def __init__(self, instrument, time, bid, ask, received_time=None):
         super(TickEvent, self).__init__(EVENT_TYPES_TICK)
         self.instrument = instrument
         self.time = time

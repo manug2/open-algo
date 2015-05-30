@@ -9,6 +9,7 @@ from threading import Thread
 import time
 from com.open.algo.eventLoop import *
 import os
+from com.open.algo.utils import get_time
 OUTPUT_DIR = '../output/'
 
 
@@ -153,14 +154,14 @@ class TestFileJounaler(unittest.TestCase):
 
         journaler = FileJournaler(Queue(), full_path=filename)
         journaler.start()
-        journaler.log_event('this is a test event #1')
-        journaler.log_event('this is a test event #2')
-        journaler.log_event('this is a test event #3')
-        journaler.log_event('this is a test event #4')
-        journaler.log_event('this is a test event #5')
+        journaler.log_event(get_time(), 'this is a test event #1')
+        journaler.log_event(get_time(), 'this is a test event #2')
+        journaler.log_event(get_time(), 'this is a test event #3')
+        journaler.log_event(get_time(), 'this is a test event #4')
+        journaler.log_event(get_time(), 'this is a test event #5')
 
         time.sleep(0.2)
-        journaler.stop()
+        journaler.close()
         print('exit')
 
     def test_should_allow_to_read_string_journals(self):
@@ -174,10 +175,10 @@ class TestFileJounaler(unittest.TestCase):
         journaler = FileJournaler(Queue(), full_path=filename)
         journaler.start()
         event = 'this is a test event #1'
-        journaler.log_event(event)
+        journaler.log_event(get_time(), event)
 
         time.sleep(0.2)
-        journaler.stop()
+        journaler.close()
         print('reading..')
 
         eq = Queue()
@@ -198,7 +199,7 @@ class TestFileJounaler(unittest.TestCase):
 
         journaler = FileJournaler(Queue(), full_path=filename)
         journaler.start()
-        journaler.stop()
+        journaler.close()
         self.assertTrue(os.path.exists(filename))
 
     def test_scheme_should_give_correct_name_for_default_path(self):
@@ -223,7 +224,7 @@ class TestFileJounaler(unittest.TestCase):
 
         journaler = FileJournaler(Queue(), name_scheme=scheme)
         journaler.start()
-        journaler.stop()
+        journaler.close()
         self.assertTrue(os.path.exists(filename))
 
     def test_should_allow_running_journal_in_an_event_loop(self):
@@ -240,9 +241,10 @@ class TestFileJounaler(unittest.TestCase):
         loop_thread = Thread(target=looper.start, args=[])
         loop_thread.start()
         event = 'this is a dummy event for running journaler in a evnt loop'
-        journaler.log_event(event)
+        journaler.log_event(get_time(), event)
         time.sleep(looper.heartbeat*2)
         journaler.stop()
         looper.stop()
         loop_thread.join(looper.heartbeat*2)
+        journaler.close()
         self.assertTrue(event, journaler.get_last_event())

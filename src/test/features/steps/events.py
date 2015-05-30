@@ -6,7 +6,7 @@ from com.open.algo.trading.fxEvents import *
 from com.open.algo.eventLoop import Journaler
 from behave import *
 from queue import Queue
-
+from com.open.algo.utils import get_time
 
 @given('we have an event stream')
 def step_impl(context):
@@ -58,17 +58,17 @@ def step_impl(context):
 
 @then('journaler can log event')
 def step_impl(context):
-    context.journaler.log_event(context.event)
+    context.journaler.log_event(get_time(), context.event)
 
 
 @when('we receive a tick')
 def step_impl(context):
     context.event = TickEvent('SGD_GBP', '', 1.0, 1.0)
-    context.journaler.log_event(context.event)
+    context.journaler.log_event(get_time(), context.event)
 
 
 @then('journaler logs show it as last event')
 def step_impl(context):
     assert context.event == context.journaler.get_last_event()
-    context.journaler.log_event(context.event)
+    context.journaler.log_event(get_time(), context.event)
 

@@ -90,22 +90,22 @@ class TestParse(unittest.TestCase):
         self.hb_json = json.loads(self.hb_str)
 
     def test_should_parse_tick_from_oanda(self):
-        parsed = parse_tick(self.tick_json)
+        parsed = parse_tick(get_time(), self.tick_json)
         self.assertIsNotNone(parsed)
         self.assertTrue(isinstance(parsed, TickEvent))
 
     def test_should_parse_heartbeat_from_oanda(self):
-        parsed = parse_heartbeat(self.hb_json)
+        parsed = parse_heartbeat(get_time(), self.hb_json)
         self.assertIsNotNone(parsed)
         self.assertTrue(isinstance(parsed, Heartbeat))
 
     def test_should_detect_and_parse_tick_from_oanda(self):
-        parsed = parse_event(self.tick_json)
+        parsed = parse_event(get_time(), self.tick_json)
         self.assertIsNotNone(parsed)
         self.assertTrue(isinstance(parsed, TickEvent))
 
     def test_should_detect_and_parse_heartbeat_from_oanda(self):
-        parsed = parse_event(self.hb_json)
+        parsed = parse_event(get_time(), self.hb_json)
         self.assertIsNotNone(parsed)
         self.assertTrue(isinstance(parsed, Heartbeat))
 
@@ -117,13 +117,13 @@ class TestParse(unittest.TestCase):
 
     def test_should_raise_error_when_event_is_string(self):
         try:
-            parse_event('this is an invalid event')
+            parse_event(None, 'this is an invalid event')
         except ValueError:
             pass
 
     def test_should_raise_error_when_event_does_not_have_tick_or_heartbeat(self):
         event = {'name': 'tick', 'value': 'hb'}
         try:
-            parse_event(event)
+            parse_event(None, event)
         except ValueError:
             pass

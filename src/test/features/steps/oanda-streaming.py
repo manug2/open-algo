@@ -87,10 +87,11 @@ def step_impl(context):
 @then('journaler logs input events')
 def step_impl(context):
     last_event_str = context.journaler.get_last_event()
+    last_received = context.journaler.get_last_received()
     last_event = json.loads(last_event_str)
-    print ('last event = %s' % last_event)
+    print('last event = %s' % last_event)
     assert last_event is not None
-    parsed = parse_event(last_event)
+    parsed = parse_event(last_received, last_event)
     assert isinstance(parsed, TickEvent) or isinstance(parsed, Heartbeat)
 
 
@@ -138,5 +139,5 @@ def step_impl(context, env, connection, instrument):
         get_price_streamer(context, connection, env, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], 'EUR_USD')
     price_thread = threading.Thread(target=context.streamer.stream, args=[])
     price_thread.start()
-    time.sleep(3)
+    time.sleep(3.5)
     context.streamer.stop()
