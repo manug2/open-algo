@@ -39,7 +39,7 @@ class TestPriceJournals(unittest.TestCase):
         self.read_q = Queue()
         self.reader = FileJournalerReader(self.read_q, full_path=self.filename)
 
-    def test_should_allow_to_read_oanda_tick_journals_from_file(self):
+    def test_should_allow_to_read_oanda_like_tick_journals_from_file(self):
         print('writing..')
         self.looper.started = True
         self.journaler.start()
@@ -55,7 +55,7 @@ class TestPriceJournals(unittest.TestCase):
         except Empty:
             self.fail('expecting a message from read queue')
 
-    def test_should_allow_to_read_oanda_tick_journals_from_file_using_thread(self):
+    def test_should_allow_to_read_oanda_like_tick_journals_from_file_using_thread(self):
         print('writing..')
         self.loop_thread.start()
         self.journaler.log_event(get_time(), self.tick_str)
@@ -88,7 +88,7 @@ class TestPriceJournals(unittest.TestCase):
         except Empty:
             self.fail('expecting a message from read queue')
 
-    def test_should_allow_to_read_oanda_tick_journals_from_file_when_loaded_as_tick_event(self):
+    def test_should_allow_to_read_oanda_like_tick_journals_from_file_when_loaded_as_tick_event(self):
         print('writing..')
         self.looper.started = True
         self.journaler.start()

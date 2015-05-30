@@ -10,14 +10,14 @@ from queue import Queue, Empty
 from threading import Thread
 
 from com.open.algo.utils import read_settings
-from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_DETAIL_UNIT_TESTS
+from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
 
 from com.open.algo.oanda.streaming import *
 from com.open.algo.model import Heartbeat
 from com.open.algo.eventLoop import *
 
 TARGET_ENV = "practice"
-OUTPUT_DIR = '../../output/'
+OUTPUT_DIR = '../output/'
 TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM=2.5
 
 
@@ -26,7 +26,7 @@ class TestStreaming(unittest.TestCase):
     def setUp(self):
         self.journaler = Journaler()
         domain = ENVIRONMENTS['streaming'][TARGET_ENV]
-        settings = read_settings(CONFIG_PATH_FOR_DETAIL_UNIT_TESTS, TARGET_ENV)
+        settings = read_settings(CONFIG_PATH_FOR_UNIT_TESTS, TARGET_ENV)
 
         self.events = Queue()
         self.heartbeat_q = Queue()
@@ -84,7 +84,7 @@ class TestStreaming(unittest.TestCase):
         journaler = FileJournaler(journal_q, full_path=filename)
 
         domain = ENVIRONMENTS['streaming'][TARGET_ENV]
-        settings = read_settings(CONFIG_PATH_FOR_DETAIL_UNIT_TESTS, TARGET_ENV)
+        settings = read_settings(CONFIG_PATH_FOR_UNIT_TESTS, TARGET_ENV)
 
         ticks_q = Queue()
         hb_q = Queue()
