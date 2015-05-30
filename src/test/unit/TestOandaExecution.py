@@ -4,7 +4,7 @@ sys.path.append('../../main')
 import unittest
 import logging
 
-from com.open.algo.utils import read_settings, get_time
+from com.open.algo.utils import read_settings, get_time_with_zero_millis
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
 
 from com.open.algo.trading.fxEvents import OrderEvent
@@ -71,7 +71,7 @@ class TestOandaExecution(unittest.TestCase):
     def testBuyLimitAndQueryOrder(self):
         self.executor.connect()
         side = "buy"
-        expiry = get_time(100)
+        expiry = get_time_with_zero_millis(100)
         event = OrderEvent("EUR_USD", 1000, side, order_type='limit', price=0.75, expiry=expiry)
         response = self.executor.execute_order(event)
         # self.logger.debug('response on booking : %s' % response)
@@ -87,6 +87,7 @@ class TestOandaExecution(unittest.TestCase):
         order = response['orderOpened']
         self.assertEqual(order['units'], 1000)
         self.assertEqual(order['side'], side)
+        self.assertEqual(order['expiry'], expiry)
 
         response = self.executor.get_order(order['id'])
         self.executor.stop()

@@ -5,7 +5,8 @@ from abc import ABCMeta, abstractmethod
 
 from configparser import ConfigParser
 
-OA_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.000000Z'
+OA_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+OA_TIME_FORMAT_ZERO_MILLIS = '%Y-%m-%dT%H:%M:%S.000000Z'
 
 EVENT_TYPES_TICK = 'TICK'
 EVENT_TYPES_ORDER = 'ORDER'
@@ -77,6 +78,15 @@ def get_time(offset=None):
     else:
         now = now + datetime.timedelta(seconds=offset)
         return now.strftime(OA_TIME_FORMAT)
+
+
+def get_time_with_zero_millis(offset=None):
+    now = datetime.datetime.now()
+    if offset is None:
+        return now.strftime(OA_TIME_FORMAT_ZERO_MILLIS)
+    else:
+        now = now + datetime.timedelta(seconds=offset)
+        return now.strftime(OA_TIME_FORMAT_ZERO_MILLIS)
 
 
 def get_age_seconds(old_time, new_time=None):
