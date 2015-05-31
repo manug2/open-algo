@@ -262,31 +262,3 @@ class TestAlternateBuySellRandomStrategy(unittest.TestCase):
         self.strategy.acknowledge(executed_order)
         self.assertEqual(0, self.strategy.get_open_interest('EUR_GBP'))
 
-
-class TestDummyUnstableStrategy(unittest.TestCase):
-
-    def setUp(self):
-        self.strategy = DummyUnstableStrategy(100)
-        # ticks and events for testing
-        self.tick = TickEvent('EUR_GBP', get_time(), 0.87, 0.88)
-        self.buy_order = OrderEvent(self.tick.instrument, self.strategy.units, ORDER_SIDE_BUY)
-        self.executed_order = ExecutedOrder(self.buy_order, 1.1, self.strategy.units)
-
-    def test_should_calculate_signals(self):
-        order = self.strategy.calculate_signals(self.tick)
-        self.assertEquals(self.tick.instrument, order.instrument)
-        self.assertEquals(EVENT_TYPES_ORDER, order.TYPE)
-        self.assertEquals(self.strategy.units, order.units)
-
-    def test_should_have_signaled_positions(self):
-        self.assertIsNotNone(self.strategy.get_signaled_positions())
-
-    def test_should_throw_error_when_pending_ack_position_exists(self):
-        order = self.strategy.calculate_signals(self.tick)
-        self.assertEqual(self.strategy.units, self.strategy.get_signaled_position(order.instrument))
-        try:
-            self.strategy.calculate_signals(self.tick)
-            self.fail('Expecting to fail due to a signaled position pending ack')
-        except RuntimeError as e:
-            self.assertTrue(e.args[0].find('Did not receive ack for previous signal') >= 0)
-
