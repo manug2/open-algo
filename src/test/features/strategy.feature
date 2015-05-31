@@ -10,9 +10,6 @@ Feature: Strategy has some common features
   Scenario: A strategy listens for execution confirmation and keeps a track
 
   @wip
-  Scenario: Streaming rates heartbeat is evaluated for connection health
-
-  @wip
   Scenario: Strategy has to add a stop loss and take profit level to every new order it generates
 
 

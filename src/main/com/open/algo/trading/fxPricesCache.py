@@ -1,9 +1,10 @@
 __author__ = 'ManuGarg'
 
 from com.open.algo.model import MarketRateCache
-from com.open.algo.utils import get_age_seconds
+from com.open.algo.utils import get_age_seconds, EventHandler
 
-class FxPricesCache(MarketRateCache):
+
+class FxPricesCache(MarketRateCache, EventHandler):
 
     def __init__(self, max_tick_age=(16*60*60 + 2*60)):
         self.rates = {}

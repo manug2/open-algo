@@ -93,7 +93,7 @@ class StreamingForexPrices(StreamDataProvider):
                     try:
                         if isinstance(parsed_event, TickEvent):
                             self.events_queue.put_nowait(parsed_event)
-                        elif isinstance(parsed_event, Heartbeat):
+                        elif isinstance(parsed_event, Heartbeat) and self.heartbeat_queue is not None:
                             self.heartbeat_queue.put_nowait(parsed_event)
                     except Full:
                         print('WARNING: queue is full, could not put event [%s]' % parsed_event)
