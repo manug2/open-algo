@@ -2,6 +2,7 @@ import random
 
 from com.open.algo.strategy import AbstractStrategy
 from com.open.algo.trading.fxEvents import OrderEvent, ORDER_SIDE_BUY, ORDER_SIDE_SELL
+from com.open.algo.utils import EventHandler
 
 
 class DummyBuyStrategy(AbstractStrategy):
@@ -76,3 +77,21 @@ class DummyExecutor(ExecutionHandler):
     def start(self):
         self.logger.info("Starting Dummy Execution!")
 
+
+class DummyEventHandler(EventHandler):
+    def process(self, event):
+        if event is None:
+            raise NotImplementedError('Cannot handle None event - [%s]' % str(self))
+        else:
+            return event
+
+    def process_all(self, events):
+        if events is None:
+            raise NotImplementedError('Cannot handle None events - [%s]' % str(self))
+        else:
+            out_event = ''
+            for event in events:
+                if len(out_event) > 0:
+                    out_event += ' '
+                out_event += str(event)
+            return out_event

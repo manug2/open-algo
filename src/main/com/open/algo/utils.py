@@ -58,11 +58,7 @@ class EventHandler:
 
     @abstractmethod
     def process(self, event):
-        if event is None:
-            raise NotImplementedError('Cannot handle None event - [%s]' % str(self))
-        else:
-            print('I [%s] have nothing to do, ignoring all events [%s]!' % (str(self), event))
-            return event
+        raise NotImplementedError('sub-class should implement "%s"' % 'process()')
 
     def __init__(self):
         pass
