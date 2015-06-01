@@ -7,9 +7,10 @@ import unittest
 from com.open.algo.eventLoop import *
 import os
 from threading import Thread
-import threading, time
+import time
 from queue import Queue
 from com.open.algo.oanda.streaming import *
+from com.open.algo.oanda.parser import *
 from com.open.algo.utils import get_time
 
 TARGET_ENV = "practice"

@@ -16,6 +16,7 @@ class FxPortfolio(Portfolio, EventHandler):
     """
 
     def __init__(self, base_ccy, balance, decimals=2, port_limit=100, port_limit_short=-100):
+        super(Portfolio, self).__init__()
         self.positions = {}         # used to capture total number of open positions per instrument
         self.executions = []        # used to capture all executions
         self.positions_avg_price = {}   # used to capture avg price of open positions per instrument
@@ -177,11 +178,11 @@ class FxPortfolio(Portfolio, EventHandler):
 
     def start(self):
         # read state from journals
-        super.start()
+        pass
 
     def stop(self):
         # write state from journals
-        super.stop()
+        pass
 
     def process(self, order):
         if order is None:

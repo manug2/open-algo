@@ -3,10 +3,12 @@ import requests
 import json
 
 from com.open.algo.model import ExecutionHandler
+from com.open.algo.utils import EventHandler
 
 
-class OandaExecutionHandler(ExecutionHandler):
+class OandaExecutionHandler(ExecutionHandler, EventHandler):
     def __init__(self, domain, access_token, account_id, logEnabled=False):
+        super(ExecutionHandler, self).__init__()
         self.TYPE = "https/urlencoded"
         self.executing = False
         self.session = None
@@ -35,8 +37,6 @@ class OandaExecutionHandler(ExecutionHandler):
         self.executing = True
 
     def parseResponse(self, response):
-        # if self.logger != None:
-        # self.logger.debug ('Response from execution server : "%s"' % response)
 
         if response is None:
             return {'code': -1, 'message': 'No response from Oanda execution server'}
@@ -54,9 +54,6 @@ class OandaExecutionHandler(ExecutionHandler):
                 if self.logger is not None:
                     self.logger.info('Response parsed : "%s"' % content)
                 return content
-
-    def stop(self):
-        self.executing = False
 
     def execute_order(self, event):
         if self.logger is not None:
@@ -148,3 +145,8 @@ class OandaExecutionHandler(ExecutionHandler):
             return {'code': -2, 'message': str(e)}
             # end of get_order
 
+    def start(self):
+        self.connect()
+
+    def process(self, event):
+        return self.execute_order(event)

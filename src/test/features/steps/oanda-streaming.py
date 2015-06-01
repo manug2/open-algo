@@ -1,11 +1,13 @@
+import queue
+import threading
+import time
 
-import queue, threading, time
+from behave import *
 
 from com.open.algo.eventLoop import Journaler
 from com.open.algo.oanda.streaming import *
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_FEATURE_STEPS
 from com.open.algo.utils import read_settings
-from behave import *
 
 
 @given('we want to establish connection to Oanda {domainAlias}')

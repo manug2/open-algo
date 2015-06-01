@@ -12,6 +12,7 @@ from com.open.algo.eventLoop import Journaler
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
 
 from com.open.algo.oanda.streaming import *
+from com.open.algo.oanda.parser import *
 from com.open.algo.oanda.history import *
 
 TARGET_ENV = "practice"

@@ -56,26 +56,33 @@ class AlternateBuySellAt5thTickStrategy(AbstractStrategy):
 
 
 from com.open.algo.model import ExecutionHandler
-import logging
+from time import sleep
+from com.open.algo.trading.fxEvents import ExecutedOrder
 
 
-class DummyExecutor(ExecutionHandler):
-    def __init__(self):
-        self.lastEvent = None
-        self.logger = logging.getLogger(self.__class__.__name__)
+class DummyExecutor(ExecutionHandler, EventHandler):
+    def __init__(self, delay=0):
+        self.last_event = None
+        self.delay = delay
 
     def get_last_event(self):
-        return self.lastEvent
+        return self.last_event
 
     def execute_order(self, event):
-        self.lastEvent = event
-        self.logger.info('Dummy Execution "%s"' % event)
+        if self.delay > 0:
+            sleep(self.delay)
+        self.last_event = event
+        print('Dummy Execution "%s", returning executed order' % event)
+        return ExecutedOrder(event, 1.0, event.units)
 
     def stop(self):
-        self.logger.info("Stopping Dummy Execution!")
+        print("Stopping Dummy Execution!")
 
     def start(self):
-        self.logger.info("Starting Dummy Execution!")
+        print("Starting Dummy Execution!")
+
+    def process(self, event):
+        return self.execute_order(event)
 
 
 class DummyEventHandler(EventHandler):

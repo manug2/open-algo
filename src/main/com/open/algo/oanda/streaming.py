@@ -1,35 +1,12 @@
-import requests
 import json
+from queue import Full
 
+import requests
+
+from com.open.algo.oanda.parser import parse_event
 from com.open.algo.trading.fxEvents import TickEvent
 from com.open.algo.model import StreamDataProvider, ExceptionEvent, Heartbeat
-from queue import Full
 from com.open.algo.utils import get_time
-
-
-def parse_tick(receive_time, msg):
-    tick = msg["tick"]
-    instrument = tick["instrument"]
-    time = tick["time"]
-    bid = tick["bid"]
-    ask = tick["ask"]
-    tev = TickEvent(instrument, time, bid, ask, receive_time)
-    return tev
-
-
-def parse_heartbeat(receive_time, msg):
-    sent_time = msg["heartbeat"]["time"]
-    hb = Heartbeat('oanda-stream', receive_time, sent_time)
-    return hb
-
-
-def parse_event(receive_time, msg):
-    if "tick" in msg:
-        return parse_tick(receive_time, msg)
-    elif "heartbeat" in msg:
-        return parse_heartbeat(receive_time, msg)
-    else:
-        raise ValueError('Unexpected message received')
 
 
 class StreamingForexPrices(StreamDataProvider):

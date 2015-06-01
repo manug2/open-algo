@@ -97,14 +97,6 @@ class Portfolio:
     def __init__(self):
         pass
 
-    @abstractmethod
-    def manage(self):
-        raise NotImplementedError("Should implement 'manage()' method")
-
-    @abstractmethod
-    def stop(self):
-        raise NotImplementedError("Should implement 'obtain_connection()' method")
-
     def list_positions(self):
         raise NotImplementedError("Should implement 'list_positions()' method")
 

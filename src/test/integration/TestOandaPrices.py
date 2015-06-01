@@ -4,8 +4,7 @@ import sys
 sys.path.append('../../../main')
 
 import unittest
-from time import sleep
-from queue import Queue, Empty
+from queue import Queue
 
 from threading import Thread
 
@@ -13,6 +12,7 @@ from com.open.algo.utils import read_settings
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
 
 from com.open.algo.oanda.streaming import *
+from com.open.algo.oanda.parser import *
 from com.open.algo.model import Heartbeat
 from com.open.algo.eventLoop import *
 
