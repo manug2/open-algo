@@ -36,20 +36,6 @@ class TestStreaming(unittest.TestCase):
             'EUR_USD', self.events, self.heartbeat_q, self.journaler, exceptions
         )
 
-    def test_should_receive_streaming_events(self):
-        price_thread = Thread(target=self.prices.stream, args=[])
-        price_thread.start()
-        sleep(TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        self.prices.stop()
-        price_thread.join(timeout=2)
-        out_event = None
-        try:
-            while True:
-                out_event = self.events.get_nowait()
-        except Empty:
-            pass
-        self.assertIsNotNone(out_event)
-
     def test_journaler_should_log_streaming_events(self):
         price_thread = Thread(target=self.prices.stream, args=[])
         price_thread.start()

@@ -1,7 +1,7 @@
-from com.open.algo.model import Heartbeat
-from com.open.algo.trading.fxEvents import TickEvent
-
 __author__ = 'ManuGarg'
+
+from com.open.algo.model import Heartbeat, ExceptionEvent
+from com.open.algo.trading.fxEvents import *
 
 
 def parse_tick(receive_time, msg):
@@ -27,3 +27,18 @@ def parse_event(receive_time, msg):
         return parse_heartbeat(receive_time, msg)
     else:
         raise ValueError('Unexpected message received')
+
+
+def parse_execution_response(response, caller=None, orig_event=None):
+        has_message = 'message' in response
+        if has_message:
+            error = 'error executing trade - [%s]' % response
+            return ExceptionEvent(caller, error, orig_event)
+
+        has_opened_trade = 'tradeOpened' in response
+        if has_opened_trade:
+            trade = response['tradeOpened']
+            return ExecutedOrder(orig_event, response['price'], trade['units'])
+        else:
+            error = 'expecting a new trade but got [%s]' % response
+            return ExceptionEvent(caller, error, orig_event)

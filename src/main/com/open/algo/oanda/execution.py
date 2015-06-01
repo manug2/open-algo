@@ -4,6 +4,7 @@ import json
 
 from com.open.algo.model import ExecutionHandler
 from com.open.algo.utils import EventHandler
+from com.open.algo.oanda.parser import parse_execution_response
 
 
 class OandaExecutionHandler(ExecutionHandler, EventHandler):
@@ -149,4 +150,8 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
         self.connect()
 
     def process(self, event):
-        return self.execute_order(event)
+        return self.execute_order_and_parse_response(event)
+
+    def execute_order_and_parse_response(self, event):
+        response_dict = self.execute_order(event)
+        return parse_execution_response(response_dict, str(self), event)
