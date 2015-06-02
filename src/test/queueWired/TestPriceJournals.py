@@ -5,13 +5,13 @@ import sys
 sys.path.append('../../main')
 import unittest
 from com.open.algo.wiring.eventLoop import *
-import os
 from threading import Thread
 import time
 from queue import Queue
 from com.open.algo.oanda.streaming import *
 from com.open.algo.oanda.parser import *
 from com.open.algo.utils import get_time
+from com.open.algo.journal import *
 
 TARGET_ENV = "practice"
 OA_OUTPUT_DIR = '../output/'

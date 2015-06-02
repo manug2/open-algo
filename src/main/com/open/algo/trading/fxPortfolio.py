@@ -2,7 +2,7 @@ __author__ = 'ManuGarg'
 
 
 from com.open.algo.model import Portfolio
-from com.open.algo.wiring.eventLoop import EventHandler
+from com.open.algo.utils import EventHandler
 from com.open.algo.trading.fxEvents import EVENT_TYPES_ORDER, EVENT_TYPES_FILL
 
 

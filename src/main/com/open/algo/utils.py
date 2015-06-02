@@ -60,6 +60,10 @@ class EventHandler:
     def process(self, event):
         raise NotImplementedError('sub-class should implement "%s"' % 'process()')
 
+    @abstractmethod
+    def process_all(self, events):
+        raise NotImplementedError('sub-class should implement "%s"' % 'process_all()')
+
     def __init__(self):
         pass
 

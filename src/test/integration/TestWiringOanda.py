@@ -3,9 +3,11 @@ from queue import Queue, Empty
 from threading import Thread
 from time import sleep
 
-from com.open.algo.wiring.eventLoop import Journaler
+from com.open.algo.journal import Journaler
 from com.open.algo.wiring.wiring import *
 from com.open.algo.oanda.environments import CONFIG_PATH_FOR_UNIT_TESTS
+
+
 TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM = 4
 
 

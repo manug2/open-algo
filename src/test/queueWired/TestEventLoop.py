@@ -7,9 +7,9 @@ import unittest
 from queue import Queue
 from threading import Thread
 from com.open.algo.wiring.eventLoop import *
-import os
 from com.open.algo.utils import get_time
 from com.open.algo.dummy import DummyEventHandler
+from com.open.algo.journal import *
 OUTPUT_DIR = '../output/'
 
 

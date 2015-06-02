@@ -15,6 +15,7 @@ from com.open.algo.oanda.streaming import *
 from com.open.algo.oanda.parser import *
 from com.open.algo.model import Heartbeat
 from com.open.algo.wiring.eventLoop import *
+from com.open.algo.journal import *
 
 TARGET_ENV = "practice"
 OUTPUT_DIR = '../output/'

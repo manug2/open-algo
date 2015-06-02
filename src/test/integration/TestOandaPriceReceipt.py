@@ -8,7 +8,7 @@ import unittest
 import queue, threading, time
 
 from com.open.algo.utils import read_settings
-from com.open.algo.wiring.eventLoop import Journaler
+from com.open.algo.journal import Journaler
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
 
 from com.open.algo.oanda.streaming import *
