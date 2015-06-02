@@ -1,14 +1,14 @@
-
-from com.open.algo.trading.fxPricesCache import FxPricesCache
-from com.open.algo.utils import get_time
-from com.open.algo.eventLoop import EventLoop
-from com.open.algo.trading.fxEvents import TickEvent
-from com.open.algo.model import ExceptionEvent
-
 from queue import Queue, Empty
 import threading
 import time
+
 from behave import *
+
+from com.open.algo.trading.fxPricesCache import FxPricesCache
+from com.open.algo.utils import get_time
+from com.open.algo.wiring.eventLoop import EventLoop
+from com.open.algo.trading.fxEvents import TickEvent
+from com.open.algo.model import ExceptionEvent
 
 
 @given('rates queue is initialized')

@@ -1,7 +1,7 @@
 __author__ = 'ManuGarg'
 
 from com.open.algo.oanda.streaming import StreamingForexPrices
-from com.open.algo.eventLoop import EventLoop
+from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.oanda.environments import ENVIRONMENTS
 from com.open.algo.utils import read_settings
 from com.open.algo.trading.fxPricesCache import FxPricesCache

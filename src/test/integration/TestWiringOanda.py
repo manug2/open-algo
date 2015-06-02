@@ -1,13 +1,11 @@
 import unittest
-
-from com.open.algo.eventLoop import Journaler
 from queue import Queue, Empty
 from threading import Thread
-from com.open.algo.oanda.environments import CONFIG_PATH_FOR_UNIT_TESTS
-from com.open.algo.wiring import *
-from com.open.algo.oanda.parser import *
-
 from time import sleep
+
+from com.open.algo.wiring.eventLoop import Journaler
+from com.open.algo.wiring.wiring import *
+from com.open.algo.oanda.environments import CONFIG_PATH_FOR_UNIT_TESTS
 TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM = 4
 
 

@@ -6,8 +6,7 @@ sys.path.append('../../main')
 import unittest
 from queue import Queue
 from threading import Thread
-from time import sleep
-from com.open.algo.eventLoop import *
+from com.open.algo.wiring.eventLoop import *
 import os
 from com.open.algo.utils import get_time
 from com.open.algo.dummy import DummyEventHandler

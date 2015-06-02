@@ -1,9 +1,11 @@
+from queue import Queue
+
 from behave import *
+
 from com.open.algo.trading.fxCostPredictor import FxSpreadCostEvaluator
 from com.open.algo.trading.fxEvents import TickEvent, OrderEvent
 from com.open.algo.utils import get_time
-from com.open.algo.eventLoop import EventLoop
-from queue import Queue
+from com.open.algo.wiring.eventLoop import EventLoop
 
 
 @given('Queue for market rates is initialized')

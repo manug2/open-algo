@@ -1,10 +1,10 @@
 import unittest
+from queue import Queue
 
 from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.trading.fxEvents import *
-from com.open.algo.eventLoop import EventLoop
+from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.dummy import *
-from queue import Queue
 from com.open.algo.utils import get_time, EVENT_TYPES_ORDER
 
 

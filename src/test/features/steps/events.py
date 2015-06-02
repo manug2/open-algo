@@ -3,7 +3,7 @@ import sys
 sys.path.append('../main/')
 
 from com.open.algo.trading.fxEvents import *
-from com.open.algo.eventLoop import Journaler
+from com.open.algo.wiring.eventLoop import Journaler
 from behave import *
 from queue import Queue
 from com.open.algo.utils import get_time

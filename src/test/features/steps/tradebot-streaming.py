@@ -1,11 +1,12 @@
+import sys
+
 from behave import *
 
 from com.open.algo.utils import get_time
 from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.dummy import DummyBuyStrategy, DummyExecutor
-from com.open.algo.eventLoop import EventLoop
+from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.trading.fxEvents import *
-import sys
 
 
 @given('we are using a dummy strategy and executor')
