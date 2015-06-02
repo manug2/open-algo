@@ -42,3 +42,7 @@ def parse_execution_response(response, caller=None, orig_event=None):
         else:
             error = 'expecting a new trade but got [%s]' % response
             return ExceptionEvent(caller, error, orig_event)
+
+
+def parse_execution_events(event):
+        raise NotImplementedError('to be implemented for execution actions')

@@ -155,3 +155,10 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
     def execute_order_and_parse_response(self, event):
         response_dict = self.execute_order(event)
         return parse_execution_response(response_dict, str(self), event)
+
+
+class OandaExecutionEventHandler(ExecutionHandler, EventHandler):
+    """
+    for capturing stop loss, take profit, margin call type of actions
+    """
+    pass
