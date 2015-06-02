@@ -31,7 +31,6 @@ class TestPriceJournals(unittest.TestCase):
         self.tick_json = json.loads(self.tick_str)
         self.tick_event = parse_tick(None, self.tick_json)
 
-        self.write_q = Queue()
         self.journal_q = Queue()
         self.journaler = FileJournaler(self.journal_q, full_path=self.filename)
         self.looper = EventLoop(self.journal_q, self.journaler)
@@ -40,13 +39,16 @@ class TestPriceJournals(unittest.TestCase):
         self.read_q = Queue()
         self.reader = FileJournalerReader(self.read_q, full_path=self.filename)
 
-    def test_should_allow_to_read_oanda_like_tick_journals_from_file(self):
-        print('writing..')
-        self.looper.started = True
-        self.journaler.start()
-        self.journaler.log_event(get_time(), self.tick_str)
-        self.looper.pull_process()
+    def play_event_loop(self):
+        time.sleep(3*self.looper.heartbeat)
+        self.looper.stop()
+        self.loop_thread.join(2*self.looper.heartbeat)
         self.journaler.close()
+
+    def test_should_allow_to_read_oanda_like_tick_journals_from_file(self):
+        self.loop_thread.start()
+        self.journaler.log_event(get_time(), self.tick_str)
+        self.play_event_loop()
 
         print('reading..')
         self.reader.read_events()
@@ -57,14 +59,10 @@ class TestPriceJournals(unittest.TestCase):
             self.fail('expecting a message from read queue')
 
     def test_should_allow_to_read_oanda_like_tick_journals_from_file_using_thread(self):
-        print('writing..')
         self.loop_thread.start()
         self.journaler.log_event(get_time(), self.tick_str)
-        time.sleep(3*self.looper.heartbeat)
-        self.looper.stop()
-        self.loop_thread.join(3*self.looper.heartbeat)
+        self.play_event_loop()
 
-        print('reading..')
         self.reader.read_events()
         try:
             ev_str = self.read_q.get_nowait()
@@ -73,14 +71,10 @@ class TestPriceJournals(unittest.TestCase):
             self.fail('expecting a message from read queue')
 
     def test_should_allow_to_read_oanda_tick_journals_from_file_when_loaded_as_json(self):
-        print('writing..')
-        self.looper.started = True
-        self.journaler.start()
+        self.loop_thread.start()
         self.journaler.log_event(get_time(), self.tick_str)
-        self.looper.pull_process()
-        self.journaler.stop()
+        self.play_event_loop()
 
-        print('reading..')
         self.reader.read_events()
         try:
             ev_str = self.read_q.get_nowait()
@@ -90,14 +84,10 @@ class TestPriceJournals(unittest.TestCase):
             self.fail('expecting a message from read queue')
 
     def test_should_allow_to_read_oanda_like_tick_journals_from_file_when_loaded_as_tick_event(self):
-        print('writing..')
-        self.looper.started = True
-        self.journaler.start()
+        self.loop_thread.start()
         self.journaler.log_event(get_time(), self.tick_str)
-        self.looper.pull_process()
-        self.journaler.stop()
+        self.play_event_loop()
 
-        print('reading..')
         self.reader.read_events()
         try:
             ev_str = self.read_q.get_nowait()
@@ -106,4 +96,3 @@ class TestPriceJournals(unittest.TestCase):
             self.assertEqual(self.tick_event, ev_tick)
         except Empty:
             self.fail('expecting a message from read queue')
-
