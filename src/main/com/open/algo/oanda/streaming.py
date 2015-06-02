@@ -9,7 +9,7 @@ from com.open.algo.model import StreamDataProvider, ExceptionEvent, Heartbeat
 from com.open.algo.utils import get_time
 
 
-class StreamingForexPrices(StreamDataProvider):
+class OandaEventStreamer(StreamDataProvider):
     def __init__(self, domain, access_token, account_id, journaler):
         self.TYPE = "streaming/json"
         self.domain = domain

@@ -27,7 +27,7 @@ class TestStreaming(unittest.TestCase):
         self.events = queue.Queue()
         self.heartbeat_q = queue.Queue()
         exceptions = queue.Queue()
-        self.prices = StreamingForexPrices(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
+        self.prices = OandaEventStreamer(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
         self.prices.set_instruments('EUR_USD')
         self.prices.set_events_q(self.events).set_heartbeat_q(self.heartbeat_q).set_exception_q(exceptions)
 

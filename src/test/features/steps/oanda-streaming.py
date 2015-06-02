@@ -127,7 +127,7 @@ def get_price_streamer(context, connection, env, token, account_id, instruments)
     context.exceptions = queue.Queue()
 
     domain = ENVIRONMENTS[connection][env]
-    pricer = StreamingForexPrices(domain, token, account_id, context.journaler)
+    pricer = OandaEventStreamer(domain, token, account_id, context.journaler)
     pricer.set_instruments(instruments)
     pricer.set_events_q(context.events).set_heartbeat_q(context.heartbeat_events).set_exception_q(context.exceptions)
     return pricer

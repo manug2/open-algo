@@ -1,6 +1,6 @@
 __author__ = 'ManuGarg'
 
-from com.open.algo.oanda.streaming import StreamingForexPrices
+from com.open.algo.oanda.streaming import OandaEventStreamer
 from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.oanda.environments import ENVIRONMENTS
 from com.open.algo.utils import read_settings
@@ -23,7 +23,7 @@ class WireRateCache:
         domain = ENVIRONMENTS['streaming'][self.target_env]
         settings = read_settings(self.config_path, self.target_env)
 
-        rates_streamer = StreamingForexPrices(
+        rates_streamer = OandaEventStreamer(
             domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
         rates_streamer.set_instruments('EUR_USD')
         rates_streamer.set_events_q(self.rates_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
