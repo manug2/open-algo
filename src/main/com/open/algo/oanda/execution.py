@@ -35,15 +35,15 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
     def parse_response(self, receive_time, response):
 
         if response is None:
-            return {'code': -1, 'message': 'No response from Oanda execution server'}
+            return {'code': -1, 'message': 'No response from execution server'}
         elif response.content is None:
-            return {'code': -1, 'message': 'No content in response from Oanda execution server'}
+            return {'code': -1, 'message': 'No content in response from execution server'}
         else:
 
             content = response.content.decode('utf-8')
             self.journaler.log_event(receive_time, content)
             if content is None:
-                return {'code': -1, 'message': 'No content after decoding response from Oanda execution server'}
+                return {'code': -1, 'message': 'No content after decoding response from execution server'}
             else:
                 return json.loads(content)
 
@@ -118,11 +118,12 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
             receive_time = get_time()
             return self.parse_response(receive_time, response)
         except requests.RequestException as e:
-            return {'code': -2, 'message': str(e)}
+            self.journaler.log_event(get_time(), str(e))
+            return {'code': -2, 'message': e.args[0]}
 
 
 class OandaExecutionEventHandler(ExecutionHandler, EventHandler):
     """
-    for capturing stop loss, take profit, margin call type of actions
+    for capturing stop loss, take profit, margin call type of actions taken by the broker and then sent via http
     """
     pass
