@@ -1,14 +1,14 @@
 import urllib
 import requests
 import json
-
+from os import linesep
 from com.open.algo.model import ExecutionHandler
-from com.open.algo.utils import EventHandler
+from com.open.algo.utils import EventHandler, get_time
 from com.open.algo.oanda.parser import parse_execution_response
 
 
 class OandaExecutionHandler(ExecutionHandler, EventHandler):
-    def __init__(self, domain, access_token, account_id, logEnabled=False):
+    def __init__(self, domain, access_token, account_id, journaler):
         super(ExecutionHandler, self).__init__()
         self.TYPE = "https/urlencoded"
         self.executing = False
@@ -18,12 +18,7 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
             , "Authorization": "Bearer " + access_token
         }
         self.url = domain + '/v1/accounts/%s/orders' % account_id
-        if logEnabled:
-            import logging
-
-            self.logger = logging.getLogger(self.__class__.__name__)
-        else:
-            self.logger = None
+        self.journaler = journaler
 
     def __str__(self):
         val = self.__class__.__name__ + "{" + self.url + "|" + str(self.headers) + "}"
@@ -37,32 +32,24 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
         self.session.headers.update(self.headers)
         self.executing = True
 
-    def parseResponse(self, response):
+    def parse_response(self, receive_time, response):
 
         if response is None:
             return {'code': -1, 'message': 'No response from Oanda execution server'}
         elif response.content is None:
-            return {'code': -1, 'message': 'No response from Oanda execution server'}
+            return {'code': -1, 'message': 'No content in response from Oanda execution server'}
         else:
+
             content = response.content.decode('utf-8')
-            # put this into journal
+            self.journaler.log_event(receive_time, content)
             if content is None:
-                return {'code': -1, 'message': 'No response from Oanda execution server'}
+                return {'code': -1, 'message': 'No content after decoding response from Oanda execution server'}
             else:
-                # if self.logger != None:
-                # self.logger.debug('Response from execution server : "%s"' % content)
-                content = json.loads(content)
-                if self.logger is not None:
-                    self.logger.info('Response parsed : "%s"' % content)
-                return content
+                return json.loads(content)
 
     def execute_order(self, event):
-        if self.logger is not None:
-            self.logger.debug(event)
-
         if not self.executing:
-            if self.logger is not None:
-                self.logger.warn('Executor in stop mode, will not execute order: "%s"' % event)
+            print('Executor in stop mode, will not execute order: "%s"' % event)
             return
 
         params = {
@@ -78,19 +65,9 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
 
         request_args = dict()
         request_args['data'] = urllib.parse.urlencode(params)
-
-        if self.logger is not None:
-            self.logger.debug('URL:%s, PARAM:%s' % (self.url, request_args))
-
         func = getattr(self.session, 'post')
-        try:
-            response = func(self.url, **request_args)
-            return self.parseResponse(response)
-        except requests.RequestException as e:
-            if self.logger is not None:
-                self.logger.error(e)
-            # put in exception queue
-            return {'code': -2, 'message': str(e)}
+
+        return self.send_and_receive(func, self.url, request_args)
 
     def stop(self):
         self.executing = False
@@ -101,50 +78,26 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
     def get_orders(self, params=None):
         # def get_orders(self, order_type="market", instrument=None):
         if not self.executing:
-            if self.logger is not None:
-                self.logger.warn('Executor in stop mode, will not query orders')
+            print('Executor in stop mode, will not query orders')
             return
 
         request_args = {}
         if params is not None:
             request_args['data'] = urllib.parse.urlencode(params)
-
-        if self.logger is not None:
-            self.logger.debug('URL:%s, PARAM:%s' % (self.url, request_args))
-
         func = getattr(self.session, 'get')
-        try:
-            response = func(self.url, **request_args)
-            return self.parseResponse(response)
-        except requests.RequestException as e:
-            if self.logger is not None:
-                self.logger.error(e)
-            # put in exception queue
-            return {'code': -2, 'message': str(e)}
 
-    # end of get_orders
+        return self.send_and_receive(func, self.url, request_args)
 
     def get_order(self, order_id):
         if not self.executing:
-            if self.logger is not None:
-                self.logger.warn('Executor in stop mode, will not query order')
+            print('Executor in stop mode, will not query order')
             return
 
         request_args = {}
         url = '%s/%s' % (self.url, order_id)
-        if self.logger is not None:
-            self.logger.debug('URL:%s' % url)
-
         func = getattr(self.session, 'get')
-        try:
-            response = func(url, **request_args)
-            return self.parseResponse(response)
-        except requests.RequestException as e:
-            if self.logger is not None:
-                self.logger.error(e)
-            # put in exception queue
-            return {'code': -2, 'message': str(e)}
-            # end of get_order
+
+        return self.send_and_receive(func, url, request_args)
 
     def start(self):
         self.connect()
@@ -155,6 +108,17 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
     def execute_order_and_parse_response(self, event):
         response_dict = self.execute_order(event)
         return parse_execution_response(response_dict, str(self), event)
+
+    def send_and_receive(self, func, url, request_args):
+        debug_message = 'URL[%s]%sPARAMS[%s]' % (url, linesep, request_args)
+        before_send_time = get_time()
+        self.journaler.log_event(before_send_time, debug_message)
+        try:
+            response = func(url, **request_args)
+            receive_time = get_time()
+            return self.parse_response(receive_time, response)
+        except requests.RequestException as e:
+            return {'code': -2, 'message': str(e)}
 
 
 class OandaExecutionEventHandler(ExecutionHandler, EventHandler):

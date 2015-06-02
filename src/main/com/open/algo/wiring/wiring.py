@@ -5,6 +5,7 @@ from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.oanda.environments import ENVIRONMENTS
 from com.open.algo.utils import read_settings
 from com.open.algo.trading.fxPricesCache import FxPricesCache
+from com.open.algo.journal import Journaler
 
 
 class WireRateCache:
@@ -136,7 +137,7 @@ class WireExecutor:
     def wire(self):
         domain = ENVIRONMENTS['api'][self.target_env]
         settings = read_settings(self.config_path, self.target_env)
-        executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], logEnabled=True)
+        executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], Journaler())
 
         execution_loop = EventLoop(self.execution_q, executor, processed_event_q=self.portfolio_q)
         return execution_loop

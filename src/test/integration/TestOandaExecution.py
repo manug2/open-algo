@@ -5,7 +5,7 @@ import unittest
 
 from com.open.algo.utils import read_settings, get_time_with_zero_millis
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
-
+from com.open.algo.journal import Journaler
 from com.open.algo.trading.fxEvents import OrderEvent
 from com.open.algo.oanda.execution import OandaExecutionHandler
 
@@ -16,7 +16,7 @@ class TestOandaExecution(unittest.TestCase):
     def setUp(self):
         domain = ENVIRONMENTS['api'][TARGET_ENV]
         settings = read_settings(CONFIG_PATH_FOR_UNIT_TESTS, TARGET_ENV)
-        self.executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], logEnabled=True)
+        self.executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], Journaler())
 
     def testConnect(self):
         try:

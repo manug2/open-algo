@@ -3,12 +3,12 @@ from com.open.algo.oanda.execution import *
 from com.open.algo.trading.fxEvents import *
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_FEATURE_STEPS
 from com.open.algo.utils import read_settings, get_time_with_zero_millis
-
+from com.open.algo.journal import Journaler
 from behave import *
-import logging
 
 OANDA_TRADE_KEY = 'tradeOpened'
 OANDA_ORDER_KEY = 'orderOpened'
+
 
 @given('we want to {side} {units} units of {instrument}')
 def step_impl(context, side, units, instrument):
@@ -18,9 +18,10 @@ def step_impl(context, side, units, instrument):
 def step_impl(context, path):
     context.mySettings = read_settings(path, context.env)
 
+
 def get_executor(connection, env, settings):
     domain = ENVIRONMENTS[connection][env]
-    executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'])
+    executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], Journaler())
     return executor
 
 
@@ -124,16 +125,15 @@ def step_impl(context):
 @when('Executor connects')
 def step_impl(context):
     context.response = None
-    logger = logging.getLogger('oanda-execution')
     try:
         executor = get_executor(context.connection, context.env, context.mySettings)
         executor.connect()
         executor.stop()
     except IOError as e:
-        logger.error('I/O error-%s' % e)
+        print('I/O error-%s' % e)
         context.response = sys.exc_info()[0]
     except:
-        logger.error('Unexpected error-%s' % sys.exc_info()[0])
+        print('Unexpected error-%s' % sys.exc_info()[0])
         context.response = sys.exc_info()[0]
 
 
