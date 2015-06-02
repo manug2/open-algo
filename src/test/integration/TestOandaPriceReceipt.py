@@ -27,10 +27,9 @@ class TestStreaming(unittest.TestCase):
         self.events = queue.Queue()
         self.heartbeat_q = queue.Queue()
         exceptions = queue.Queue()
-        self.prices = StreamingForexPrices(
-            domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'],
-            'EUR_USD', self.events, self.heartbeat_q, self.journaler, exceptions
-        )
+        self.prices = StreamingForexPrices(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
+        self.prices.set_instruments('EUR_USD')
+        self.prices.set_events_q(self.events).set_heartbeat_q(self.heartbeat_q).set_exception_q(exceptions)
 
     def test_should_receive_streaming_ticks(self):
         price_thread = threading.Thread(target=self.prices.stream, args=[])

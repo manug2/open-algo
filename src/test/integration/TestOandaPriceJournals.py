@@ -32,10 +32,9 @@ class TestStreaming(unittest.TestCase):
         self.events = Queue()
         self.heartbeat_q = Queue()
         exceptions = Queue()
-        self.prices = StreamingForexPrices(
-            domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'],
-            'EUR_USD', self.events, self.heartbeat_q, self.journaler, exceptions
-        )
+        self.prices = StreamingForexPrices(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
+        self.prices.set_instruments('EUR_USD')
+        self.prices.set_events_q(self.events).set_heartbeat_q(self.heartbeat_q).set_exception_q(exceptions)
 
     def test_journaler_should_log_streaming_events(self):
         price_thread = Thread(target=self.prices.stream, args=[])
@@ -75,9 +74,9 @@ class TestStreaming(unittest.TestCase):
 
         ticks_q = Queue()
         hb_q = Queue()
-        prices = StreamingForexPrices(
-            domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'],
-            'EUR_USD', ticks_q, hb_q, journaler, None)
+        prices = StreamingForexPrices(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], journaler)
+        prices.set_instruments('EUR_USD')
+        prices.set_events_q(ticks_q).set_heartbeat_q(hb_q)
 
         looper = EventLoop(journal_q, journaler)
         loop_thread = Thread(target=looper.start, args=[])

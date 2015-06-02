@@ -8,7 +8,6 @@ account_id = "12345678"
 domain = "stream-fxpractice.oanda.com"
 
 prices = StreamingForexPrices(
-    domain, token, account_id,
-    instrument, None, None, None
+    domain, token, account_id, None
 )
 

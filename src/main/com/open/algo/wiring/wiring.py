@@ -24,8 +24,9 @@ class WireRateCache:
         settings = read_settings(self.config_path, self.target_env)
 
         rates_streamer = StreamingForexPrices(
-            domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'],
-            'EUR_USD', self.rates_q, self.heartbeat_q, self.journaler, self.exception_q)
+            domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
+        rates_streamer.set_instruments('EUR_USD')
+        rates_streamer.set_events_q(self.rates_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
 
         rates_cache = FxPricesCache()
         rates_cache_loop = EventLoop(self.rates_q, rates_cache, forward_q=self.forward_q)
