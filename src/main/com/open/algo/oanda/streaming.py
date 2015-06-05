@@ -4,9 +4,12 @@ from queue import Full
 import requests
 
 from com.open.algo.oanda.parser import parse_event
-from com.open.algo.trading.fxEvents import TickEvent
 from com.open.algo.model import StreamDataProvider, ExceptionEvent, Heartbeat
 from com.open.algo.utils import get_time
+
+
+OANDA_CONTEXT_RATES = '/v1/prices'
+OANDA_CONTEXT_EVENTS = '/v1/events'
 
 
 class OandaEventStreamer(StreamDataProvider):
@@ -25,7 +28,7 @@ class OandaEventStreamer(StreamDataProvider):
         self.heartbeat_q = None
         self.exception_q = None
 
-        self.context = '/v1/prices'
+        self.context = OANDA_CONTEXT_RATES
     # end of init
 
     def __str__(self):
@@ -38,6 +41,7 @@ class OandaEventStreamer(StreamDataProvider):
         if self.journaler is None:
             raise Exception('"%s" is not set' % 'journaler')
 
+        self.journaler.log_event(get_time(), 'connected-%s' % str(self))
         self.session = requests.Session()
         url = self.domain + self.context
         headers = {'Authorization': 'Bearer ' + self.access_token}
@@ -48,6 +52,7 @@ class OandaEventStreamer(StreamDataProvider):
         req = requests.Request('GET', url, headers=headers, params=params)
         pre = req.prepare()
         resp = self.session.send(pre, stream=True, verify=False)
+        self.journaler.log_event(get_time(), 'receiving-%s' % str(self))
         return resp
 
     def stream(self):
@@ -76,13 +81,14 @@ class OandaEventStreamer(StreamDataProvider):
 
                 if parsed_event is not None:
                     try:
-                        if isinstance(parsed_event, TickEvent):
+                        if isinstance(parsed_event, Heartbeat):
+                            if self.heartbeat_q is not None:
+                                self.heartbeat_q.put_nowait(parsed_event)
+                        else:
                             self.events_q.put_nowait(parsed_event)
-                        elif isinstance(parsed_event, Heartbeat) and self.heartbeat_q is not None:
-                            self.heartbeat_q.put_nowait(parsed_event)
                     except Full:
-                        print('WARNING: queue is full, could not put event [%s]' % parsed_event)
-
+                        self.journaler.log_event(get_time(),
+                            'WARNING: queue is full, could not put event [%s]' % parsed_event)
             if not self.streaming:
                 break
 
@@ -109,5 +115,11 @@ class OandaEventStreamer(StreamDataProvider):
         return self
 
     def set_context(self, context):
-        self.context = context
+        if self.streaming:
+            raise RuntimeError('cannot change context after events streaming has started')
+        if context == OANDA_CONTEXT_RATES or context == OANDA_CONTEXT_EVENTS:
+            self.context = context
+        else:
+            raise ValueError('expecting context to be one of (%s,%s), found "%s"'
+                             % (OANDA_CONTEXT_RATES, OANDA_CONTEXT_EVENTS, context))
         return self

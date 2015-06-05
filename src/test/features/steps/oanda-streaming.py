@@ -8,6 +8,7 @@ from com.open.algo.journal import Journaler
 from com.open.algo.oanda.streaming import *
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_FEATURE_STEPS
 from com.open.algo.utils import read_settings
+from com.open.algo.trading.fxEvents import TickEvent
 
 
 @given('we want to establish connection to Oanda {domainAlias}')
