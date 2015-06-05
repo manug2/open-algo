@@ -104,6 +104,9 @@ class TestWireExecutor(unittest.TestCase):
 
         try:
             executed_order = self.portfolio_q.get_nowait()
+            self.assertIsInstance(executed_order, ExecutedOrder
+                      , 'expecting an executed order of type [%s] but got of type [%s] - %s'
+                          % (type(ExecutedOrder), type(executed_order), executed_order))
             self.assertEqual(buy_order, executed_order.order)
         except Empty:
             self.fail('should have sent executed order to portfolio q')

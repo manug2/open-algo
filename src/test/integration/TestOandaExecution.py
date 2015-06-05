@@ -6,7 +6,7 @@ import unittest
 from com.open.algo.utils import read_settings, get_time_with_zero_millis
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
 from com.open.algo.journal import Journaler
-from com.open.algo.trading.fxEvents import OrderEvent
+from com.open.algo.trading.fxEvents import OrderEvent, ExecutedOrder
 from com.open.algo.oanda.execution import OandaExecutionHandler
 
 TARGET_ENV = "practice"
@@ -117,8 +117,7 @@ class TestOandaExecution(unittest.TestCase):
         executed_order = self.executor.execute_order_and_parse_response(event)
         self.executor.stop()
         self.assertIsNotNone(executed_order)
+        self.assertIsInstance(executed_order, ExecutedOrder
+              , 'expecting an executed order of type [%s] but got of type [%s] - %s'
+                % (type(ExecutedOrder), type(executed_order), executed_order))
         self.assertEqual(event, executed_order.order)
-
-
-if __name__ == "__main__":
-    unittest.main()
