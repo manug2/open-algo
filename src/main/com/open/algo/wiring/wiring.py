@@ -4,8 +4,7 @@ from com.open.algo.oanda.streaming import OandaEventStreamer
 from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.oanda.environments import ENVIRONMENTS
 from com.open.algo.utils import read_settings
-from com.open.algo.trading.fxPricesCache import FxPricesCache
-from com.open.algo.journal import Journaler
+from com.open.algo.trading.fxPricesCache import FxPricesCache, DEFAULT_ACCEPTABLE_TICK_AGE
 
 
 class WireRateCache:
@@ -18,6 +17,7 @@ class WireRateCache:
         self.journaler = None
         self.target_env = None
         self.config_path = None
+        self.max_tick_age = DEFAULT_ACCEPTABLE_TICK_AGE
 
     def wire(self):
         domain = ENVIRONMENTS['streaming'][self.target_env]
@@ -28,7 +28,7 @@ class WireRateCache:
         rates_streamer.set_instruments('EUR_USD')
         rates_streamer.set_events_q(self.rates_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
 
-        rates_cache = FxPricesCache()
+        rates_cache = FxPricesCache(max_tick_age=self.max_tick_age)
         rates_cache_loop = EventLoop(self.rates_q, rates_cache, forward_q=self.forward_q)
 
         return rates_streamer, rates_cache_loop
@@ -61,6 +61,10 @@ class WireRateCache:
 
     def set_config_path(self, config_path):
         self.config_path = config_path
+        return self
+
+    def set_max_tick_age(self, max_tick_age):
+        self.max_tick_age = max_tick_age
         return self
 
 from com.open.algo.trading.fxPortfolio import *
@@ -126,11 +130,13 @@ class WirePortfolio:
 
 from com.open.algo.oanda.execution import OandaExecutionHandler
 
+
 class WireExecutor:
 
     def __init__(self):
         self.portfolio_q = None
         self.execution_q = None
+        self.journaler = None
 
         self.target_env = None
         self.config_path = None
@@ -138,7 +144,7 @@ class WireExecutor:
     def wire(self):
         domain = ENVIRONMENTS['api'][self.target_env]
         settings = read_settings(self.config_path, self.target_env)
-        executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], Journaler())
+        executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
 
         execution_loop = EventLoop(self.execution_q, executor, processed_event_q=self.portfolio_q)
         return execution_loop
@@ -159,4 +165,114 @@ class WireExecutor:
 
     def set_config_path(self, config_path):
         self.config_path = config_path
+        return self
+
+    def set_journaler(self, journaler):
+        self.journaler = journaler
+        return self
+
+
+class WireStrategy:
+    def __init__(self):
+        self.ticks_and_ack_q = None
+        self.signal_output_q = None
+        self.strategy = None
+
+    def wire(self):
+        strategy_loop = EventLoop(self.ticks_and_ack_q, self.strategy, processed_event_q=self.signal_output_q)
+        return strategy_loop
+
+    # setup queues
+    def set_ticks_and_ack_q(self, ticks_and_ack_q):
+        self.ticks_and_ack_q = ticks_and_ack_q
+        return self
+
+    def set_signal_output_q(self, signal_output_q):
+        self.signal_output_q = signal_output_q
+        return self
+
+    def set_strategy(self, strategy):
+        self.strategy = strategy
+        return self
+
+
+class WireAll:
+    def __init__(self):
+        self.rates_q = None
+        self.heartbeat_q = None
+        self.exception_q = None
+        self.portfolio_q = None
+        self.execution_q = None
+        self.ticks_and_ack_q = None
+        self.journaler = None
+        self.max_tick_age = DEFAULT_ACCEPTABLE_TICK_AGE
+        self.target_env = None
+        self.config_path = None
+        self.strategy = None
+        self.port_wiring = WirePortfolio()
+
+    def wire(self):
+        rates_wiring = WireRateCache()
+        rates_wiring.set_max_tick_age(self.max_tick_age)
+        rates_wiring.set_rates_q(self.rates_q).set_forward_q(self.ticks_and_ack_q).set_journaler(self.journaler)
+        rates_wiring.set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
+        rates_wiring.set_target_env(self.target_env).set_config_path(self.config_path)
+        rates_streamer, rates_cache_loop = rates_wiring.wire()
+
+        self.port_wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
+        self.port_wiring.set_prices_cache(rates_cache_loop.handler)
+        portfolio_loop = self.port_wiring.wire()
+
+        executor_wiring = WireExecutor().set_journaler(self.journaler)
+        executor_wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
+        executor_wiring.set_target_env(self.target_env).set_config_path(self.config_path)
+        execution_loop = executor_wiring.wire()
+
+        strategy_wiring = WireStrategy().set_strategy(self.strategy)
+        strategy_wiring.set_signal_output_q(self.portfolio_q).set_ticks_and_ack_q(self.ticks_and_ack_q)
+        strategy_loop = strategy_wiring.wire()
+        # TODO execution acks need to feedback to strategy also, via ticks and ack q
+
+        return rates_streamer, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop
+
+    def set_portfolio_q(self, portfolio_q):
+        self.portfolio_q = portfolio_q
+        return self
+
+    def set_execution_q(self, execution_q):
+        self.execution_q = execution_q
+        return self
+
+    def set_ticks_and_ack_q(self, ticks_and_ack_q):
+        self.ticks_and_ack_q = ticks_and_ack_q
+        return self
+
+    # setup queues
+    def set_rates_q(self, rates_q):
+        self.rates_q = rates_q
+        return self
+
+    def set_heartbeat_q(self, heartbeat_q):
+        self.heartbeat_q = heartbeat_q
+        return self
+
+    # setup config file details and environment to connect to
+    def set_target_env(self, target_env):
+        self.target_env = target_env
+        return self
+
+    def set_config_path(self, config_path):
+        self.config_path = config_path
+        return self
+
+    def set_journaler(self, journaler):
+        self.journaler = journaler
+        return self
+
+    def set_max_tick_age(self, max_tick_age):
+        self.max_tick_age = max_tick_age
+        return self
+
+    def set_strategy(self, strategy):
+        self.strategy = strategy
         return self

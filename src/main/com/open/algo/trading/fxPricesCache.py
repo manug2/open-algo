@@ -3,10 +3,12 @@ __author__ = 'ManuGarg'
 from com.open.algo.model import MarketRateCache
 from com.open.algo.utils import get_age_seconds, EventHandler
 
+DEFAULT_ACCEPTABLE_TICK_AGE = 16*60*60 + 2*60
+
 
 class FxPricesCache(MarketRateCache, EventHandler):
 
-    def __init__(self, max_tick_age=(16*60*60 + 2*60)):
+    def __init__(self, max_tick_age=DEFAULT_ACCEPTABLE_TICK_AGE):
         self.rates = {}
         self.rates_tuples = {}
         self.started = False

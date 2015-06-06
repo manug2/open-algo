@@ -1,16 +1,17 @@
 import unittest
 from queue import Queue
 from threading import Thread
-from integration.common import *
+from testUtils import *
 from com.open.algo.wiring.wiring import *
-from com.open.algo.oanda.environments import CONFIG_PATH_FOR_UNIT_TESTS
-
+from com.open.algo.dummy import DummyBuyStrategy
+from com.open.algo.journal import Journaler
 
 class TestWirePricesStreamToCache(unittest.TestCase):
     def setUp(self):
         self.wiring = WireRateCache()
         self.wiring.set_rates_q(Queue()).set_forward_q(Queue()).set_journaler(Journaler())
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
+        self.wiring.set_max_tick_age(24*60*60)
 
     def test_forwarded_rate_should_be_in_fx_cache(self):
         rates_streamer, rates_cache_loop = self.wiring.wire()
@@ -29,6 +30,7 @@ class TestWirePricesStreamToCache(unittest.TestCase):
 
         try:
             rates = rates_cache_loop.handler.get_rate(tick.instrument)
+            print(rates)
             self.assertEqual(tick.bid, rates['bid'])
             self.assertEqual(tick.ask, rates['ask'])
         except KeyError:
@@ -70,7 +72,7 @@ class TestWireExecutor(unittest.TestCase):
     def setUp(self):
         self.portfolio_q = Queue()
         self.execution_q = Queue()
-        self.wiring = WireExecutor()
+        self.wiring = WireExecutor().set_journaler(Journaler)
         self.wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
@@ -89,3 +91,42 @@ class TestWireExecutor(unittest.TestCase):
                   , 'expecting an executed order of type [%s] but got of type [%s] - %s'
                       % (type(ExecutedOrder), type(executed_order), executed_order))
         self.assertEqual(buy_order, executed_order.order)
+
+
+class TestWireDummyBuyStrategy(unittest.TestCase):
+    def setUp(self):
+        self.tick_for_strategy_q = Queue()
+        self.signal_output_q = Queue()
+
+        self.strategy_wiring = WireStrategy().set_strategy(DummyBuyStrategy(100))
+        self.strategy_wiring.set_signal_output_q(self.signal_output_q).set_ticks_and_ack_q(self.tick_for_strategy_q)
+        self.strategy_loop = self.strategy_wiring.wire()
+        self.strategy_thread = Thread(target=self.strategy_loop.start)
+
+        self.rates_wiring = WireRateCache()
+        self.rates_wiring.set_rates_q(Queue()).set_forward_q(self.tick_for_strategy_q).set_journaler(Journaler())
+        self.rates_wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
+        self.rates_wiring.set_max_tick_age(24*60*60)
+
+        self.streamer, self.rates_cache_loop = self.rates_wiring.wire()
+        self.streaming_thread = Thread(target=self.streamer.stream, args=[])
+        self.rates_cache_thread = Thread(target=self.rates_cache_loop.start)
+
+    def tearDown(self):
+        self.streamer.stop()
+        self.rates_cache_loop.stop()
+        self.strategy_loop.stop()
+
+        self.streaming_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        self.rates_cache_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        self.strategy_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+
+    def test_should_produce_order_when_started(self):
+        self.streaming_thread.start()
+        self.rates_cache_thread.start()
+        self.strategy_thread.start()
+
+        signal = await_event_receipt(self, self.signal_output_q, 'should have received a signal from strategy')
+        self.assertIsNotNone(signal)
+        self.assertIsInstance(signal, OrderEvent)
+

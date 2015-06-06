@@ -6,6 +6,10 @@ from com.open.algo.utils import EventHandler
 
 
 class DummyBuyStrategy(AbstractStrategy):
+    """
+    this strategy is used for testing of trading system in an event driven fashion
+    as well as for unit testing of base class.
+    """
     def __init__(self, units):
         super(DummyBuyStrategy, self).__init__()
         self.units = units
@@ -37,6 +41,10 @@ class BuyOrSellAt5thTickStrategy(AbstractStrategy):
 
 
 class AlternateBuySellAt5thTickStrategy(AbstractStrategy):
+    """
+    this strategy is used for unit testing of abstract class.
+    abstract class maintains signals, open interests etc.
+    """
     def __init__(self, units):
         super(AlternateBuySellAt5thTickStrategy, self).__init__()
         self.units = units

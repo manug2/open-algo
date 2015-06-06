@@ -4,7 +4,7 @@ import sys
 sys.path.append('../../../main')
 
 import unittest
-from integration.common import *
+from testUtils import *
 
 from queue import Queue
 from threading import Thread
