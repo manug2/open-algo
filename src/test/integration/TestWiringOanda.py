@@ -1,14 +1,9 @@
 import unittest
-from queue import Queue, Empty
+from queue import Queue
 from threading import Thread
-from time import sleep
-
-from com.open.algo.journal import Journaler
+from integration.common import *
 from com.open.algo.wiring.wiring import *
 from com.open.algo.oanda.environments import CONFIG_PATH_FOR_UNIT_TESTS
-
-
-TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM = 4
 
 
 class TestWirePricesStreamToCache(unittest.TestCase):
@@ -26,19 +21,12 @@ class TestWirePricesStreamToCache(unittest.TestCase):
         rates_stream_thread.start()
         rates_cache_thread.start()
 
-        sleep(TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        tick = await_event_receipt(self, self.wiring.forward_q, 'did not get any rates forwarded by fx cache')
         rates_streamer.stop()
-        rates_stream_thread.join(timeout=TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
         rates_cache_loop.stop()
-        rates_cache_thread.join(timeout=2*rates_cache_loop.heartbeat)
+        rates_cache_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
-        tick = None
-        try:
-            while True:
-                tick = self.wiring.forward_q.get_nowait()
-        except Empty:
-            pass
-        self.assertIsNotNone(tick, 'rates q should have had at least one tick received by rates streamer, found None')
         try:
             rates = rates_cache_loop.handler.get_rate(tick.instrument)
             self.assertEqual(tick.bid, rates['bid'])
@@ -72,15 +60,10 @@ class TestWirePortfolio(unittest.TestCase):
 
         portfolio_thread.start()
         self.portfolio_q.put_nowait(buy_order)
-        sleep(2*portfolio_loop.heartbeat)
+        out_event = await_event_receipt(self, self.execution_q, 'did not find one order in execution queue')
         portfolio_loop.stop()
         portfolio_thread.join(2*portfolio_loop.heartbeat)
-
-        try:
-            out_event = self.execution_q.get_nowait()
-            self.assertEqual(buy_order, out_event)
-        except Empty:
-            self.fail('should have found one order in execution queue')
+        self.assertEqual(buy_order, out_event)
 
 
 class TestWireExecutor(unittest.TestCase):
@@ -98,15 +81,11 @@ class TestWireExecutor(unittest.TestCase):
         execution_thread = Thread(target=execution_loop.start)
         execution_thread.start()
         self.execution_q.put_nowait(buy_order)
-        sleep(TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        executed_order = await_event_receipt(self, self.portfolio_q, 'did not find one order in portfolio queue')
         execution_loop.stop()
         execution_thread.join(timeout=2*execution_loop.heartbeat)
 
-        try:
-            executed_order = self.portfolio_q.get_nowait()
-            self.assertIsInstance(executed_order, ExecutedOrder
-                      , 'expecting an executed order of type [%s] but got of type [%s] - %s'
-                          % (type(ExecutedOrder), type(executed_order), executed_order))
-            self.assertEqual(buy_order, executed_order.order)
-        except Empty:
-            self.fail('should have sent executed order to portfolio q')
+        self.assertIsInstance(executed_order, ExecutedOrder
+                  , 'expecting an executed order of type [%s] but got of type [%s] - %s'
+                      % (type(ExecutedOrder), type(executed_order), executed_order))
+        self.assertEqual(buy_order, executed_order.order)

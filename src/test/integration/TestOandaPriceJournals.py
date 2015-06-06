@@ -4,10 +4,10 @@ import sys
 sys.path.append('../../../main')
 
 import unittest
+from integration.common import *
+
 from queue import Queue
-
 from threading import Thread
-
 from com.open.algo.utils import read_settings
 from com.open.algo.oanda.environments import ENVIRONMENTS, CONFIG_PATH_FOR_UNIT_TESTS
 
@@ -19,7 +19,7 @@ from com.open.algo.journal import *
 
 TARGET_ENV = "practice"
 OUTPUT_DIR = '../output/'
-TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM=2.5
+MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM=5
 
 
 class TestStreaming(unittest.TestCase):
@@ -29,38 +29,30 @@ class TestStreaming(unittest.TestCase):
         domain = ENVIRONMENTS['streaming'][TARGET_ENV]
         settings = read_settings(CONFIG_PATH_FOR_UNIT_TESTS, TARGET_ENV)
 
-        self.events = Queue()
+        self.ticks_q = Queue()
         self.heartbeat_q = Queue()
-        exceptions = Queue()
+        self.exception_q = Queue()
         self.prices = OandaEventStreamer(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
         self.prices.set_instruments('EUR_USD')
-        self.prices.set_events_q(self.events).set_heartbeat_q(self.heartbeat_q).set_exception_q(exceptions)
+        self.prices.set_events_q(self.ticks_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
+        self.price_thread = Thread(target=self.prices.stream, args=[])
+        self.price_thread.start()
+
+    def tearDown(self):
+        self.prices.stop()
+        self.price_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
     def test_journaler_should_log_streaming_events(self):
-        price_thread = Thread(target=self.prices.stream, args=[])
-        price_thread.start()
-        sleep(TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        self.prices.stop()
-        price_thread.join(timeout=2)
+        await_event_receipt(self, self.ticks_q, 'did not get any tick')
         out_event = self.journaler.get_last_event()
         self.assertIsNotNone(out_event)
 
     def test_should_receive_streaming_heartbeat_events(self):
-        price_thread = Thread(target=self.prices.stream, args=[])
-        price_thread.start()
-        sleep(TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        self.prices.stop()
-        price_thread.join(timeout=2)
-        out_event = None
-        try:
-            while True:
-                out_event = self.heartbeat_q.get_nowait()
-        except Empty:
-            pass
+        out_event = await_event_receipt(self, self.heartbeat_q, 'did not get any heartbeat')
         self.assertIsNotNone(out_event)
         self.assertTrue(isinstance(out_event, Heartbeat))
 
-    def test_should_log_oanda_streaming_ticks_to_journal_file(self):
+    def test_should_log_oanda_streaming_ticks_to_fil_journaler_q(self):
         filename = os.path.join(OUTPUT_DIR, 'journal_oanda_tick_ut.txt')
         try:
             os.remove(filename)
@@ -69,47 +61,29 @@ class TestStreaming(unittest.TestCase):
         journal_q = Queue()
         journaler = FileJournaler(journal_q, full_path=filename)
 
-        domain = ENVIRONMENTS['streaming'][TARGET_ENV]
-        settings = read_settings(CONFIG_PATH_FOR_UNIT_TESTS, TARGET_ENV)
+        # plug the new file journaler
+        self.prices.journaler = journaler
+        tick = await_event_receipt(self, self.ticks_q, 'did not get any tick')
+        self.prices.stop()
 
-        ticks_q = Queue()
-        hb_q = Queue()
-        prices = OandaEventStreamer(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], journaler)
-        prices.set_instruments('EUR_USD')
-        prices.set_events_q(ticks_q).set_heartbeat_q(hb_q)
-
-        looper = EventLoop(journal_q, journaler)
-        loop_thread = Thread(target=looper.start, args=[])
-        loop_thread.start()
-        price_thread = Thread(target=prices.stream, args=[])
-        price_thread.start()
-        sleep(TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        prices.stop()
-        price_thread.join(timeout=2)
-
-        looper.stop()
-        loop_thread.join(2*looper.heartbeat)
-        journaler.close()
-
-        out_str = journaler.get_last_event()
-        self.assertIsNotNone(out_str)
-        out_json = json.loads(out_str)
-        out_event = parse_event(journaler.get_last_received(), out_json)
-        tick = None
         try:
             while True:
-                tick = ticks_q.get_nowait()
+                tick = self.ticks_q.get_nowait()
         except Empty:
             pass
-        self.assertIsNotNone(tick)
+
         heartbeat = None
         try:
             while True:
-                heartbeat = hb_q.get_nowait()
+                heartbeat = self.heartbeat_q.get_nowait()
         except Empty:
             pass
-        self.assertIsNotNone(heartbeat)
 
+        journal_last_received = journaler.get_last_received()
+        journal_last_event = journaler.get_last_event()
+        self.assertIsNotNone(journal_last_event)
+
+        out_event = parse_event(journal_last_received, json.loads(journal_last_event))
         if isinstance(out_event, Heartbeat):
             self.assertEqual(heartbeat, out_event)
         elif isinstance(out_event, TickEvent):

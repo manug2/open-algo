@@ -4,9 +4,9 @@ import sys
 
 sys.path.append('../../main')
 import unittest
+from integration.common import *
 
-from queue import Queue, Empty
-from time import sleep
+from queue import Queue
 from threading import Thread
 from com.open.algo.utils import read_settings
 from com.open.algo.journal import Journaler
@@ -16,6 +16,7 @@ from com.open.algo.oanda.streaming import *
 from com.open.algo.oanda.history import *
 
 TARGET_ENV = "practice"
+MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM=5
 
 
 class TestStreaming(unittest.TestCase):
@@ -30,20 +31,16 @@ class TestStreaming(unittest.TestCase):
         self.exceptions = Queue()
         self.streamer = OandaEventStreamer(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
         self.streamer.set_events_q(self.events).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exceptions)
+        self.streamer.set_instruments('EUR_USD')
         self.streaming_thread = Thread(target=self.streamer.stream, args=[])
+        self.streaming_thread.start()
+
+    def tearDown(self):
+        self.streamer.stop()
+        self.streaming_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
     def test_should_receive_streaming_ticks(self):
-        self.streamer.set_instruments('EUR_USD')
-        self.streaming_thread.start()
-        sleep(2.5)
-        self.streamer.stop()
-        self.streaming_thread.join(timeout=2)
-        out_event = None
-        try:
-            while True:
-                out_event = self.events.get_nowait()
-        except Empty:
-            pass
+        out_event = await_event_receipt(self, self.events, 'did not get any tick')
         self.assertIsNotNone(out_event)
         self.assertTrue(isinstance(out_event, TickEvent))
 
@@ -70,16 +67,13 @@ class TestStreamingExecutionEvents(unittest.TestCase):
         self.streamer.set_events_q(self.events).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exceptions)
         self.streamer.set_context(OANDA_CONTEXT_EVENTS)
         self.streaming_thread = Thread(target=self.streamer.stream, args=[])
-
-    def test_should_be_able_to_connect_for_receiving_streaming_account_events(self):
-        self.streamer.set_context(OANDA_CONTEXT_EVENTS)
         self.streaming_thread.start()
-        out_event = None
-        try:
-            out_event = self.heartbeat_q.get(timeout=20)
-        except Empty:
-            pass
+
+    def tearDown(self):
         self.streamer.stop()
         self.streaming_thread.join(timeout=5)
+
+    def test_should_be_able_to_connect_for_receiving_streaming_account_events(self):
+        out_event = await_event_receipt(self, self.heartbeat_q, 'did not get any heartbeat', 20)
         self.assertIsNotNone(out_event)
         self.assertTrue(isinstance(out_event, Heartbeat))

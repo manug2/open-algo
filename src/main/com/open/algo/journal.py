@@ -50,6 +50,8 @@ class FileJournaler(Journaler, EventHandler):
 
     def log_event(self, receive_time, event):
         try:
+            self.last_received = event
+            self.last_received = receive_time
             msg = prepare_journal_entry(receive_time, event)
             self.events.put_nowait(msg)
         except Full:
