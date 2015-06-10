@@ -3,7 +3,7 @@ __author__ = 'ManuGarg'
 import sys
 from queue import Queue, Full, Empty
 from com.open.algo.utils import get_time
-from threading import Thread
+from threading import Thread, RLock
 from time import sleep
 
 def prepare_journal(message, event, consumer_q):
@@ -22,6 +22,7 @@ class QueueSPMC(Queue):
     """
     Single Producer Multiple Consumer Queue
     """
+
     def __init__(self, journaler, monitor_interval=0.5):
         super(Queue, self).__init__()
         self.consumer_queues = list()
@@ -33,15 +34,16 @@ class QueueSPMC(Queue):
         self.monitor = False
         self.monitor_thread = None
         self.monitor_interval = monitor_interval
+        self.lock = RLock()
 
     def add_consumer(self, consumer_q, timeout=0.5):
-        if consumer_q not in self.consumer_queues:
-            self.consumer_queues.append(consumer_q)
-            staging_queue = Queue()
-            self.staging_queues.append(staging_queue)
-            self.consumer_timeout.append(timeout)
-        else:
+        if consumer_q in self.consumer_queues:
             raise ValueError('consumer q already added to SPMC queue - [%s]' % consumer_q)
+
+        self.consumer_queues.append(consumer_q)
+        staging_queue = Queue()
+        self.staging_queues.append(staging_queue)
+        self.consumer_timeout.append(timeout)
 
     def put_nowait(self, item):
         for q in self.consumer_queues:
@@ -57,8 +59,6 @@ class QueueSPMC(Queue):
         if timeout is not None:
             print('timeout [%f] will be ignored and defaulted per consumer' % timeout)
 
-        if not self.monitor:
-            self.start()
         for sq in self.staging_queues:
             try:
                 sq.put_nowait(item)
@@ -70,6 +70,7 @@ class QueueSPMC(Queue):
 
     def submit(self):
         for i in range(0, len(self.staging_queues)):
+            print('putting in sq # %d' % i)
             staging_queue = self.staging_queues[i]
             try:
                 item = staging_queue.get_nowait()
@@ -93,6 +94,8 @@ class QueueSPMC(Queue):
             self.journaler.log_event(get_time(), prepare_journal('target queue was full', item, q))
 
     def await_puts(self):
+        if not self.monitor:
+            self.start()
         for i in range(0, len(self.staging_queues)):
             if i in self.consumer_thread:
                 cq_t = self.consumer_thread[i]
@@ -101,20 +104,29 @@ class QueueSPMC(Queue):
                     cq_t.join(timeout)
 
     def stop(self):
-        self.monitor = False
-        self.consumer_queues.clear()
-        self.consumer_timeout.clear()
-        self.consumer_thread.clear()
-        self.staging_queues.clear()
+        with self.lock:
+            self.monitor = False
+            self.consumer_queues.clear()
+            self.consumer_timeout.clear()
+            self.consumer_thread.clear()
+            self.staging_queues.clear()
 
     def start(self):
-        self.monitor = True
-        self.monitor_thread = Thread(target=self.monitor_threads, args=[])
-        self.monitor_thread.start()
+        with self.lock:
+            self.monitor = True
+            self.monitor_thread = Thread(target=self.monitor_threads, args=[])
+            self.monitor_thread.start()
 
     def monitor_threads(self):
         while self.monitor:
-            for cq_t in self.consumer_thread.values():
+            for i in self.consumer_thread.keys():
+                cq_t = self.consumer_thread[i]
                 if cq_t.is_alive():
                     print('%s -> thread [%s] is alive..' % (self.__class__.__name__, cq_t.getName()))
-            sleep(self.monitor_interval)
+                else:
+                    del self.consumer_thread[i]
+
+            if self.consumer_thread:
+                sleep(self.monitor_interval)
+            else:
+                self.stop()

@@ -5,6 +5,7 @@ from os import linesep
 from com.open.algo.model import ExecutionHandler
 from com.open.algo.utils import EventHandler, get_time
 from com.open.algo.oanda.parser import parse_execution_response
+import logging
 
 
 class OandaExecutionHandler(ExecutionHandler, EventHandler):
@@ -19,6 +20,7 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
         }
         self.url = domain + '/v1/accounts/%s/orders' % account_id
         self.journaler = journaler
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def __str__(self):
         val = self.__class__.__name__ + "{" + self.url + "|" + str(self.headers) + "}"
@@ -110,9 +112,9 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
         return parse_execution_response(response_dict, str(self), event)
 
     def send_and_receive(self, func, url, request_args):
-        debug_message = 'URL[%s]%sPARAMS[%s]' % (url, linesep, request_args)
-        before_send_time = get_time()
-        self.journaler.log_event(before_send_time, debug_message)
+        if self.logger.isEnabledFor(logging.DEBUG):
+            self.logger.debug('URL[%s]%sPARAMS[%s]' % (url, linesep, request_args))
+
         try:
             response = func(url, **request_args)
             receive_time = get_time()
@@ -120,10 +122,3 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
         except requests.RequestException as e:
             self.journaler.log_event(get_time(), str(e))
             return {'code': -2, 'message': e.args[0]}
-
-
-class OandaExecutionEventHandler(ExecutionHandler, EventHandler):
-    """
-    for capturing stop loss, take profit, margin call type of actions taken by the broker and then sent via http
-    """
-    pass

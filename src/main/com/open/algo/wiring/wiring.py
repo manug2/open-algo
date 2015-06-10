@@ -5,6 +5,7 @@ from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.oanda.environments import ENVIRONMENTS
 from com.open.algo.utils import read_settings
 from com.open.algo.trading.fxPricesCache import FxPricesCache, DEFAULT_ACCEPTABLE_TICK_AGE
+from com.open.algo.wiring.queue_spmc import *
 
 
 class WireRateCache:
@@ -134,7 +135,7 @@ from com.open.algo.oanda.execution import OandaExecutionHandler
 class WireExecutor:
 
     def __init__(self):
-        self.portfolio_q = None
+        self.execution_result_q = None
         self.execution_q = None
         self.journaler = None
 
@@ -146,12 +147,12 @@ class WireExecutor:
         settings = read_settings(self.config_path, self.target_env)
         executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
 
-        execution_loop = EventLoop(self.execution_q, executor, processed_event_q=self.portfolio_q)
+        execution_loop = EventLoop(self.execution_q, executor, processed_event_q=self.execution_result_q)
         return execution_loop
 
     # setup queues
-    def set_portfolio_q(self, portfolio_q):
-        self.portfolio_q = portfolio_q
+    def set_execution_result_q(self, execution_result_q):
+        self.execution_result_q = execution_result_q
         return self
 
     def set_execution_q(self, execution_q):
@@ -210,6 +211,7 @@ class WireAll:
         self.config_path = None
         self.strategy = None
         self.port_wiring = WirePortfolio()
+        self.execution_ack_nack_q = None
 
     def wire(self):
         rates_wiring = WireRateCache()
@@ -223,15 +225,19 @@ class WireAll:
         self.port_wiring.set_prices_cache(rates_cache_loop.handler)
         portfolio_loop = self.port_wiring.wire()
 
+        self.execution_ack_nack_q = QueueSPMC(self.journaler, monitor_interval=2)
+        self.execution_ack_nack_q.add_consumer(self.portfolio_q, timeout=5)
+        self.execution_ack_nack_q.add_consumer(self.ticks_and_ack_q, timeout=5)
+
         executor_wiring = WireExecutor().set_journaler(self.journaler)
-        executor_wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
+        executor_wiring.set_execution_q(self.execution_q)
         executor_wiring.set_target_env(self.target_env).set_config_path(self.config_path)
+        executor_wiring.set_execution_result_q(self.execution_ack_nack_q)
         execution_loop = executor_wiring.wire()
 
         strategy_wiring = WireStrategy().set_strategy(self.strategy)
         strategy_wiring.set_signal_output_q(self.portfolio_q).set_ticks_and_ack_q(self.ticks_and_ack_q)
         strategy_loop = strategy_wiring.wire()
-        # TODO execution acks need to feedback to strategy also, via ticks and ack q
 
         return rates_streamer, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop
 

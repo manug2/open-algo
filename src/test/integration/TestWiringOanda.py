@@ -1,10 +1,9 @@
 import unittest
-from queue import Queue
-from threading import Thread
 from testUtils import *
 from com.open.algo.wiring.wiring import *
 from com.open.algo.dummy import DummyBuyStrategy
 from com.open.algo.journal import Journaler
+
 
 class TestWirePricesStreamToCache(unittest.TestCase):
     def setUp(self):
@@ -72,8 +71,8 @@ class TestWireExecutor(unittest.TestCase):
     def setUp(self):
         self.portfolio_q = Queue()
         self.execution_q = Queue()
-        self.wiring = WireExecutor().set_journaler(Journaler)
-        self.wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
+        self.wiring = WireExecutor().set_journaler(Journaler())
+        self.wiring.set_execution_result_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
     def test_executed_order_should_reach_portfolio_q(self):

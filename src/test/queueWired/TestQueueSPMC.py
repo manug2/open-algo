@@ -61,7 +61,7 @@ class TestNonBlockingScenarios(unittest.TestCase):
             except Empty:
                 self.fail('should have one event in the consumer queue # %s' % i)
 
-    def test_shoud_log_journal_when_single_consumer_is_full(self):
+    def test_should_log_journal_when_single_consumer_is_full(self):
         cons = Queue(maxsize=1)
         self.consumer_queues.append(cons)
         self.spmc_q.add_consumer(cons)
@@ -82,7 +82,7 @@ class TestNonBlockingScenarios(unittest.TestCase):
         except Empty:
             self.fail('should have one other event in the consumer queue')
 
-    def test_shoud_log_journal_when_first_consumer_is_full(self):
+    def test_should_log_journal_when_first_consumer_is_full(self):
         cons1 = Queue(maxsize=1)
         self.consumer_queues.append(cons1)
         self.spmc_q.add_consumer(cons1)
@@ -114,7 +114,7 @@ class TestNonBlockingScenarios(unittest.TestCase):
         except Empty:
             self.fail('should have one event in the 2nd consumer queue')
 
-    def test_shoud_log_journal_when_second_consumer_is_full(self):
+    def test_should_log_journal_when_second_consumer_is_full(self):
         cons1 = Queue()
         self.consumer_queues.append(cons1)
         self.spmc_q.add_consumer(cons1)
@@ -159,7 +159,7 @@ class TestBlockingScenarios(unittest.TestCase):
         for i in range(0, count):
             cons = Queue()
             self.consumer_queues.append(cons)
-            self.spmc_q.add_consumer(cons)
+            self.spmc_q.add_consumer(cons, timeout=0.1)
 
     def test_single_consumer_can_get_event(self):
         self.append_consumers(1)
@@ -202,7 +202,7 @@ class TestBlockingScenarios(unittest.TestCase):
             except Empty:
                 self.fail('should have one event in the consumer queue # %s' % i)
 
-    def test_shoud_log_journal_when_single_consumer_is_full(self):
+    def test_should_log_journal_when_single_consumer_is_full(self):
         cons = Queue(maxsize=1)
         self.consumer_queues.append(cons)
         self.spmc_q.add_consumer(cons, timeout=0.1)
@@ -222,7 +222,7 @@ class TestBlockingScenarios(unittest.TestCase):
         except Empty:
             self.fail('should have one other event in the consumer queue')
 
-    def test_shoud_log_journal_when_first_consumer_is_full(self):
+    def test_should_log_journal_when_first_consumer_is_full(self):
         cons1 = Queue(maxsize=1)
         self.consumer_queues.append(cons1)
         self.spmc_q.add_consumer(cons1, timeout=0.1)
@@ -254,7 +254,7 @@ class TestBlockingScenarios(unittest.TestCase):
         except Empty:
             self.fail('should have one event in the 2nd consumer queue')
 
-    def test_shoud_log_journal_when_second_consumer_is_full(self):
+    def test_should_log_journal_when_second_consumer_is_full(self):
         cons1 = Queue()
         self.consumer_queues.append(cons1)
         self.spmc_q.add_consumer(cons1, timeout=0.1)
