@@ -19,6 +19,7 @@ class WireRateCache:
         self.target_env = None
         self.config_path = None
         self.max_tick_age = DEFAULT_ACCEPTABLE_TICK_AGE
+        self.instruments = 'EUR_USD'
 
     def wire(self):
         domain = ENVIRONMENTS['streaming'][self.target_env]
@@ -26,7 +27,7 @@ class WireRateCache:
 
         rates_streamer = OandaEventStreamer(
             domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
-        rates_streamer.set_instruments('EUR_USD')
+        rates_streamer.set_instruments(self.instruments)
         rates_streamer.set_events_q(self.rates_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
 
         rates_cache = FxPricesCache(max_tick_age=self.max_tick_age)
@@ -66,6 +67,10 @@ class WireRateCache:
 
     def set_max_tick_age(self, max_tick_age):
         self.max_tick_age = max_tick_age
+        return self
+
+    def set_instruments(self, instruments):
+        self.instruments = instruments
         return self
 
 from com.open.algo.trading.fxPortfolio import *
@@ -282,3 +287,26 @@ class WireAll:
     def set_strategy(self, strategy):
         self.strategy = strategy
         return self
+
+
+import logging
+
+
+def wire_logger():
+    logger = logging.getLogger('')
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
+
+def wire_file_logger(file_path):
+    logger = logging.getLogger('')
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(file_path)
+    fh.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
