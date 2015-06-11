@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 
 from com.open.algo.utils import EventHandler
 from com.open.algo.utils import EVENT_TYPES_FILL, EVENT_TYPES_REJECTED, EVENT_TYPES_TICK, EVENT_TYPES_FILTERED
+import logging
 
 
 class AbstractStrategy(EventHandler):
@@ -11,6 +12,7 @@ class AbstractStrategy(EventHandler):
         super(AbstractStrategy, self).__init__()
         self.signaled_positions = dict()
         self.open_interests = dict()
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     @abstractmethod
     def calculate_signals(self, event):
@@ -23,11 +25,10 @@ class AbstractStrategy(EventHandler):
             self.acknowledge(event)
 
     def acknowledge(self, event):
+        self.logger.info('received ack/nak [%s]', event)
         if event.TYPE == EVENT_TYPES_FILL:
-            print('acknowledgment received - %s' % event)
             self.acknowledge_execution(event)
         elif event.TYPE == EVENT_TYPES_FILTERED or event.TYPE == EVENT_TYPES_REJECTED:
-            print('rejection received - %s' % event)
             self.acknowledge_rejection(event)
         else:
             raise ValueError('Don\'t know how to handle event of type "%s" - [%s]' % (event.TYPE, event))

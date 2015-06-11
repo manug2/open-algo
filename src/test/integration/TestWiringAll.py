@@ -6,6 +6,7 @@ from com.open.algo.wiring.wiring import *
 from time import sleep
 from com.open.algo.dummy import DummyBuyStrategy
 from com.open.algo.journal import Journaler
+import logging
 
 
 class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
@@ -36,6 +37,22 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
         self.portfolio_thread = Thread(target=self.portfolio_loop.start)
         self.execution_thread = Thread(target=self.execution_loop.start)
         self.strategy_thread = Thread(target=self.strategy_loop.start)
+
+        logger = logging.getLogger('')
+        logger.setLevel(logging.DEBUG)
+        # create file handler which logs even debug messages
+        # fh = logging.FileHandler('spam.log')
+        # fh.setLevel(logging.DEBUG)
+        # create console handler with a higher log level
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        # create formatter and add it to the handlers
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
+        # fh.setFormatter(formatter)
+        ch.setFormatter(formatter)
+        # add the handlers to the logger
+        # logger.addHandler(fh)
+        logger.addHandler(ch)
 
     def tearDown(self):
         self.execution_loop.stop()

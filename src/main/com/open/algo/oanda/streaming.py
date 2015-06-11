@@ -6,6 +6,7 @@ import requests
 from com.open.algo.oanda.parser import parse_event
 from com.open.algo.model import StreamDataProvider, ExceptionEvent, Heartbeat
 from com.open.algo.utils import get_time
+import logging
 
 
 OANDA_CONTEXT_RATES = '/v1/prices'
@@ -29,7 +30,10 @@ class OandaEventStreamer(StreamDataProvider):
         self.exception_q = None
 
         self.context = OANDA_CONTEXT_RATES
-        print(get_time(), '%s using account[%s], token[%s]' %
+        self.logger = logging.getLogger(self.__class__.__name__)
+
+        self.logger.info('using domain [%s]' % self.domain)
+        self.logger.info('%s using account[%s], token[%s]' %
                           (self.__class__.__name__, self.account_id, self.access_token))
 
     # end of init
@@ -39,31 +43,34 @@ class OandaEventStreamer(StreamDataProvider):
             self.__class__.__name__, self.domain, self.context)
 
     def connect(self):
+        url = self.domain + self.context
+        self.logger.info('preparing connection to streaming end point [%s]' % url)
         if self.events_q is None:
             raise Exception('"%s" is not set' % 'events_q')
         if self.journaler is None:
             raise Exception('"%s" is not set' % 'journaler')
 
-        self.journaler.log_event(get_time(), 'connected-%s' % str(self))
         self.session = requests.Session()
-        url = self.domain + self.context
         headers = {'Authorization': 'Bearer ' + self.access_token}
         params = {'accountId': self.account_id}
         if self.instruments is not None:
             params['instruments'] = self.instruments
 
+        self.logger.info('using headers [%s]' % headers)
+        self.logger.info('using params [%s]' % params)
+
         req = requests.Request('GET', url, headers=headers, params=params)
         pre = req.prepare()
+        self.logger.info('connecting to streaming end point..')
         resp = self.session.send(pre, stream=True, verify=False)
-        self.journaler.log_event(get_time(), 'receiving-%s' % str(self))
+        self.logger.info('connection to streaming end point successful, now receiving..')
         return resp
 
     def stream(self):
-        self.journaler.log_event(get_time(), 'connecting-%s' % str(self))
         self.streaming = True
         response = self.connect()
         if response.status_code != 200:
-            raise RuntimeError('Web response not OK (%d), "%s"' % (response.status_code, response.text))
+            raise RuntimeError('HTTP response not OK (%d), "%s"' % (response.status_code, response.text))
 
         if not self.streaming:
             return
@@ -81,7 +88,7 @@ class OandaEventStreamer(StreamDataProvider):
                     try:
                         self.exception_q.put_nowait(ExceptionEvent(self, exm))
                     except Full:
-                        print(exm)
+                        self.logger.error(exm)
 
                 if parsed_event is not None:
                     try:
@@ -91,8 +98,7 @@ class OandaEventStreamer(StreamDataProvider):
                         else:
                             self.events_q.put_nowait(parsed_event)
                     except Full:
-                        self.journaler.log_event(get_time(),
-                            'WARNING: queue is full, could not put event [%s]' % parsed_event)
+                        self.logger.error('queue is full, could not put event received [%s]' % parsed_event)
             if not self.streaming:
                 break
 

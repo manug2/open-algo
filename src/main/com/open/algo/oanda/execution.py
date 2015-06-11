@@ -20,7 +20,10 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
         }
         self.url = domain + '/v1/accounts/%s/orders' % account_id
         self.journaler = journaler
+
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.info('using url [%s]' % self.url)
+        self.logger.info('using headers [%s]' % self.headers)
 
     def __str__(self):
         val = self.__class__.__name__ + "{" + self.url + "|" + str(self.headers) + "}"
@@ -30,8 +33,10 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
         return self.__str__()
 
     def connect(self):
+        self.logger.info('connecting to execution end point..')
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+        self.logger.info('connection to execution end point successful!')
         self.executing = True
 
     def parse_response(self, receive_time, response):
@@ -51,9 +56,9 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
 
     def execute_order(self, event):
         if not self.executing:
-            print('Executor in stop mode, will not execute order: "%s"' % event)
+            self.logger.warn('Executor in stop mode, will not execute order: "%s"' % event)
             return
-        self.journaler.log_event(get_time(), 'executing order [%s]' % str(event))
+        self.logger.info('executing order [%s]' % event)
 
         params = {
             "instrument": event.instrument,
@@ -66,6 +71,7 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
             if value is not None:
                 params[attr] = value
 
+        self.logger.info('execution order parameters [%s]' % params)
         request_args = dict()
         request_args['data'] = urllib.parse.urlencode(params)
         func = getattr(self.session, 'post')
@@ -81,7 +87,7 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
     def get_orders(self, params=None):
         # def get_orders(self, order_type="market", instrument=None):
         if not self.executing:
-            print('Executor in stop mode, will not query orders')
+            self.logger.warn('Executor in stop mode, will not query orders')
             return
 
         request_args = {}
@@ -93,7 +99,7 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
 
     def get_order(self, order_id):
         if not self.executing:
-            print('Executor in stop mode, will not query order')
+            self.logger.warn('Executor in stop mode, will not query order')
             return
 
         request_args = {}
@@ -111,17 +117,16 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
     def execute_order_and_parse_response(self, event):
         response_dict = self.execute_order(event)
         executed_order = parse_execution_response(response_dict, str(self), event)
-        print('executor response - %s' % executed_order)
+        self.logger.info('executor response - %s' % executed_order)
         return executed_order
 
     def send_and_receive(self, func, url, request_args):
-        if self.logger.isEnabledFor(logging.DEBUG):
-            self.logger.debug('URL[%s]%sPARAMS[%s]' % (url, linesep, request_args))
+        self.logger.info('execution order parameter (url encoded) [%s]' % request_args)
 
         try:
             response = func(url, **request_args)
             receive_time = get_time()
             return self.parse_response(receive_time, response)
         except requests.RequestException as e:
-            self.journaler.log_event(get_time(), str(e))
+            self.logger.error('exception during execution', e)
             return {'code': -2, 'message': e.args[0]}

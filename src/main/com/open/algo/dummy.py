@@ -4,6 +4,9 @@ from com.open.algo.strategy import AbstractStrategy
 from com.open.algo.trading.fxEvents import OrderEvent, ORDER_SIDE_BUY, ORDER_SIDE_SELL
 from com.open.algo.utils import EventHandler
 
+import logging
+logger = logging.getLogger('dummy')
+
 
 class DummyBuyStrategy(AbstractStrategy):
     """
@@ -21,7 +24,7 @@ class DummyBuyStrategy(AbstractStrategy):
             signal_amount_pending_ack = 0
         if signal_amount_pending_ack == 0:
             order = OrderEvent(event.instrument, self.units, ORDER_SIDE_BUY)
-            print('issuing order - %s' % order)
+            logger.info('issuing order - %s' % order)
             self.update_signaled_position(order.instrument, order.get_signed_units())
             return order
 
@@ -81,14 +84,14 @@ class DummyExecutor(ExecutionHandler, EventHandler):
         if self.delay > 0:
             sleep(self.delay)
         self.last_event = event
-        print('Dummy Execution "%s", returning executed order' % event)
+        logger.info('Dummy Execution "%s", returning executed order' % event)
         return ExecutedOrder(event, 1.0, event.units)
 
     def stop(self):
-        print("Stopping Dummy Execution!")
+        logger.info("Stopping Dummy Execution!")
 
     def start(self):
-        print("Starting Dummy Execution!")
+        logger.info("Starting Dummy Execution!")
 
     def process(self, event):
         return self.execute_order(event)

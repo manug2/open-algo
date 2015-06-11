@@ -17,8 +17,7 @@ class TickEvent(Event):
         self.ask = ask
 
     def to_string(self):
-        msg = self.__class__.__name__ + "(" + self.instrument + ","
-        msg = msg + str(self.bid) + "," + str(self.ask) + "," + self.time + ")"
+        msg = '%s(%s,%f,%f,%s)' % (self.__class__.__name__, self.instrument, self.bid, self.ask, self.time)
         return msg
 
 
@@ -76,7 +75,7 @@ class OrderEvent(Event):
 
 
 class ExecutedOrder(Event):
-    def __init__(self, order_event, execution_price, execution_units):
+    def __init__(self, order_event, execution_price, execution_units, received_time=None):
 
         super(ExecutedOrder, self).__init__(EVENT_TYPES_FILL)
 
@@ -88,9 +87,14 @@ class ExecutedOrder(Event):
             'executed order can be made with integral "units" only, found %s' % execution_units
         assert execution_units >= 0, 'executed order cannot be made with amount less than zero'
         self.units = execution_units
+        self.received_time = received_time
 
     def get_signed_units(self):
         if self.order.side == ORDER_SIDE_BUY:
             return self.units
         else:
             return -self.units
+
+    def to_string(self):
+        msg = '%s(%f,%s,%s,%s)' % (self.__class__.__name__, self.price, self.units, self.received_time, self.order)
+        return msg

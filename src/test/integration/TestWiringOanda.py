@@ -23,8 +23,8 @@ class TestWirePricesStreamToCache(unittest.TestCase):
 
         tick = await_event_receipt(self, self.wiring.forward_q, 'did not get any rates forwarded by fx cache')
         rates_streamer.stop()
-        rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
         rates_cache_loop.stop()
+        rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
         rates_cache_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
         try:
