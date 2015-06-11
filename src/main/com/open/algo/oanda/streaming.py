@@ -29,11 +29,14 @@ class OandaEventStreamer(StreamDataProvider):
         self.exception_q = None
 
         self.context = OANDA_CONTEXT_RATES
+        print(get_time(), '%s using account[%s], token[%s]' %
+                          (self.__class__.__name__, self.account_id, self.access_token))
+
     # end of init
 
     def __str__(self):
-        return '%s[%s;%s;%s;%s;%s]' % (
-            self.__class__.__name__, self.domain, self.access_token, self.account_id, self.context, self.instruments)
+        return '%s[%s%s]' % (
+            self.__class__.__name__, self.domain, self.context)
 
     def connect(self):
         if self.events_q is None:
@@ -56,6 +59,7 @@ class OandaEventStreamer(StreamDataProvider):
         return resp
 
     def stream(self):
+        self.journaler.log_event(get_time(), 'connecting-%s' % str(self))
         self.streaming = True
         response = self.connect()
         if response.status_code != 200:

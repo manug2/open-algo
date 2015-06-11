@@ -225,7 +225,7 @@ class WireAll:
         self.port_wiring.set_prices_cache(rates_cache_loop.handler)
         portfolio_loop = self.port_wiring.wire()
 
-        self.execution_ack_nack_q = QueueSPMC(self.journaler, monitor_interval=2)
+        self.execution_ack_nack_q = QueueSPMC(self.journaler)
         self.execution_ack_nack_q.add_consumer(self.portfolio_q, timeout=5)
         self.execution_ack_nack_q.add_consumer(self.ticks_and_ack_q, timeout=5)
 

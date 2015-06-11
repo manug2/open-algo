@@ -21,6 +21,7 @@ class DummyBuyStrategy(AbstractStrategy):
             signal_amount_pending_ack = 0
         if signal_amount_pending_ack == 0:
             order = OrderEvent(event.instrument, self.units, ORDER_SIDE_BUY)
+            print('issuing order - %s' % order)
             self.update_signaled_position(order.instrument, order.get_signed_units())
             return order
 

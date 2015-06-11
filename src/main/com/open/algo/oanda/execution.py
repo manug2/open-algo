@@ -53,6 +53,7 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
         if not self.executing:
             print('Executor in stop mode, will not execute order: "%s"' % event)
             return
+        self.journaler.log_event(get_time(), 'executing order [%s]' % str(event))
 
         params = {
             "instrument": event.instrument,
@@ -109,7 +110,9 @@ class OandaExecutionHandler(ExecutionHandler, EventHandler):
 
     def execute_order_and_parse_response(self, event):
         response_dict = self.execute_order(event)
-        return parse_execution_response(response_dict, str(self), event)
+        executed_order = parse_execution_response(response_dict, str(self), event)
+        print('executor response - %s' % executed_order)
+        return executed_order
 
     def send_and_receive(self, func, url, request_args):
         if self.logger.isEnabledFor(logging.DEBUG):

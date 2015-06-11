@@ -24,8 +24,10 @@ class AbstractStrategy(EventHandler):
 
     def acknowledge(self, event):
         if event.TYPE == EVENT_TYPES_FILL:
+            print('acknowledgment received - %s' % event)
             self.acknowledge_execution(event)
         elif event.TYPE == EVENT_TYPES_FILTERED or event.TYPE == EVENT_TYPES_REJECTED:
+            print('rejection received - %s' % event)
             self.acknowledge_rejection(event)
         else:
             raise ValueError('Don\'t know how to handle event of type "%s" - [%s]' % (event.TYPE, event))
