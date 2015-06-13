@@ -23,7 +23,7 @@ def collect(duration=1*60, instruments='EUR_USD', sleepy_time=10):
     filename = os.path.join(OA_OUTPUT_DIR, 'EUR_USD.txt')
     journal_q = Queue()
     journaler = FileJournaler(journal_q, full_path=filename)
-    journal_loop = EventLoop(journal_q, journaler)
+    journal_loop = EventLoop(journal_q, journaler).set_process_all_on()
     # journaler = Journaler()
 
     logger.info('wiring rates cache..')
@@ -78,5 +78,5 @@ if __name__ == '__main__':
         collect()
     except:
         print('Unexpected error:', sys.exc_info()[0])
-
-    sys.exit()
+    finally:
+        print('completed collection!')

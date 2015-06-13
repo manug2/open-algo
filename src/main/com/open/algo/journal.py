@@ -64,6 +64,12 @@ class FileJournaler(Journaler, EventHandler):
         self.writer.write(os.linesep)
         self.writer.flush()
 
+    def process_all(self, events):
+        for event in events:
+            self.writer.write(event)
+            self.writer.write(os.linesep)
+        self.writer.flush()
+
     def start(self):
         if self.writer is None:
             fp = self.full_path
