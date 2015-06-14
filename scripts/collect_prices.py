@@ -2,6 +2,8 @@ __author__ = 'ManuGarg'
 
 import sys
 sys.path.append('../src/main')
+from optparse import OptionParser
+
 ENVIRONMENTS_CONFIG_PATH = '../../fx-oanda/'
 OA_OUTPUT_DIR = '../output/'
 
@@ -9,7 +11,7 @@ from com.open.algo.journal import *
 from com.open.algo.wiring.wiring import *
 
 
-def collect(duration=1*60, instruments='EUR_USD', sleepy_time=10):
+def collect(duration, instruments, sleepy_time, file_path):
 
     from queue import Queue
     from threading import Thread
@@ -20,7 +22,7 @@ def collect(duration=1*60, instruments='EUR_USD', sleepy_time=10):
     logger = logging.getLogger('')
 
     logger.info('preparing journaler..')
-    filename = os.path.join(OA_OUTPUT_DIR, 'EUR_USD.txt')
+    filename = os.path.join(OA_OUTPUT_DIR, file_path)
     journal_q = Queue()
     journaler = FileJournaler(journal_q, full_path=filename)
     journal_loop = EventLoop(journal_q, journaler).set_process_all_on()
@@ -32,6 +34,9 @@ def collect(duration=1*60, instruments='EUR_USD', sleepy_time=10):
     wiring.set_target_env('practice').set_config_path(ENVIRONMENTS_CONFIG_PATH)
     wiring.set_max_tick_age(24*60*60)
     wiring.set_instruments(instruments)
+
+    # for debugging over weekend
+    wiring.set_max_tick_age(150000)
 
     rates_streamer, rates_cache_loop = wiring.wire()
 
@@ -51,17 +56,23 @@ def collect(duration=1*60, instruments='EUR_USD', sleepy_time=10):
         sleep(sleepy_time)
         total_duration += sleepy_time
         if not journal_thread.is_alive():
+            rates_streamer.stop()
+            rates_cache_loop.stop()
             raise RuntimeError('journal thread is no more active')
         elif not rates_stream_thread.is_alive():
+            rates_cache_loop.stop()
+            journal_loop.stop()
             raise RuntimeError('rates streaming thread is no more active')
-        elif not rates_stream_thread.is_alive():
+        elif not rates_cache_thread.is_alive():
+            rates_streamer.stop()
+            journal_loop.stop()
             raise RuntimeError('rates cache thread is no more active')
         else:
             logger.info('all threads are active..')
 
     logger.info('stopping threads..')
     rates_streamer.stop()
-    rates_cache_loop.handler.stop()
+    rates_cache_loop.stop()
     journal_loop.stop()
 
     logger.info('waiting for threads to wrap up..')
@@ -70,13 +81,34 @@ def collect(duration=1*60, instruments='EUR_USD', sleepy_time=10):
     journal_thread.join(timeout=sleepy_time)
     logger.info('closing journal..')
     journaler.close()
+
+    logger.info('checking whether all thread are now inactive..')
+    if rates_stream_thread.is_alive():
+        logger.warn('rates stream thread is still active')
+    if rates_cache_thread.is_alive():
+        logger.warn('rates cache thread is still active')
+    if journal_thread.is_alive():
+        logger.warn('journal thread is still active')
+
     logger.info('thank you, journal file has been created at [%s]' % filename)
     return
 
+
 if __name__ == '__main__':
+    print('starting process %s-%s, for [%s]' % (os.getppid(), os.getpid(), 'collect_prices'))
+    parser = OptionParser()
+    parser.add_option("-t", "--time", type="int", dest="collection_duration", default=1*60)
+    parser.add_option("-i", "--instruments", type="string", dest="instruments", default='EUR_USD')
+    # parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False)
+    parser.add_option("-s", "--monitor_interval", type="int", dest="sleepy", default=10)
+    parser.add_option("-f", "--file_path", type="string", dest="file_path", default='prices.txt')
+
+    (options, args) = parser.parse_args()
+    print('using settings =>', options)
     try:
-        collect()
+        collect(options.collection_duration, options.instruments, options.sleepy, options.file_path)
     except:
         print('Unexpected error:', sys.exc_info()[0])
     finally:
         print('completed collection!')
+    print('stopping process %s-%s, for [%s]' % (os.getppid(), os.getpid(), 'collect_prices'))
