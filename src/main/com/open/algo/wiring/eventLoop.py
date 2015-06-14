@@ -6,6 +6,7 @@ from time import sleep
 
 from com.open.algo.model import ExceptionEvent
 from com.open.algo.utils import EventHandler
+import os
 
 
 class EventLoop(object):
@@ -30,6 +31,7 @@ class EventLoop(object):
         Polls events queue and directs each event to handler.
         The loop will then pause for "heartbeat" seconds and continue.
         """
+        print('starting process %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
         self.started = True
         self.handler.start()
         self.run_in_loop()
@@ -64,12 +66,13 @@ class EventLoop(object):
                 finally:
                     if self.forward_q is not None:
                         try:
-                            self.forward_q.put(event, self.heartbeat)
+                            self.forward_q.put_nowait(event)
                         except Full:
                             print('Could not forward as q is full - [%s]' % event)
         # end of while loop after collecting all events in queue
 
     def stop(self):
+        print('stopping process %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
         self.started = False
         self.handler.stop()
 
@@ -118,7 +121,7 @@ class EventLoop(object):
                 if self.forward_q is not None:
                     while len(events) > 0:
                         try:
-                            self.forward_q.put(events.pop(0), self.heartbeat)
+                            self.forward_q.put_nowait(events.pop(0))
                         except Full:
                             print('Could not forward as q is full - [%s]' % event)
                             while len(events) > 0:

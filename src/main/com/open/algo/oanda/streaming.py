@@ -7,6 +7,7 @@ from com.open.algo.oanda.parser import parse_event
 from com.open.algo.model import StreamDataProvider, ExceptionEvent, Heartbeat
 from com.open.algo.utils import get_time
 import logging
+import os
 
 
 OANDA_CONTEXT_RATES = '/v1/prices'
@@ -67,6 +68,7 @@ class OandaEventStreamer(StreamDataProvider):
         return resp
 
     def stream(self):
+        print('starting process %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
         self.streaming = True
         response = self.connect()
         if response.status_code != 200:
@@ -103,6 +105,7 @@ class OandaEventStreamer(StreamDataProvider):
                 break
 
     def stop(self):
+        print('stopping process %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
         self.streaming = False
         if self.session is not None:
             self.session.close()
