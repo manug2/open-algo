@@ -5,7 +5,6 @@ import sys
 sys.path.append('../../main')
 import unittest
 from com.open.algo.journal import FileJournaler, FileJournalerReader
-import os
 from com.open.algo.oanda.streaming import *
 from com.open.algo.oanda.parser import *
 from com.open.algo.utils import get_time
