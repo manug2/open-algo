@@ -4,9 +4,8 @@ import sys
 
 sys.path.append('../../main')
 import unittest
-from com.open.algo.oanda.parser import parse_tick
+from com.open.algo.oanda.parser import parse_event_str
 from com.open.algo.strategy import *
-import json
 from com.open.algo.utils import get_time
 
 
@@ -79,32 +78,43 @@ class TestMACrossover(unittest.TestCase):
     def test_should_be_instance_of_AbstractStrategy(self):
         self.assertIsInstance(MACrossoverStrategy(), AbstractStrategy)
 
+    def test_should_not_allow_period2_equal_to_period1(self):
+        try:
+            MACrossoverStrategy(5, 5)
+            self.fail('should have failed when period1 = period2')
+        except ValueError:
+            pass
+
+    def test_should_not_allow_period2_less_than_period1(self):
+        try:
+            MACrossoverStrategy(15, 5)
+            self.fail('should have failed when period1 > period2')
+        except ValueError:
+            pass
+
     def test_should_not_generate_order_after_one_tick_event(self):
-        tick_json = json.loads(self.ticks[0])
-        tick = parse_tick(get_time(), tick_json)
+        tick = parse_event_str(get_time(), self.ticks[0])
         order = self.strategy.calculate_signals(tick)
         self.assertIsNone(order)
 
     def test_should_not_generate_order_when_ticks_are_enough_for_period1_ma(self):
         for i in range(0, self.strategy.period1):
-            tick_json = json.loads(self.ticks[i])
-            tick = parse_tick(get_time(), tick_json)
+            tick = parse_event_str(get_time(), self.ticks[i])
             order = self.strategy.calculate_signals(tick)
             self.assertIsNone(order)
 
     def test_should_not_generate_order_when_ticks_are_not_enough_for_period2_ma(self):
         for i in range(0, self.strategy.period2-1):
-            tick_json = json.loads(self.ticks[i])
-            tick = parse_tick(get_time(), tick_json)
+            tick = parse_event_str(get_time(), self.ticks[i])
             order = self.strategy.calculate_signals(tick)
             self.assertIsNone(order)
 
-    def test_should_not_generate_order_when_ticks_are_enough_for_period2_ma(self):
+    def test_should_generate_order_when_ticks_are_enough_for_period2_ma(self):
         for i in range(0, self.strategy.period2-1):
-            self.strategy.calculate_signals(parse_tick(get_time(), json.loads(self.ticks[i])))
+            self.assertIsNone(
+                self.strategy.calculate_signals(parse_event_str(get_time(), self.ticks[i])))
 
-        tick_json = json.loads(self.ticks[self.strategy.period2])
-        tick = parse_tick(get_time(), tick_json)
+        tick = parse_event_str(get_time(), self.ticks[self.strategy.period2-1])
         order = self.strategy.calculate_signals(tick)
         self.assertIsNotNone(order)
 
