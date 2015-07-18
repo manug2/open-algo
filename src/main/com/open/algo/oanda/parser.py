@@ -2,7 +2,7 @@ __author__ = 'ManuGarg'
 
 from com.open.algo.model import Heartbeat, ExceptionEvent
 from com.open.algo.trading.fxEvents import *
-
+import json
 
 def parse_tick(receive_time, msg):
     tick = msg["tick"]
@@ -46,3 +46,8 @@ def parse_execution_response(response, caller=None, orig_event=None):
 
 def parse_execution_events(event):
         raise NotImplementedError('to be implemented for execution actions')
+
+
+def parse_event_str(receive_time, msg_str):
+    msg = json.loads(msg_str)
+    return parse_event(receive_time, msg)

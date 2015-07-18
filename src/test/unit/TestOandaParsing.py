@@ -59,6 +59,16 @@ class TestParseRates(unittest.TestCase):
         except ValueError:
             pass
 
+    def test_should_parse_tick_event_string_from_oanda(self):
+        parsed = parse_event_str(get_time(), self.tick_str)
+        self.assertIsNotNone(parsed)
+        self.assertTrue(isinstance(parsed, TickEvent))
+
+    def test_should_parse_heartbeat_event_string_from_oanda(self):
+        parsed = parse_event_str(get_time(), self.hb_str)
+        self.assertIsNotNone(parsed)
+        self.assertTrue(isinstance(parsed, Heartbeat))
+
 
 class TestParseExecutionResponse(unittest.TestCase):
 
