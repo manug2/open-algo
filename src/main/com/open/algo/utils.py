@@ -103,5 +103,11 @@ def get_age_seconds(old_time, new_time=None):
     return timedelta.total_seconds()
 
 
+def get_day_of_week(offset=None):
+    now = datetime.datetime.now()
+    if offset:
+        now = now + datetime.timedelta(seconds=offset)
+    return now.weekday()
+
 
 

@@ -10,7 +10,7 @@ class TestWirePricesStreamToCache(unittest.TestCase):
         self.wiring = WireRateCache()
         self.wiring.set_rates_q(Queue()).set_forward_q(Queue()).set_journaler(Journaler())
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
-        self.wiring.set_max_tick_age(24*60*60)
+        self.wiring.set_max_tick_age(2*24*60*60)
 
     def test_forwarded_rate_should_be_in_fx_cache(self):
         rates_streamer, rates_cache_loop = self.wiring.wire()
@@ -38,7 +38,8 @@ class TestWirePricesStreamToCache(unittest.TestCase):
 
 
 from com.open.algo.trading.fxEvents import *
-from com.open.algo.utils import get_time
+from com.open.algo.utils import get_time, get_day_of_week
+from com.open.algo.model import ExceptionEvent
 
 
 class TestWirePortfolio(unittest.TestCase):
@@ -86,10 +87,13 @@ class TestWireExecutor(unittest.TestCase):
         execution_loop.stop()
         execution_thread.join(timeout=2*execution_loop.heartbeat)
 
-        self.assertIsInstance(executed_order, ExecutedOrder
-                  , 'expecting an executed order of type [%s] but got of type [%s] - %s'
-                      % (type(ExecutedOrder), type(executed_order), executed_order))
-        self.assertEqual(buy_order, executed_order.order)
+        if get_day_of_week() == 6:
+            self.assertIsInstance(executed_order, ExceptionEvent)
+        else:
+            self.assertIsInstance(executed_order, ExecutedOrder
+                      , 'expecting an executed order of type [%s] but got of type [%s] - %s'
+                          % (type(ExecutedOrder), type(executed_order), executed_order))
+            self.assertEqual(buy_order, executed_order.order)
 
 
 class TestWireDummyBuyStrategy(unittest.TestCase):
