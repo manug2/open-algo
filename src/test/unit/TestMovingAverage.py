@@ -7,6 +7,7 @@ import unittest
 from com.open.algo.calcs.ma import sma
 from com.open.algo.trading.fxEvents import TickEvent
 
+
 class TestMA(unittest.TestCase):
 
     def setUp(self):
@@ -17,12 +18,10 @@ class TestMA(unittest.TestCase):
         value = sma(numbers)
         self.assertEqual(3.0, value)
 
-
     def test_should_give_sma_for_list_of_neg_numbers(self):
         numbers = [-1, -2, -3, -4, -5]
         value = sma(numbers)
         self.assertEqual(-3.0, value)
-
 
     def test_should_fail_sma_for_list_of_ticks_without_mention_of_attribute(self):
         ticks = []
@@ -32,14 +31,12 @@ class TestMA(unittest.TestCase):
         except:
             pass
 
-
     def test_should_give_sma_for_list_of_ticks_bids(self):
         ticks = []
         ticks.append({'bid': 1})
         ticks.append({'bid': 3})
         value = sma(ticks, attribute='bid')
         self.assertEqual(2.0, value)
-
 
     def test_should_fail_sma_for_list_of_ticks_asks_when_not_present(self):
         ticks = []
@@ -51,7 +48,6 @@ class TestMA(unittest.TestCase):
         except:
             pass
 
-
     def test_should_give_sma_for_list_of_ticks_asks(self):
         ticks = []
         ticks.append({'ask': 1})
@@ -60,7 +56,6 @@ class TestMA(unittest.TestCase):
         value = sma(ticks, attribute='ask')
         self.assertEqual(3.0, value)
 
-
     def test_should_give_sma_for_list_of_ticks_bids_when_asks_also_present(self):
         ticks = []
         ticks.append({'bid': 1, 'ask': 1})
@@ -68,7 +63,6 @@ class TestMA(unittest.TestCase):
         ticks.append({'bid': 1, 'ask': 5})
         value = sma(ticks, attribute='ask')
         self.assertEqual(3.0, value)
-
 
     def test_should_give_sma_for_list_of_ticks_bids_and_asks(self):
         ticks = []
@@ -79,7 +73,6 @@ class TestMA(unittest.TestCase):
         self.assertEqual(1.0, value['bid'])
         self.assertEqual(3.0, value['ask'])
 
-
     def test_should_give_sma_for_list_of_tick_objects_bids_and_asks(self):
         ticks = []
         ticks.append(TickEvent('CHF_USD', None, 1.01, 1.02))
@@ -88,10 +81,26 @@ class TestMA(unittest.TestCase):
         self.assertEqual(1.02, value['bid'])
         self.assertEqual(1.03, value['ask'])
 
-
     def test_should_give_sma_for_list_smaller_than_period(self):
         ticks = []
         ticks.append({'bid': 1})
         ticks.append({'bid': 3})
         value = sma(ticks, period=14, attribute='bid')
         self.assertEqual(2.0, value)
+
+    def test_should_give_sma_for_list_bigger_than_period3(self):
+        numbers = [1, 2, 3, 4]
+        value = sma(numbers, period=3)
+        self.assertEqual(3.0, value)
+
+    def test_should_give_sma_for_list_bigger_than_period4(self):
+        numbers = [1, 2, 3, 4, 5, 6]
+        value = sma(numbers, period=4)
+        self.assertEqual(4.5, value)
+
+    def test_should_give_sma_for_diff_period(self):
+        numbers = [1.02, 1.03, 1.04]
+        ma1 = sma(numbers, 2)
+        self.assertEqual(0, round(1.035 - ma1, 4))
+        ma2 = sma(numbers, 3)
+        self.assertEqual(0, round(1.030 - ma2, 4))
