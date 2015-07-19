@@ -77,15 +77,15 @@ from com.open.algo.calcs.ma import sma
 from com.open.algo.trading.fxEvents import OrderEvent, ORDER_SIDE_BUY, ORDER_SIDE_SELL
 
 
-class MACrossoverStrategy(AbstractStrategy):
+class BidsMACrossoverStrategy(AbstractStrategy):
 
     def __init__(self, period1=5, period2=10, ma_function=sma):
         if period1 >= period2:
             raise ValueError('For ma, period 1(%s) cannot be ge period 2(%s)', period1, period2)
-        super(MACrossoverStrategy, self).__init__()
+        super(BidsMACrossoverStrategy, self).__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bids = []
-        self.asks = []
+        #self.asks = []
         self.period1 = period1
         self.period2 = period2
         self.ma1 = None
@@ -102,7 +102,7 @@ class MACrossoverStrategy(AbstractStrategy):
             raise ValueError('cannot calculate signal from None event')
 
         self.bids.append(event.bid)
-        self.asks.append(event.ask)
+        #self.asks.append(event.ask)
 
         if len(self.bids) < self.period1:
             return None

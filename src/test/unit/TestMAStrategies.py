@@ -11,7 +11,7 @@ from com.open.algo.utils import get_time
 
 class TestMACrossoverStrategy(unittest.TestCase):
     def setUp(self):
-        self.strategy = MACrossoverStrategy(2, 3)
+        self.strategy = BidsMACrossoverStrategy(2, 3)
 
         self.ticks = []
         self.ticks.append(
@@ -26,31 +26,31 @@ class TestMACrossoverStrategy(unittest.TestCase):
             '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:50:10.243141Z","bid":1.12411,"ask":1.12429}}')
 
     def test_should_default_period1(self):
-        self.assertTrue(MACrossoverStrategy().period1 > 0)
+        self.assertTrue(BidsMACrossoverStrategy().period1 > 0)
 
     def test_should_default_period2(self):
-        self.assertTrue(MACrossoverStrategy().period2 > 0)
+        self.assertTrue(BidsMACrossoverStrategy().period2 > 0)
 
     def test_should_default_period2_greater_than_period1(self):
-        strategy = MACrossoverStrategy()
+        strategy = BidsMACrossoverStrategy()
         self.assertTrue(strategy.period2 > strategy.period1)
 
     def test_should_default_function_for_calculating_moving_average(self):
-        self.assertEqual(MACrossoverStrategy().ma_function, sma)
+        self.assertEqual(BidsMACrossoverStrategy().ma_function, sma)
 
     def test_should_be_instance_of_AbstractStrategy(self):
-        self.assertIsInstance(MACrossoverStrategy(), AbstractStrategy)
+        self.assertIsInstance(BidsMACrossoverStrategy(), AbstractStrategy)
 
     def test_should_not_allow_period2_equal_to_period1(self):
         try:
-            MACrossoverStrategy(5, 5)
+            BidsMACrossoverStrategy(5, 5)
             self.fail('should have failed when period1 = period2')
         except ValueError:
             pass
 
     def test_should_not_allow_period2_less_than_period1(self):
         try:
-            MACrossoverStrategy(15, 5)
+            BidsMACrossoverStrategy(15, 5)
             self.fail('should have failed when period1 > period2')
         except ValueError:
             pass
@@ -75,7 +75,7 @@ class TestMACrossoverStrategy(unittest.TestCase):
 
 class TestMACrossoverSignals(unittest.TestCase):
     def test_should_generate_order_when_ticks_are_enough_for_2_3_period_ma(self):
-        strategy = MACrossoverStrategy(2, 3)
+        strategy = BidsMACrossoverStrategy(2, 3)
 
         ticks = []
         ticks.append(
@@ -94,9 +94,8 @@ class TestMACrossoverSignals(unittest.TestCase):
         tick = parse_event_str(get_time(), ticks[strategy.period2 - 1])
         self.assertIsNotNone(strategy.calculate_signals(tick))
 
-
     def test_should_generate_order_when_ticks_are_enough_for_5_10_period_ma(self):
-        strategy = MACrossoverStrategy(5, 10)
+        strategy = BidsMACrossoverStrategy(5, 10)
 
         ticks = []
         ticks.append(
@@ -132,7 +131,7 @@ class TestMACrossoverSignals(unittest.TestCase):
 
 class TestMACrossoverSignals23(unittest.TestCase):
     def setUp(self):
-        self.strategy = MACrossoverStrategy(2, 3)
+        self.strategy = BidsMACrossoverStrategy(2, 3)
 
     def test_should_not_generate_order_when_ma_and_previous_ma_are_same_for_the_first_period(self):
         order = self.strategy.calculate_signals(parse_event_str(get_time(),
