@@ -101,6 +101,31 @@ class TestMA(unittest.TestCase):
     def test_should_give_sma_for_diff_period(self):
         numbers = [1.02, 1.03, 1.04]
         ma1 = sma(numbers, 2)
-        self.assertEqual(0, round(1.035 - ma1, 4))
+        self.assertEqual(0, round(1.035 - ma1, 3))
         ma2 = sma(numbers, 3)
-        self.assertEqual(0, round(1.030 - ma2, 4))
+        self.assertEqual(0, round(1.030 - ma2, 3))
+
+    def test_should_give_sma_for_diff_period_with_4_items(self):
+        numbers = [1.02, 1.03, 1.04, 1.03]
+        ma1 = sma(numbers, 2)
+        self.assertEqual(0, round(1.035 - ma1, 3))
+        ma2 = sma(numbers, 3)
+        self.assertEqual(0, round(1.033 - ma2, 3))
+
+    def test_should_detect_sma_crossover_for_3_period(self):
+        numbers = [1.024, 1.026, 1.024]
+        ma1 = sma(numbers, 2)
+        self.assertEqual(0, round(1.0250 - ma1, 4))
+        ma2 = sma(numbers, 3)
+        self.assertEqual(0, round(1.0247 - ma2, 4))
+        diff = abs(round(ma1-ma2, 4))
+        self.assertTrue(diff < 0.001)
+
+    def test_should_detect_sma_crossover_for_4_period(self):
+        numbers = [1.024, 1.026, 1.024, 1.025]
+        ma1 = sma(numbers, 2)
+        self.assertEqual(0, round(1.0245 - ma1, 4))
+        ma2 = sma(numbers, 3)
+        self.assertEqual(0, round(1.0250 - ma2, 4))
+        diff = abs(round(ma1-ma2, 4))
+        self.assertTrue(diff < 0.001)
