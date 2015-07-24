@@ -9,7 +9,7 @@ from com.open.algo.strategy import *
 from com.open.algo.utils import get_time
 
 
-class TestMACrossoverStrategy(unittest.TestCase):
+class TestMACrossoverStrategyClass(unittest.TestCase):
     def setUp(self):
         self.strategy = BidsMACrossoverStrategy(2, 3)
 
@@ -168,3 +168,33 @@ class TestMACrossoverSignals23(unittest.TestCase):
         self.assertIsNotNone(order)
         self.assertEqual(ORDER_SIDE_BUY, order.side)
 
+    def test_should_not_generate_order_when_no_cross_over(self):
+        order = self.strategy.calculate_signals(parse_event_str(get_time(),
+            '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:48:02.024026Z","bid":1.024,"ask":1.01}}'))
+        self.assertIsNone(order)
+        order = self.strategy.calculate_signals(parse_event_str(get_time(),
+            '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:48:02.024026Z","bid":1.026,"ask":1.07}}'))
+        self.assertIsNone(order)
+        order = self.strategy.calculate_signals(parse_event_str(get_time(),
+            '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:48:02.024026Z","bid":1.028,"ask":1.09}}'))
+        self.assertIsNone(order)
+
+    def test_should_generate_buy_order_then_sell_order(self):
+        order = self.strategy.calculate_signals(parse_event_str(get_time(),
+            '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:48:02.024026Z","bid":1.024,"ask":1.01}}'))
+        self.assertIsNone(order)
+        order = self.strategy.calculate_signals(parse_event_str(get_time(),
+            '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:48:02.024026Z","bid":1.023,"ask":1.07}}'))
+        self.assertIsNone(order)
+        order = self.strategy.calculate_signals(parse_event_str(get_time(),
+            '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:48:02.024026Z","bid":1.026,"ask":1.09}}'))
+        self.assertIsNotNone(order)
+        self.assertEqual(ORDER_SIDE_BUY, order.side)
+
+        order = self.strategy.calculate_signals(parse_event_str(get_time(),
+            '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:48:02.024026Z","bid":1.026,"ask":1.07}}'))
+        self.assertIsNone(order)
+        order = self.strategy.calculate_signals(parse_event_str(get_time(),
+            '{"tick":{"instrument":"EUR_USD","time":"2015-06-11T22:48:02.024026Z","bid":1.023,"ask":1.09}}'))
+        self.assertIsNotNone(order)
+        self.assertEqual(ORDER_SIDE_SELL, order.side)
