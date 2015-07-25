@@ -8,17 +8,15 @@ from com.open.algo.trading.fxPricesCache import FxPricesCache, DEFAULT_ACCEPTABL
 from com.open.algo.wiring.queue_spmc import *
 
 
-class WireRateCache:
+class WireOandaPrices:
 
     def __init__(self):
         self.rates_q = None
         self.heartbeat_q = None
         self.exception_q = None
-        self.forward_q = None
         self.journaler = None
         self.target_env = None
         self.config_path = None
-        self.max_tick_age = DEFAULT_ACCEPTABLE_TICK_AGE
         self.instruments = 'EUR_USD'
 
     def wire(self):
@@ -30,10 +28,8 @@ class WireRateCache:
         rates_streamer.set_instruments(self.instruments)
         rates_streamer.set_events_q(self.rates_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
 
-        rates_cache = FxPricesCache(max_tick_age=self.max_tick_age)
-        rates_cache_loop = EventLoop(self.rates_q, rates_cache, forward_q=self.forward_q)
-
-        return rates_streamer, rates_cache_loop
+        # Not required to return anything, but streamer reference can be used in shut down
+        return rates_streamer
 
     # setup queues
     def set_rates_q(self, rates_q):
@@ -46,10 +42,6 @@ class WireRateCache:
 
     def set_exception_q(self, exception_q):
         self.exception_q = exception_q
-        return self
-
-    def set_forward_q(self, forward_q):
-        self.forward_q = forward_q
         return self
 
     def set_journaler(self, journaler):
@@ -65,13 +57,37 @@ class WireRateCache:
         self.config_path = config_path
         return self
 
+    def set_instruments(self, instruments):
+        self.instruments = instruments
+        return self
+
+
+class WireRateCache:
+
+    def __init__(self):
+        self.rates_q = None
+        self.forward_q = None
+        self.max_tick_age = DEFAULT_ACCEPTABLE_TICK_AGE
+
+    def wire(self):
+        rates_cache = FxPricesCache(max_tick_age=self.max_tick_age)
+        rates_cache_loop = EventLoop(self.rates_q, rates_cache, forward_q=self.forward_q)
+
+        return rates_cache_loop
+
+    # setup queues
+    def set_rates_q(self, rates_q):
+        self.rates_q = rates_q
+        return self
+
+    def set_forward_q(self, forward_q):
+        self.forward_q = forward_q
+        return self
+
     def set_max_tick_age(self, max_tick_age):
         self.max_tick_age = max_tick_age
         return self
 
-    def set_instruments(self, instruments):
-        self.instruments = instruments
-        return self
 
 from com.open.algo.trading.fxPortfolio import *
 from com.open.algo.risk.ccyExposureLimitRisk import CcyExposureLimitRiskEvaluator
@@ -219,12 +235,16 @@ class WireAll:
         self.execution_ack_nack_q = None
 
     def wire(self):
-        rates_wiring = WireRateCache()
-        rates_wiring.set_max_tick_age(self.max_tick_age)
-        rates_wiring.set_rates_q(self.rates_q).set_forward_q(self.ticks_and_ack_q).set_journaler(self.journaler)
-        rates_wiring.set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
-        rates_wiring.set_target_env(self.target_env).set_config_path(self.config_path)
-        rates_streamer, rates_cache_loop = rates_wiring.wire()
+        prices_wiring = WireOandaPrices()
+        prices_wiring.set_rates_q(self.rates_q).set_journaler(self.journaler)
+        prices_wiring.set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
+        prices_wiring.set_target_env(self.target_env).set_config_path(self.config_path)
+        rates_streamer = prices_wiring.wire()
+
+        rates_cache_wiring = WireRateCache()
+        rates_cache_wiring.set_max_tick_age(self.max_tick_age)
+        rates_cache_wiring.set_rates_q(self.rates_q).set_forward_q(self.ticks_and_ack_q)
+        rates_cache_loop = rates_cache_wiring.wire()
 
         self.port_wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.port_wiring.set_prices_cache(rates_cache_loop.handler)

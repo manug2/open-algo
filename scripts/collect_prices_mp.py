@@ -31,17 +31,22 @@ def collect(duration, instruments, sleepy_time, file_path):
     journal_loop = EventLoop(journal_q, journaler).set_process_all_on()
     # journaler = Journaler()
 
+    logger.info('wiring oanda prices streaming..')
+    wiring_prices = WireOandaPrices()
+    wiring_prices.set_rates_q(Queue()).set_journaler(journaler)
+    wiring_prices.set_target_env('practice').set_config_path(ENVIRONMENTS_CONFIG_PATH)
+    wiring_prices.set_instruments(instruments)
+
     logger.info('wiring rates cache..')
-    wiring = WireRateCache()
-    wiring.set_rates_q(Queue()).set_journaler(journaler)
-    wiring.set_target_env('practice').set_config_path(ENVIRONMENTS_CONFIG_PATH)
-    wiring.set_max_tick_age(24*60*60)
-    wiring.set_instruments(instruments)
+    wiring_cache = WireRateCache()
+    wiring_cache.set_rates_q(wiring_prices.rates_q)
+    wiring_cache.set_max_tick_age(24*60*60)
 
     # for debugging over weekend
-    wiring.set_max_tick_age(150000)
+    wiring_cache.set_max_tick_age(150000)
 
-    rates_streamer, rates_cache_loop = wiring.wire()
+    rates_streamer = wiring_prices.wire()
+    rates_cache_loop = wiring_cache.wire()
 
     logger.info('creating threads..')
     journal_thread = Thread(target=journal_loop.start, args=[])

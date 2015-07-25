@@ -38,3 +38,7 @@ Feature: Following features are pending implementation
 
   @wip
   Scenario: Fx Cache can serve 1 minute ticks using journals
+
+
+  @wip
+  Scenario: Strategy Exposure Manager component is present instead of strategy maintaining outstanding signals.
