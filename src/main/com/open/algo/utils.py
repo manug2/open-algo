@@ -14,6 +14,8 @@ EVENT_TYPES_FILL = 'FILL'
 EVENT_TYPES_FILTERED = 'FILTERED'
 EVENT_TYPES_REJECTED = 'REJECTED'
 
+COMMAND_STOP = 'stop'
+
 
 class DynamicLoader(object):
     def load(self, realtivePath):
