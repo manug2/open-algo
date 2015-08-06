@@ -5,7 +5,7 @@ import requests
 
 from com.open.algo.oanda.parser import parse_event
 from com.open.algo.model import StreamDataProvider, ExceptionEvent, Heartbeat
-from com.open.algo.utils import get_time
+from com.open.algo.utils import get_time, COMMAND_STOP
 import logging
 import os
 
@@ -136,3 +136,8 @@ class OandaEventStreamer(StreamDataProvider):
             raise ValueError('expecting context to be one of (%s,%s), found "%s"'
                              % (OANDA_CONTEXT_RATES, OANDA_CONTEXT_EVENTS, context))
         return self
+
+    def on_command(self, command):
+        self.logger.info('command received "%s"' % command)
+        if command == COMMAND_STOP:
+            self.stop()

@@ -14,9 +14,9 @@ class QueueCommandListener:
     def __init__(self, command_q, on_command_method):
         self.command_q = command_q
         self.on_command_method = on_command_method
-        self.command_thread = None
         self.poll_interval = 2
         self.name = 'default'
+        self.listening = False
 
     def start(self):
         if not self.command_q:
@@ -24,17 +24,19 @@ class QueueCommandListener:
         if not self.on_command_method:
             raise RuntimeError('cannot setup command listener as no "on_command_method" was specified')
 
-        self.command_thread = Thread(name='COMMANDER-' + self.name, target=self.poll_command_events, args=[])
-        self.command_thread.start()
+        command_thread = Thread(name='COMMANDER-' + self.name, target=self.poll_command_events, args=[])
+        self.listening = True
+        command_thread.start()
+        return command_thread
 
     def poll_command_events(self):
-        while True:
+        while self.listening:
             command_event = self.command_q.get(self.poll_interval)
-            if command_event:
-                self.on_command_method(command_event)
-                if COMMAND_STOP == command_event:
-                    # finished this thread's work
-                    break
+            if not command_event:
+                continue
+            self.on_command_method(command_event)
+            if COMMAND_STOP == command_event:
+                self.listening = False
         # end of while
 
     def set_command_q(self, command_q):
@@ -48,3 +50,6 @@ class QueueCommandListener:
     def set_name(self, name):
         self.name = name
         return self
+
+    def force_stop(self):
+        self.listening = False
