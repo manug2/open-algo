@@ -1,8 +1,5 @@
 __author__ = 'ManuGarg'
 
-import sys
-
-sys.path.append('../../main')
 import unittest
 from queue import Queue
 from threading import Thread
@@ -327,11 +324,11 @@ class TestFileJounaler(unittest.TestCase):
 
     def test_scheme_should_give_correct_name_for_specific_path(self):
         scheme = JournalNamingScheme(path='/tmp')
-        self.assertEqual('/tmp/journal.txt', scheme.get_file_name())
+        self.assertEqual(os.path.join('/tmp', 'journal.txt'), scheme.get_file_name())
 
     def test_scheme_should_give_correct_name_for_specific_path_with_prefix(self):
         scheme = JournalNamingScheme(path='/tmp', name='jjj', prefix='aaa', suffix='qqq', ext='.lst')
-        self.assertEqual('/tmp/aaajjjqqq.lst', scheme.get_file_name())
+        self.assertEqual(os.path.join('/tmp', 'aaajjjqqq.lst'), scheme.get_file_name())
 
     def test_should_allow_creation_of_journal_file_using_name_scheme(self):
         scheme = JournalNamingScheme(path=OUTPUT_DIR, name='journal_ut')

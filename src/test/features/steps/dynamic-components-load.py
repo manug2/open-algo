@@ -1,31 +1,32 @@
-import sys
-
-sys.path.append('../main/')
-
+import os
 from com.open.algo.utils import DynamicLoader
 from behave import *
+
+RESOURCES_ROOT = 'test-resources'
 
 
 @given('we have a dynamic loader module')
 def step_impl(context):
-    assert DynamicLoader != None
+    pass
 
 
 @when('i say load components definition file "{component}"')
 def step_impl(context, component):
-    context.components = DynamicLoader().load(component)
+    context.components = DynamicLoader().loadFromPath(RESOURCES_ROOT, component, globals())
 
 
 @then('we find component "{name}" is "{component}"')
 def step_impl(context, name, component):
-    assert context.components.__dict__[name] == component
+    assert isinstance(component, object)
+    assert context.components[name] == component
 
 
 @then('we find component "{name}" is of type "{ctype}"')
 def step_impl(context, name, ctype):
     item = context.myMod[name]
-    assert item != None
-    item.__class__.__name__ == ctype
+    assert item is not None
+    print('asserting that the component "%s" is of type "%s", found "%s"' % (name, ctype, item.__class__.__name__))
+    assert item.__class__.__name__ == ctype
 
 
 @given('variable "{varName}" has value "{inputValue}"')
@@ -44,7 +45,7 @@ def step_impl(context, componentFile, varName):
         fn = componentFile + '.py'
 
     varLen = len(varName)
-    sf = open(fn, 'r')
+    sf = open(os.path.join(RESOURCES_ROOT, fn), 'r')
     for line in sf.readlines():
         location = line.find(varName)
         commentLocation = line.find('#')
@@ -53,16 +54,17 @@ def step_impl(context, componentFile, varName):
             fileHasVariable = True
             break
     sf.close()
-    assert fileHasVariable == True
+    assert fileHasVariable
 
 
 @when('i say load given components definition file')
 def step_impl(context):
     globals()[context.varName] = context.inputValue
-    context.myMod = DynamicLoader().loadFromPath('.', context.component, globals())
+    context.myMod = DynamicLoader().loadFromPath(RESOURCES_ROOT, context.component, globals())
 
 
 @then('we find component "{name}" has value "{value}"')
 def step_impl(context, name, value):
+    print('->asserting value for variable "%s" = "%s"' % (name, value))
     assert context.myMod[name] == value
 

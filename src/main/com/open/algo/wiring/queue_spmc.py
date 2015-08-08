@@ -7,16 +7,16 @@ from threading import Thread, RLock
 from time import sleep
 
 
-def prepare_journal(message, event, consumer_q):
+def prepare_journal_message(message, event, consumer_q):
     return '%s|consumer[%s]|%s' % (message, consumer_q, event)
 
 
-def prepare_staging_journal(message, event, consumer_q):
+def prepare_staging_journal_message(message, event, consumer_q):
     return '%s|staging[%s]|%s' % (message, consumer_q, event)
 
 
-def parse_journal(jounral_entry):
-    return str(jounral_entry).split('|')[2]
+def parse_message(message):
+    return str(message).split('|')[2]
 
 
 class QueueSPMC(Queue):
@@ -40,7 +40,7 @@ class QueueSPMC(Queue):
             try:
                 consumer_q.put_nowait(item)
             except Full:
-                self.journaler.log_event(get_time(), prepare_journal('q is full', item, i))
+                self.journaler.log_event(get_time(), prepare_journal_message('q is full', item, i))
 
     def put(self, item, block=True, timeout=None):
         if not block:
@@ -55,7 +55,7 @@ class QueueSPMC(Queue):
             try:
                 consumer_q.put(item, timeout=consumer_timeout)
             except Full:
-                self.journaler.log_event(get_time(), prepare_journal('q is full', item, i))
+                self.journaler.log_event(get_time(), prepare_journal_message('q is full', item, i))
 
 
 class QueueThreadedSPMC(Queue):
@@ -91,7 +91,7 @@ class QueueThreadedSPMC(Queue):
             try:
                 consumer_q.put_nowait(item)
             except Full:
-                self.journaler.log_event(get_time(), prepare_journal('q is full', item, i))
+                self.journaler.log_event(get_time(), prepare_journal_message('q is full', item, i))
 
     def put(self, item, block=True, timeout=None):
         if not block:
@@ -104,7 +104,7 @@ class QueueThreadedSPMC(Queue):
             try:
                 sq.put_nowait(item)
             except Full:
-                self.journaler.log_event(get_time(), prepare_staging_journal('q is full', item, sq))
+                self.journaler.log_event(get_time(), prepare_staging_journal_message('q is full', item, sq))
 
         self.submit()
         self.await_puts()
@@ -125,14 +125,14 @@ class QueueThreadedSPMC(Queue):
                 print('starting thread %s' % consumer_qt.getName())
                 consumer_qt.start()
             except:
-                self.journaler.log_event(get_time(), prepare_journal(sys.exc_info().args[0], item, consumer_q))
+                self.journaler.log_event(get_time(), prepare_journal_message(sys.exc_info().args[0], item, consumer_q))
 
     def _put_in_q(self, q, item, timeout):
         try:
             q.put(item, True, timeout=timeout)
             print('successfully put item on queue [%s <- %s]' % (q, item))
         except Full:
-            self.journaler.log_event(get_time(), prepare_journal('target queue was full', item, q))
+            self.journaler.log_event(get_time(), prepare_journal_message('target queue was full', item, q))
 
     def await_puts(self):
         if not self.monitor:

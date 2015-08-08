@@ -27,7 +27,7 @@ class FxPricesCache(MarketRateCache, EventHandler):
         assert tick.ask is not None
 
         age = -1 * get_age_seconds(tick.time)
-        assert age > 0, 'Future tick is not allowed - [%s]' % tick
+        assert age >= 0, 'Future tick is not allowed - [%s -> %s]' % (age, tick)
         assert age < self.max_tick_age, 'Tick too old, age[%s], max allowed[%s] - [%s]' % (age, self.max_tick_age, tick)
 
         if tick.instrument not in self.rates:

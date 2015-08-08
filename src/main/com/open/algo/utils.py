@@ -24,7 +24,7 @@ class DynamicLoader(object):
 
     def loadFromPath(self, path, name, dictionary):
         if len(path.strip()) > 0:
-            fPath = path + '/' + name
+            fPath = os.path.join(path, name)
         else:
             fPath = name
 

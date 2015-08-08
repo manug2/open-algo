@@ -75,7 +75,7 @@ class TestNonBlockingPutMethod(unittest.TestCase):
         event = 'this is an event'
         self.spmc_put_method(event)
         last_journal = self.spmc_q.journaler.get_last_event()
-        jounrnal_orig_event = parse_journal(last_journal)
+        jounrnal_orig_event = parse_message(last_journal)
         self.assertEqual(event, jounrnal_orig_event)
 
         try:
@@ -101,7 +101,7 @@ class TestNonBlockingPutMethod(unittest.TestCase):
         event = 'this is an event'
         self.spmc_put_method(event)
         last_journal = self.spmc_q.journaler.get_last_event()
-        jounrnal_orig_event = parse_journal(last_journal)
+        jounrnal_orig_event = parse_message(last_journal)
         self.assertEqual(event, jounrnal_orig_event)
 
         try:
@@ -133,7 +133,7 @@ class TestNonBlockingPutMethod(unittest.TestCase):
         event = 'this is an event'
         self.spmc_put_method(event)
         last_journal = self.spmc_q.journaler.get_last_event()
-        jounrnal_orig_event = parse_journal(last_journal)
+        jounrnal_orig_event = parse_message(last_journal)
         self.assertEqual(event, jounrnal_orig_event)
 
         try:
