@@ -5,6 +5,7 @@ sys.path.append('../../../../fx-oanda')
 import unittest
 
 from com.open.algo.utils import DynamicLoader
+from com.open.algo.oanda.streaming import OandaEventStreamer
 
 
 class TestOandaDynamicLoader(unittest.TestCase):
@@ -21,5 +22,6 @@ class TestOandaDynamicLoader(unittest.TestCase):
 
         myMod = DynamicLoader().loadFromPath("../../../../fx-oanda", "oandaComponents", globals())
         self.assertNotEquals(myMod["prices"], None)
-		
+        self.assertIsInstance(myMod["prices"], OandaEventStreamer)
+
 
