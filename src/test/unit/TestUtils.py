@@ -19,12 +19,12 @@ class TestDynamicLoader(unittest.TestCase):
         self.assertEquals(my_mod.__dict__["name"], "test components 1")
 
     def test_loader_can_load_module_from_another_path(self):
-        my_mod = DynamicLoader().loadFromPath("..", "sampleComponents", globals())
+        my_mod = DynamicLoader().loadFromPath("../test-resources", "sampleComponents", globals())
         self.assertEquals(my_mod["url"], "www.abc.xyz.com")
 
     def test_loader_can_load_module_from_another_path_with_var(self):
         globals()["WELCOME_MESSAGE"] = "123"
-        my_mod = DynamicLoader().loadFromPath("..", "sampleComponentsVar", globals())
+        my_mod = DynamicLoader().loadFromPath("../test-resources", "sampleComponentsVar", globals())
         self.assertEquals(my_mod["msg"], "Received : 123")
 
 

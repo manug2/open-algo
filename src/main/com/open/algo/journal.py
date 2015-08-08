@@ -13,8 +13,11 @@ def prepare_journal_entry(receive_time, event):
 
 
 def parse_journal_entry(entry):
-    parts = entry.split(JOURNAL_SEPARATOR)
-    return parts[1]
+    try:
+        parts = entry.split(JOURNAL_SEPARATOR)
+        return parts[1]
+    except IndexError:
+        raise ValueError('could not parse journal entry [%s]' % entry)
 
 
 class Journaler(object):
@@ -50,14 +53,12 @@ class FileJournaler(Journaler, EventHandler):
 
     def log_event(self, receive_time, event):
         try:
-            self.last_received = event
+            self.last_event = event
             self.last_received = receive_time
             msg = prepare_journal_entry(receive_time, event)
             self.events.put_nowait(msg)
         except Full:
             print('WARNING: Count not journal event [%s] as queue is full' % event)
-        self.last_event = event
-        self.last_received = receive_time
 
     def process(self, event):
         self.writer.write(event)
@@ -106,6 +107,8 @@ class FileJournalerReader():
 
         self.reader = open(fp, 'r')
         for line in self.reader.read().splitlines():
+            if not line or "" == line:
+                continue
             ev_str = parse_journal_entry(line)
             try:
                 self.events.put_nowait(ev_str)

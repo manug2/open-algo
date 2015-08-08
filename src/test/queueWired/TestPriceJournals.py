@@ -8,7 +8,6 @@ from com.open.algo.wiring.eventLoop import *
 from threading import Thread
 import time
 from queue import Queue
-from com.open.algo.oanda.streaming import *
 from com.open.algo.oanda.parser import *
 from com.open.algo.utils import get_time
 from com.open.algo.journal import *
