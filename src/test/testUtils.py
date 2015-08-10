@@ -5,7 +5,7 @@ sys.path.append('../../main')
 from queue import Empty
 
 TARGET_ENV = "practice"
-MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM = 5
+MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM = 10
 CONFIG_PATH_FOR_UNIT_TESTS = '../../../../fx-oanda'
 
 

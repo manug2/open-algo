@@ -40,23 +40,33 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
         wire_logger()
 
     def tearDown(self):
-        self.execution_loop.stop()
-        self.portfolio_loop.stop()
-        self.strategy_loop.stop()
-        self.rates_streamer.stop()
-        self.rates_cache_loop.stop()
-
-        self.execution_thread.join(timeout=2*self.execution_loop.heartbeat)
-        self.portfolio_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        self.strategy_thread.join(timeout=2*self.execution_loop.heartbeat)
-        self.rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        self.rates_cache_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        try:
+            self.execution_loop.stop()
+            self.portfolio_loop.stop()
+            self.strategy_loop.stop()
+            self.rates_streamer.stop()
+            self.rates_cache_loop.stop()
+        except:
+            print('error stopping all components')
+        finally:
+            self.execution_thread.join(timeout=2*self.execution_loop.heartbeat)
+            self.portfolio_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+            self.strategy_thread.join(timeout=2*self.execution_loop.heartbeat)
+            self.rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+            self.rates_cache_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
     def test_wire_all(self):
-        self.rates_stream_thread.start()
-        self.rates_cache_thread.start()
-        self.portfolio_thread.start()
-        self.execution_thread.start()
-        self.strategy_thread.start()
+        try:
+            self.rates_stream_thread.start()
+            self.rates_cache_thread.start()
+            self.portfolio_thread.start()
+            self.execution_thread.start()
+            self.strategy_thread.start()
 
-        sleep(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+            sleep(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        except RuntimeError as e:
+            print('error starting all components')
+            print(e)
+        except:
+            print('error starting all components')
+
