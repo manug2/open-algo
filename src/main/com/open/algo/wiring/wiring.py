@@ -6,11 +6,13 @@ from com.open.algo.oanda.environments import ENVIRONMENTS
 from com.open.algo.utils import read_settings
 from com.open.algo.trading.fxPricesCache import FxPricesCache, DEFAULT_ACCEPTABLE_TICK_AGE
 from com.open.algo.wiring.queue_spmc import *
+from com.open.algo.wiring.commandListener import QueueCommandListener
 
 
 class WireOandaPrices:
 
     def __init__(self):
+        self.command_q = None
         self.rates_q = None
         self.heartbeat_q = None
         self.exception_q = None
@@ -28,8 +30,12 @@ class WireOandaPrices:
         rates_streamer.set_instruments(self.instruments)
         rates_streamer.set_events_q(self.rates_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
 
-        # Not required to return anything, but streamer reference can be used in shut down
-        return rates_streamer
+        if self.command_q:
+            listener = QueueCommandListener(self.command_q, rates_streamer.on_command)
+            return rates_streamer, listener
+        else:
+            # Not required to return anything, but streamer reference can be used in shut down
+            return rates_streamer
 
     # setup queues
     def set_rates_q(self, rates_q):
@@ -61,18 +67,24 @@ class WireOandaPrices:
         self.instruments = instruments
         return self
 
+    def set_command_q(self, command_q):
+        self.command_q = command_q
+        return self
+
 
 class WireRateCache:
 
     def __init__(self):
+        self.command_q = None
         self.rates_q = None
         self.forward_q = None
         self.max_tick_age = DEFAULT_ACCEPTABLE_TICK_AGE
+        self.command_q = None
 
     def wire(self):
         rates_cache = FxPricesCache(max_tick_age=self.max_tick_age)
         rates_cache_loop = EventLoop(self.rates_q, rates_cache, forward_q=self.forward_q)
-
+        rates_cache_loop.set_command_q(self.command_q)
         return rates_cache_loop
 
     # setup queues
@@ -88,6 +100,10 @@ class WireRateCache:
         self.max_tick_age = max_tick_age
         return self
 
+    def set_command_q(self, command_q):
+        self.command_q = command_q
+        return self
+
 
 from com.open.algo.trading.fxPortfolio import *
 from com.open.algo.risk.ccyExposureLimitRisk import CcyExposureLimitRiskEvaluator
@@ -97,6 +113,7 @@ from com.open.algo.risk.fxPositionLimitRisk import FxPositionLimitRiskEvaluator
 class WirePortfolio:
 
     def __init__(self):
+        self.command_q = None
         self.portfolio_ccy = None
         self.portfolio_balance = None
         self.portfolio_limit = None
@@ -118,6 +135,7 @@ class WirePortfolio:
         portfolio.add_risk_manager(rm)
 
         portfolio_loop = EventLoop(self.portfolio_q, portfolio, processed_event_q=self.execution_q)
+        portfolio_loop.set_command_q(self.command_q)
         return portfolio_loop
 
     # setup queues
@@ -149,6 +167,10 @@ class WirePortfolio:
         self.prices_cache = prices_cache
         return self
 
+    def set_command_q(self, command_q):
+        self.command_q = command_q
+        return self
+
 
 from com.open.algo.oanda.execution import OandaExecutionHandler
 
@@ -156,6 +178,7 @@ from com.open.algo.oanda.execution import OandaExecutionHandler
 class WireExecutor:
 
     def __init__(self):
+        self.command_q = None
         self.execution_result_q = None
         self.execution_q = None
         self.journaler = None
@@ -169,6 +192,7 @@ class WireExecutor:
         executor = OandaExecutionHandler(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
 
         execution_loop = EventLoop(self.execution_q, executor, processed_event_q=self.execution_result_q)
+        execution_loop.set_command_q(self.command_q)
         return execution_loop
 
     # setup queues
@@ -193,15 +217,22 @@ class WireExecutor:
         self.journaler = journaler
         return self
 
+    def set_command_q(self, command_q):
+        self.command_q = command_q
+        return self
+
 
 class WireStrategy:
+
     def __init__(self):
+        self.command_q = None
         self.ticks_and_ack_q = None
         self.signal_output_q = None
         self.strategy = None
 
     def wire(self):
         strategy_loop = EventLoop(self.ticks_and_ack_q, self.strategy, processed_event_q=self.signal_output_q)
+        strategy_loop.set_command_q(self.command_q)
         return strategy_loop
 
     # setup queues
@@ -219,7 +250,9 @@ class WireStrategy:
 
 
 class WireAll:
+
     def __init__(self):
+        self.command_q = None
         self.rates_q = None
         self.heartbeat_q = None
         self.exception_q = None

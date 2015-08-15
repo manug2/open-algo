@@ -6,6 +6,7 @@ from time import sleep
 
 from com.open.algo.model import ExceptionEvent
 from com.open.algo.utils import EventHandler
+from com.open.algo.wiring.commandListener import COMMAND_STOP, QueueCommandListener
 import os
 
 
@@ -24,6 +25,8 @@ class EventLoop(object):
         self.forward_q = forward_q
         self.processed_event_q = processed_event_q
         self.process_all = False
+        self.command_q = None
+        self.listener_thread = None
 
     def start(self):
         """
@@ -31,7 +34,12 @@ class EventLoop(object):
         Polls events queue and directs each event to handler.
         The loop will then pause for "heartbeat" seconds and continue.
         """
-        print('starting process %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
+        if self.command_q:
+            print('starting command listener thread within %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
+            listener = QueueCommandListener(self.command_q, self.on_command)
+            self.listener_thread = listener.start()
+
+        print('starting process event loop within current thread %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
         self.started = True
         self.handler.start()
         self.run_in_loop()
@@ -129,4 +137,11 @@ class EventLoop(object):
 
         # end of while loop after collecting all events in queue
 
+    def set_command_q(self, command_q):
+        self.command_q = command_q
+        return self
 
+    def on_command(self, command):
+        print('received command [%s]' % command)
+        if command == COMMAND_STOP:
+            self.stop()

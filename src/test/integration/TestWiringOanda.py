@@ -2,6 +2,50 @@ import unittest
 from testUtils import *
 from com.open.algo.wiring.wiring import *
 from com.open.algo.journal import Journaler
+from com.open.algo.wiring.commandListener import COMMAND_STOP
+
+
+class TestWirePricesStream(unittest.TestCase):
+    def setUp(self):
+        self.rates_q = Queue()
+        self.prices_wiring = WireOandaPrices()
+        self.prices_wiring.set_rates_q(self.rates_q).set_journaler(Journaler())
+        self.prices_wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
+
+    def test_forwarded_rate_should_be_in_fx_cache(self):
+        rates_streamer = self.prices_wiring.wire()
+        rates_stream_thread = Thread(target=rates_streamer.stream)
+        rates_stream_thread.start()
+
+        await_event_receipt(self, self.rates_q
+                                   , 'did not get any rates forwarded by fx cache')
+        rates_streamer.stop()
+        rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        # end of wire test, but what to measure
+
+
+class TestWirePricesStreamCommandListener(unittest.TestCase):
+    def setUp(self):
+        self.rates_q = Queue()
+        self.prices_wiring = WireOandaPrices()
+        self.prices_wiring.set_rates_q(self.rates_q).set_journaler(Journaler())
+        self.prices_wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
+
+        self.command_q = Queue()
+        self.prices_wiring.set_command_q(self.command_q)
+
+    def test_forwarded_rate_should_be_in_fx_cache(self):
+        rates_streamer, listener = self.prices_wiring.wire()
+        rates_stream_thread = Thread(target=rates_streamer.stream)
+        rates_stream_thread.start()
+        listener_thread = listener.start()
+
+        await_event_receipt(self, self.rates_q
+                                   , 'did not get any rates forwarded by fx cache')
+        self.command_q.put_nowait(COMMAND_STOP)
+        rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        listener_thread.join(timeout=1)
+        # end of wire test, but what to measure
 
 
 class TestWirePricesStreamToCache(unittest.TestCase):
