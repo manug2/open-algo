@@ -63,6 +63,9 @@ class TestWirePortfolio(unittest.TestCase):
         self.cache = FxPricesCache()
         self.wiring.set_prices_cache(self.cache)
 
+        self.command_q = Queue()
+        self.wiring.set_command_q(self.command_q)
+
     def test_signal_should_reach_execution_q(self):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
         self.cache.set_rate(TickEvent('EUR_USD', get_time(), 1.0, 1.0))
@@ -73,8 +76,10 @@ class TestWirePortfolio(unittest.TestCase):
         portfolio_thread.start()
         self.portfolio_q.put_nowait(buy_order)
         out_event = await_event_receipt(self, self.execution_q, 'did not find one order in execution queue')
-        portfolio_loop.stop()
+
+        self.command_q.put_nowait(COMMAND_STOP)
         portfolio_thread.join(2*portfolio_loop.heartbeat)
+        portfolio_loop.listener_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
         self.assertEqual(buy_order, out_event)
 
 
@@ -86,6 +91,9 @@ class TestWireExecutor(unittest.TestCase):
         self.wiring.set_execution_result_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
+        self.command_q = Queue()
+        self.wiring.set_command_q(self.command_q)
+
     def test_executed_order_should_reach_portfolio_q(self):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
 
@@ -94,8 +102,10 @@ class TestWireExecutor(unittest.TestCase):
         execution_thread.start()
         self.execution_q.put_nowait(buy_order)
         executed_order = await_event_receipt(self, self.portfolio_q, 'did not find one order in portfolio queue')
-        execution_loop.stop()
+
+        self.command_q.put_nowait(COMMAND_STOP)
         execution_thread.join(timeout=2*execution_loop.heartbeat)
+        execution_loop.listener_thread.join(timeout=1)
 
         if get_day_of_week() >= 5:
             self.assertIsInstance(executed_order, ExceptionEvent)
@@ -116,29 +126,36 @@ class TestWireDummyBuyStrategy(unittest.TestCase):
 
         self.strategy_wiring = WireStrategy().set_strategy(DummyBuyStrategy(100))
         self.strategy_wiring.set_signal_output_q(self.signal_output_q).set_ticks_and_ack_q(self.tick_for_strategy_q)
-        self.strategy_loop = self.strategy_wiring.wire()
-        self.strategy_thread = Thread(target=self.strategy_loop.start)
+        command_q_strategy = Queue()
+        self.strategy_wiring.set_command_q(command_q_strategy)
 
         self.rates_cache_wiring = WireRateCache()
         self.rates_cache_wiring.set_rates_q(self.rates_q).set_forward_q(self.tick_for_strategy_q)
         self.rates_cache_wiring.set_max_tick_age(TICK_MAX_AGE)
-        self.rates_cache_loop = self.rates_cache_wiring.wire()
+        command_q_rates = Queue()
+        self.rates_cache_wiring.set_command_q(command_q_rates)
 
-        self.rates_cache_thread = Thread(target=self.rates_cache_loop.start)
-
-    def tearDown(self):
-        self.rates_cache_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        self.strategy_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        self.command_q = QueueSPMC(Journaler())
+        self.command_q.add_consumer(command_q_rates).add_consumer(command_q_strategy)
 
     def test_should_produce_order_when_started(self):
-        self.rates_cache_thread.start()
-        self.strategy_thread.start()
+        strategy_loop = self.strategy_wiring.wire()
+        rates_cache_loop = self.rates_cache_wiring.wire()
+
+        strategy_thread = Thread(target=strategy_loop.start)
+        rates_cache_thread = Thread(target=rates_cache_loop.start)
+
+        rates_cache_thread.start()
+        strategy_thread.start()
 
         self.rates_q.put_nowait(self.tick)
         signal = await_event_receipt(self, self.signal_output_q, 'should have received a signal from strategy')
         self.assertIsNotNone(signal)
         self.assertIsInstance(signal, OrderEvent)
 
-        self.rates_cache_loop.stop()
-        self.strategy_loop.stop()
+        self.command_q.put_nowait(COMMAND_STOP)
 
+        rates_cache_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        strategy_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        rates_cache_loop.listener_thread.join(timeout=1)
+        strategy_loop.listener_thread.join(timeout=1)

@@ -136,3 +136,33 @@ class TestWireDummyBuyStrategy(unittest.TestCase):
         signal = await_event_receipt(self, self.signal_output_q, 'should have received a signal from strategy')
         self.assertIsNotNone(signal)
         self.assertIsInstance(signal, OrderEvent)
+
+
+class TestWireAll(unittest.TestCase):
+    def test_should_accept_not_None_command_q(self):
+        wiring = WireAll()
+        wiring.set_command_q(Queue(), Queue())
+
+    def test_should_not_accept_None_command_q(self):
+        wiring = WireAll()
+        try:
+            wiring.set_command_q(None, Queue())
+            self.fail('should have raised value error')
+        except ValueError:
+            pass
+
+    def test_should_not_accept_None_command_q_for_cloning(self):
+        wiring = WireAll()
+        try:
+            wiring.set_command_q(Queue(), None)
+            self.fail('should have raised value error')
+        except ValueError:
+            pass
+
+    def test_should_not_accept_None_for_both_command_q_and_command_q_for_cloning(self):
+        wiring = WireAll()
+        try:
+            wiring.set_command_q(None, None)
+            self.fail('should have raised value error')
+        except ValueError:
+            pass

@@ -48,7 +48,7 @@ class TestStreaming(unittest.TestCase):
         self.assertIsNotNone(out_event)
 
     def test_should_receive_streaming_heartbeat_events(self):
-        out_event = await_event_receipt(self, self.heartbeat_q, 'did not get any heartbeat')
+        out_event = await_event_receipt(self, self.heartbeat_q, 'did not get any heartbeat', timeout=10)
         self.assertIsNotNone(out_event)
         self.assertTrue(isinstance(out_event, Heartbeat))
 

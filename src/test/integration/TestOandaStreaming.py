@@ -105,7 +105,7 @@ class TestCommandEvents(unittest.TestCase):
 
     def test_should_be_able_to_connect_for_receiving_streaming_account_events(self):
         self.command_q.put_nowait(COMMAND_STOP)
-        self.command_thread.join(timeout=5)
         self.streaming_thread.join(timeout=5)
+        self.command_thread.join(timeout=5)
         self.assertFalse(self.streamer.streaming, 'streaming should have stopped, but did not')
 

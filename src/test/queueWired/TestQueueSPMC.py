@@ -8,6 +8,16 @@ from com.open.algo.journal import Journaler
 from com.open.algo.wiring.queue_spmc import *
 
 
+class TestQueueSPMC(unittest.TestCase):
+    def test_cannot_append_self_as_consumer(self):
+        spmc_q = QueueSPMC(Journaler())
+        try:
+            spmc_q.add_consumer(spmc_q)
+            self.fail('was able to add self as a downstream consumer q')
+        except ValueError:
+            pass
+
+
 class TestNonBlockingPutMethod(unittest.TestCase):
 
     def setUp(self):

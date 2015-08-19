@@ -248,11 +248,20 @@ class WireStrategy:
         self.strategy = strategy
         return self
 
+    def set_command_q(self, command_q):
+        self.command_q = command_q
+        return self
+
+
+from copy import copy
+
 
 class WireAll:
 
     def __init__(self):
         self.command_q = None
+        self.command_q_for_cloning = None
+
         self.rates_q = None
         self.heartbeat_q = None
         self.exception_q = None
@@ -272,16 +281,12 @@ class WireAll:
         prices_wiring.set_rates_q(self.rates_q).set_journaler(self.journaler)
         prices_wiring.set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
         prices_wiring.set_target_env(self.target_env).set_config_path(self.config_path)
-        rates_streamer = prices_wiring.wire()
 
         rates_cache_wiring = WireRateCache()
         rates_cache_wiring.set_max_tick_age(self.max_tick_age)
         rates_cache_wiring.set_rates_q(self.rates_q).set_forward_q(self.ticks_and_ack_q)
-        rates_cache_loop = rates_cache_wiring.wire()
 
         self.port_wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
-        self.port_wiring.set_prices_cache(rates_cache_loop.handler)
-        portfolio_loop = self.port_wiring.wire()
 
         self.execution_ack_nack_q = QueueSPMC(self.journaler)
         self.execution_ack_nack_q.add_consumer(self.portfolio_q, timeout=5)
@@ -291,13 +296,44 @@ class WireAll:
         executor_wiring.set_execution_q(self.execution_q)
         executor_wiring.set_target_env(self.target_env).set_config_path(self.config_path)
         executor_wiring.set_execution_result_q(self.execution_ack_nack_q)
-        execution_loop = executor_wiring.wire()
 
         strategy_wiring = WireStrategy().set_strategy(self.strategy)
         strategy_wiring.set_signal_output_q(self.portfolio_q).set_ticks_and_ack_q(self.ticks_and_ack_q)
+
+        if self.command_q:
+            prices_command_q = copy(self.command_q_for_cloning)
+            prices_wiring.set_command_q(prices_command_q)
+
+            rates_cache_command_q = copy(self.command_q_for_cloning)
+            rates_cache_wiring.set_command_q(rates_cache_command_q)
+
+            port_command_q = copy(self.command_q_for_cloning)
+            self.port_wiring.set_command_q(port_command_q)
+
+            executor_command_q = copy(self.command_q_for_cloning)
+            executor_wiring.set_command_q(executor_command_q)
+
+            strategy_command_q = copy(self.command_q_for_cloning)
+            strategy_wiring.set_command_q(strategy_command_q)
+
+            self.command_q.add_consumer(prices_command_q).add_consumer(rates_cache_command_q)\
+                .add_consumer(port_command_q).add_consumer(executor_command_q).add_consumer(strategy_command_q)
+        # end of assigning command listener q
+
+        rates_cache_loop = rates_cache_wiring.wire()
+
+        self.port_wiring.set_prices_cache(rates_cache_loop.handler)
+        portfolio_loop = self.port_wiring.wire()
+
+        execution_loop = executor_wiring.wire()
         strategy_loop = strategy_wiring.wire()
 
-        return rates_streamer, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop
+        if self.command_q:
+            rates_streamer, rates_listener = prices_wiring.wire()
+            return rates_streamer, rates_listener, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop
+        else:
+            rates_streamer = prices_wiring.wire()
+            return rates_streamer, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop
 
     def set_portfolio_q(self, portfolio_q):
         self.portfolio_q = portfolio_q
@@ -340,6 +376,14 @@ class WireAll:
     def set_strategy(self, strategy):
         self.strategy = strategy
         return self
+
+    def set_command_q(self, command_q, command_q_for_cloning):
+        if command_q and command_q_for_cloning:
+            self.command_q = command_q
+            self.command_q_for_cloning = command_q_for_cloning
+            return self
+        else:
+            raise ValueError('both "command_q" and "command_q_for_cloning" should be not None')
 
 
 import logging
