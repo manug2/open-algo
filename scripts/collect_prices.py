@@ -5,16 +5,15 @@ sys.path.append('../src/main')
 from optparse import OptionParser
 
 ENVIRONMENTS_CONFIG_PATH = '../../fx-oanda/'
-OA_OUTPUT_DIR = '../output/'
+OA_OUTPUT_DIR = '.'
 
 from com.open.algo.journal import *
 from com.open.algo.wiring.wiring import *
+from com.open.algo.wiring.commandListener import COMMAND_STOP
 
 
-def collect(duration, instruments, sleepy_time, file_path):
+def collect(duration, instruments, sleepy_time, file_path, ThreadOrProcessClass, QueueClass):
 
-    from queue import Queue
-    from threading import Thread
     from time import sleep
 
     # wire_file_logger(os.path.join(OA_OUTPUT_DIR, 'EUR_USD.log'))
@@ -23,14 +22,14 @@ def collect(duration, instruments, sleepy_time, file_path):
 
     logger.info('preparing journaler..')
     filename = os.path.join(OA_OUTPUT_DIR, file_path)
-    journal_q = Queue()
+    journal_q = QueueClass()
     journaler = FileJournaler(journal_q, full_path=filename)
     journal_loop = EventLoop(journal_q, journaler).set_process_all_on()
     # journaler = Journaler()
 
     logger.info('wiring oanda prices streaming..')
     wiring_prices = WireOandaPrices()
-    wiring_prices.set_rates_q(Queue()).set_journaler(journaler)
+    wiring_prices.set_rates_q(QueueClass()).set_journaler(journaler)
     wiring_prices.set_target_env('practice').set_config_path(ENVIRONMENTS_CONFIG_PATH)
     wiring_prices.set_instruments(instruments)
 
@@ -42,58 +41,68 @@ def collect(duration, instruments, sleepy_time, file_path):
     # for debugging over weekend
     wiring_cache.set_max_tick_age(150000)
 
-    rates_streamer = wiring_prices.wire()
+    # setup command queues
+    command_q = QueueSPMC(Journaler())
+    command_q_streamer = QueueClass()
+    command_q_journaler = QueueClass()
+    command_q_cache = QueueClass()
+    wiring_prices.set_command_q(command_q_streamer)
+    wiring_cache.set_command_q(command_q_cache)
+    journal_loop.set_command_q(command_q_journaler)
+    command_q.add_consumer(command_q_streamer).add_consumer(command_q_cache).add_consumer(command_q_journaler)
+
+    rates_streamer, stream_command_listener = wiring_prices.wire()
     rates_cache_loop = wiring_cache.wire()
 
     logger.info('creating threads..')
-    journal_thread = Thread(target=journal_loop.start, args=[])
-    rates_stream_thread = Thread(target=rates_streamer.stream)
-    rates_cache_thread = Thread(target=rates_cache_loop.start)
+    journal_thread = ThreadOrProcessClass(target=journal_loop.start, args=[])
+    rates_stream_thread = ThreadOrProcessClass(target=rates_streamer.stream)
+    rates_cache_thread = ThreadOrProcessClass(target=rates_cache_loop.start)
 
     total_duration = 0
 
-    logger.info('starting threads..')
-    journal_thread.start()
-    rates_stream_thread.start()
-    rates_cache_thread.start()
+    error = None
 
-    while total_duration < duration:
-        sleep(sleepy_time)
-        total_duration += sleepy_time
-        if not journal_thread.is_alive():
-            rates_streamer.stop()
-            rates_cache_loop.stop()
-            raise RuntimeError('journal thread is no more active')
-        elif not rates_stream_thread.is_alive():
-            rates_cache_loop.stop()
-            journal_loop.stop()
-            raise RuntimeError('rates streaming thread is no more active')
-        elif not rates_cache_thread.is_alive():
-            rates_streamer.stop()
-            journal_loop.stop()
-            raise RuntimeError('rates cache thread is no more active')
-        else:
-            logger.info('all threads are active..')
+    try:
+        logger.info('starting threads..')
+        journal_thread.start()
+        rates_stream_thread.start()
+        rates_cache_thread.start()
+        stream_command_thread = stream_command_listener.start()
 
-    logger.info('stopping threads..')
-    rates_streamer.stop()
-    rates_cache_loop.stop()
-    journal_loop.stop()
+        while total_duration < duration:
+            sleep(sleepy_time)
+            total_duration += sleepy_time
+            if journal_thread.is_alive() and rates_stream_thread.is_alive() \
+                    and rates_cache_thread.is_alive():
+                    logger.info('all threads are active..')
+            else:
+                error = 'a thread is not active'
+                break
 
-    logger.info('waiting for threads to wrap up..')
-    rates_stream_thread.join(timeout=sleepy_time)
-    rates_cache_thread.join(timeout=sleepy_time)
-    journal_thread.join(timeout=sleepy_time)
-    logger.info('closing journal..')
-    journaler.close()
+        logger.info('issuing stop command to all components..')
+        command_q.put_nowait(COMMAND_STOP)
+    except KeyboardInterrupt:
+        logger.info('issuing stop command to all components after keyboard interrupt..')
+        command_q.put_nowait(COMMAND_STOP)
+    finally:
+        logger.info('waiting for threads to wrap up..')
+        rates_stream_thread.join(timeout=sleepy_time)
+        rates_cache_thread.join(timeout=sleepy_time)
+        journal_thread.join(timeout=sleepy_time)
+        logger.info('closing journal..')
+        journaler.close()
 
-    logger.info('checking whether all thread are now inactive..')
+    logger.info('checking that all thread are now inactive..')
     if rates_stream_thread.is_alive():
         logger.warn('rates stream thread is still active')
     if rates_cache_thread.is_alive():
         logger.warn('rates cache thread is still active')
     if journal_thread.is_alive():
         logger.warn('journal thread is still active')
+
+    if error:
+        raise RuntimeError('error detected -> %s' % error)
 
     logger.info('thank you, journal file has been created at [%s]' % filename)
     return
@@ -110,8 +119,10 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     print('using settings =>', options)
+    from queue import Queue
+    from threading import Thread
     try:
-        collect(options.collection_duration, options.instruments, options.sleepy, options.file_path)
+        collect(options.collection_duration, options.instruments, options.sleepy, options.file_path, Thread, Queue)
     except:
         print('Unexpected error:', sys.exc_info()[0])
     finally:
