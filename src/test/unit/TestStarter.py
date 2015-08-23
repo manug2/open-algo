@@ -47,6 +47,15 @@ class Test2InParallel(unittest.TestCase):
         t2.join()
         logger.info('finished!')
 
+    def test_ThreadStarter_2_parallel_workers_in_default_group(self):
+        starter = ThreadStarter('def', [(dummy_worker, ['w1']), (dummy_worker, ['w2'])])
+
+        logger.info('starting..')
+        starter.start()
+        logger.info('joining..')
+        starter.join()
+        logger.info('finished!')
+
     def test_start_2_parallel_workers_in_default_group(self):
         starter = ProcessStarter()
         starter.add_target(dummy_worker, args=['w1'])
@@ -54,6 +63,8 @@ class Test2InParallel(unittest.TestCase):
 
         logger.info('starting..')
         starter.start_all()
+        logger.info('joining..')
+        starter.join_all()
         logger.info('finished!')
 
     def test_start_2_parallel_workers_in_one_group(self):
@@ -63,6 +74,8 @@ class Test2InParallel(unittest.TestCase):
 
         logger.info('starting..')
         starter.start_all()
+        logger.info('joining..')
+        starter.join_all()
         logger.info('finished!')
 
     def test_start_2_parallel_workers_with_one_each_in_separate_group(self):
@@ -72,6 +85,8 @@ class Test2InParallel(unittest.TestCase):
 
         logger.info('starting..')
         starter.start_all()
+        logger.info('joining..')
+        starter.join_all()
         logger.info('finished!')
 
     def test_start_2_parallel_workers_with_2_each_in_separate_group(self):
@@ -83,5 +98,7 @@ class Test2InParallel(unittest.TestCase):
 
         logger.info('starting..')
         starter.start_all()
+        logger.info('joining..')
+        starter.join_all()
         logger.info('finished!')
 

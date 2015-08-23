@@ -14,6 +14,7 @@ class ProcessStarter:
         self.started = False
         self.starters = None
         self.process_futures = None
+        self.executor = None
 
     def add_target(self, target_method, process_group='default', args=()):
         if self.started:
@@ -30,8 +31,8 @@ class ProcessStarter:
 
         return self
 
-    def start_all(self):
-        starter_thread = Thread(target=self.start_all_internal)
+    def start_all_async(self):
+        starter_thread = Thread(target=self.start_all)
         logger = logging.getLogger(self.__class__.__name__)
         logger.info('starting the various tasks in started processes..')
         starter_thread.start()
@@ -40,7 +41,7 @@ class ProcessStarter:
         logger.info('joining starter thread for processes..')
         starter_thread.join()
 
-    def start_all_internal(self):
+    def start_all(self):
         logger = logging.getLogger(self.__class__.__name__)
 
         logger.info('[%s-%s] before submitting tasks in separate processes..' % (os.getppid(), os.getpid()))
@@ -49,30 +50,42 @@ class ProcessStarter:
         elif len(self.process_target_map) == 0:
             raise RuntimeError('no targets to start')
 
-        self.starters = {group: ThreadStarter(group, targets) for group, targets in self.process_target_map.items()}
+        starters = {group: ThreadStarter(group, targets) for group, targets in self.process_target_map.items()}
+        self.executor = concurrent.futures.ProcessPoolExecutor(max_workers=len(starters))
+        self.process_futures = {self.executor.submit(starter.start): starter for group, starter in starters.items()}
+        logger.info('[%s-%s] started task/groups in separate processes..' % (os.getppid(), os.getpid()))
+        for f in self.process_futures:
+            f.add_done_callback(self.process_completed)
 
-        with concurrent.futures.ProcessPoolExecutor(max_workers=len(self.starters)) as executor:
-            self.process_futures = {executor.submit(starter.start): starter for group, starter in self.starters.items()}
-
-        #logger.info('[%s-%s] started task/groups in separate processes..' % (os.getppid(), os.getpid()))
+    def process_completed(self, future):
+        starter = self.process_futures[future]
+        try:
+            returnValue = future.result()
+        except Exception as exc:
+            logger.info('[%s-%s] process for starting [%s, %s] generated an exception: %s'
+                  % (os.getppid(), os.getpid(), starter.group, starter.targets, exc))
+        else:
+            logger.info('[%s-%s] process for starting [%s, %s] generated an result: %s'
+                        % (os.getppid(), os.getpid(), starter.group, starter.targets, returnValue))
+        logger.info('[%s-%s] completed starting process for group [%s]' % (os.getppid(), os.getpid(), starter.group))
 
     def join_all(self):
         logger = logging.getLogger(self.__class__.__name__)
-        logger.info('[%s-%s] joining tasks in separate processes..' % (os.getppid(), os.getpid()))
-
-        for future in concurrent.futures.as_completed(self.process_futures):
+        logger.info('[%s-%s] joining all processes ..' % (os.getppid(), os.getpid()))
+        ''''
+        for future in self.process_futures:
             starter = self.process_futures[future]
             try:
-                returnValue = future.result()
+                starter.join()
             except Exception as exc:
-                logger.info('[%s-%s] process for executing [%s, %s] generated an exception: %s'
+                logger.info('[%s-%s] error joining [%s, %s] generated an exception: %s'
                       % (os.getppid(), os.getpid(), starter.group, starter.targets, exc))
             else:
-                logger.info('[%s-%s] process for executing [%s, %s] generated an result: %s'
-                            % (os.getppid(), os.getpid(), starter.group, starter.targets, returnValue))
-
-            logger.info('[%s-%s] completed execution of group [%s]' % (os.getppid(), os.getpid(), starter.group))
-        logger.info('[%s-%s] completed all task/groups in all processes.' % (os.getppid(), os.getpid()))
+                logger.info('[%s-%s] all work for [%s, %s] finished'
+                            % (os.getppid(), os.getpid(), starter.group, starter.targets))
+        '''''
+        self.executor.shutdown(wait=True)
+        logger.info('[%s-%s] completed all processes.' % (os.getppid(), os.getpid()))
 
 
 class ThreadStarter:
@@ -81,18 +94,9 @@ class ThreadStarter:
         self.targets = targets
         self.started = False
         self.futures = None
+        self.executor = None
 
     def start(self):
-        starter_thread = Thread(target=self.start_internal)
-        logger = logging.getLogger(self.__class__.__name__)
-        logger.info('starting the various tasks in started thread for group [%s]..' % self.group)
-        starter_thread.start()
-        sleep(1)
-        self.join()
-        logger.info('joining started thread for group [%s]..' % self.group)
-        starter_thread.join()
-
-    def start_internal(self):
         logger = logging.getLogger(self.__class__.__name__)
         logger.info('[%s-%s] before submitting tasks in separate threads..' % (os.getppid(), os.getpid()))
         if self.started:
@@ -101,26 +105,28 @@ class ThreadStarter:
         for t in self.targets:
             logger.info('[%s-%s] starting [%s] in group [%s]' % (os.getppid(), os.getpid(), t, self.group))
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(self.targets)) as executor:
-            self.futures = {executor.submit(target_method, target_args):
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=len(self.targets))
+        self.futures = {self.executor.submit(target_method, target_args):
                            (target_method, target_args) for target_method, target_args in self.targets}
 
-        #logger.info('[%s-%s] tasks in separate threads.' % (os.getppid(), os.getpid()))
+        logger.info('[%s-%s] tasks started in separate threads.' % (os.getppid(), os.getpid()))
+        for f in self.futures:
+            f.add_done_callback(self.task_completed)
+
+    def task_completed(self, future):
+        (target_method, target_args) = self.futures[future]
+        try:
+            returnValue = future.result()
+        except Exception as exc:
+            logger.error('[%s-%s] [%s, %s] generated an exception: %s'
+                        % (os.getppid(), os.getpid(), target_method, target_args, exc))
+        else:
+            logger.info('[%s-%s] [%s, %s] generated return value : %s'
+                        % (os.getppid(), os.getpid(), target_method, target_args, returnValue))
 
     def join(self):
         logger = logging.getLogger(self.__class__.__name__)
         logger.info('[%s-%s] joining of threads in group [%s]..' % (os.getppid(), os.getpid(), self.group))
-
-        for future in concurrent.futures.as_completed(self.futures):
-            (target_method, target_args) = self.futures[future]
-            try:
-                returnValue = future.result()
-            except Exception as exc:
-                logger.error('[%s-%s] [%s, %s] generated an exception: %s'
-                            % (os.getppid(), os.getpid(), target_method, target_args, exc))
-            else:
-                logger.info('[%s-%s] [%s, %s] generated return value : %s'
-                            % (os.getppid(), os.getpid(), target_method, target_args, returnValue))
-
+        self.executor.shutdown(wait=True)
         logger.info('[%s-%s] completed execution of threaded tasks in group [%s]'
                     % (os.getppid(), os.getpid(), self.group))
