@@ -48,7 +48,8 @@ class Test2InParallel(unittest.TestCase):
         logger.info('finished!')
 
     def test_ThreadStarter_2_parallel_workers_in_default_group(self):
-        starter = ThreadStarter('def', [(dummy_worker, ['w1']), (dummy_worker, ['w2'])])
+        starter = ThreadStarter()
+        starter.add_target(dummy_worker, args=['w1']).add_target(dummy_worker, args=['w2'])
 
         logger.info('starting..')
         starter.start()
@@ -62,9 +63,9 @@ class Test2InParallel(unittest.TestCase):
         starter.add_target(dummy_worker, args=['w2'])
 
         logger.info('starting..')
-        starter.start_all()
+        starter.start()
         logger.info('joining..')
-        starter.join_all()
+        starter.join()
         logger.info('finished!')
 
     def test_start_2_parallel_workers_in_one_group(self):
@@ -73,9 +74,9 @@ class Test2InParallel(unittest.TestCase):
         starter.add_target(dummy_worker, args=['w2'], process_group='test_proc')
 
         logger.info('starting..')
-        starter.start_all()
+        starter.start()
         logger.info('joining..')
-        starter.join_all()
+        starter.join()
         logger.info('finished!')
 
     def test_start_2_parallel_workers_with_one_each_in_separate_group(self):
@@ -84,9 +85,9 @@ class Test2InParallel(unittest.TestCase):
         starter.add_target(dummy_worker, args=['w2'], process_group='test_proc2')
 
         logger.info('starting..')
-        starter.start_all()
+        starter.start()
         logger.info('joining..')
-        starter.join_all()
+        starter.join()
         logger.info('finished!')
 
     def test_start_2_parallel_workers_with_2_each_in_separate_group(self):
@@ -97,8 +98,8 @@ class Test2InParallel(unittest.TestCase):
         starter.add_target(dummy_worker, args=['w22'], process_group='test_proc2')
 
         logger.info('starting..')
-        starter.start_all()
+        starter.start()
         logger.info('joining..')
-        starter.join_all()
+        starter.join()
         logger.info('finished!')
 
