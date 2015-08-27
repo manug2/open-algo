@@ -26,7 +26,7 @@ class EventLoop(object):
         self.processed_event_q = processed_event_q
         self.process_all = False
         self.command_q = None
-        self.listener_thread = None
+        self.listener = None
 
     def start(self):
         """
@@ -34,10 +34,6 @@ class EventLoop(object):
         Polls events queue and directs each event to handler.
         The loop will then pause for "heartbeat" seconds and continue.
         """
-        if self.command_q:
-            print('starting command listener thread within %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
-            listener = QueueCommandListener(self.command_q, self.on_command)
-            self.listener_thread = listener.start()
 
         print('starting process event loop within current thread %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
         self.started = True
@@ -139,6 +135,8 @@ class EventLoop(object):
 
     def set_command_q(self, command_q):
         self.command_q = command_q
+        self.listener = QueueCommandListener(self.command_q, self.on_command)
+        self.listener.set_name('LISTENER-%s' % str(self.handler))
         return self
 
     def on_command(self, command):

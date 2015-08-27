@@ -22,18 +22,25 @@ def wire_logger():
 logger = wire_logger()
 
 
-def dummy_worker(name):
+class DummyWorker:
+    def __init__(self, name):
+        self.name = name
 
-    for i in range (0, 5):
-        logger.info('%s->%d..', name, i)
-        sleep(1)
+    def do_work(self):
+        for i in range (0, 5):
+            logger.info('%s->%d..', self.name, i)
+            sleep(0.2)
+
+
+worker1 = DummyWorker('w1')
+worker2 = DummyWorker('w2')
 
 
 class Test2InParallel(unittest.TestCase):
 
     def test_2_parallel_workers(self):
-        t1 = Thread(target=dummy_worker, args=['w1'])
-        t2 = Thread(target=dummy_worker, args=['w2'])
+        t1 = Thread(target=worker1.do_work)
+        t2 = Thread(target=worker2.do_work)
 
         logger.info('starting t1..')
         t1.start()
@@ -49,7 +56,7 @@ class Test2InParallel(unittest.TestCase):
 
     def test_ThreadStarter_2_parallel_workers_in_default_group(self):
         starter = ThreadStarter()
-        starter.add_target(dummy_worker, args=['w1']).add_target(dummy_worker, args=['w2'])
+        starter.add_target(worker1.do_work).add_target(worker2.do_work)
 
         logger.info('starting..')
         starter.start()
@@ -59,8 +66,8 @@ class Test2InParallel(unittest.TestCase):
 
     def test_start_2_parallel_workers_in_default_group(self):
         starter = ProcessStarter()
-        starter.add_target(dummy_worker, args=['w1'])
-        starter.add_target(dummy_worker, args=['w2'])
+        starter.add_target(worker1.do_work)
+        starter.add_target(worker2.do_work)
 
         logger.info('starting..')
         starter.start()
@@ -70,8 +77,8 @@ class Test2InParallel(unittest.TestCase):
 
     def test_start_2_parallel_workers_in_one_group(self):
         starter = ProcessStarter()
-        starter.add_target(dummy_worker, args=['w1'], process_group='test_proc')
-        starter.add_target(dummy_worker, args=['w2'], process_group='test_proc')
+        starter.add_target(worker1.do_work, process_group='test_proc')
+        starter.add_target(worker2.do_work, process_group='test_proc')
 
         logger.info('starting..')
         starter.start()
@@ -81,8 +88,8 @@ class Test2InParallel(unittest.TestCase):
 
     def test_start_2_parallel_workers_with_one_each_in_separate_group(self):
         starter = ProcessStarter()
-        starter.add_target(dummy_worker, args=['w1'], process_group='test_proc1')
-        starter.add_target(dummy_worker, args=['w2'], process_group='test_proc2')
+        starter.add_target(worker1.do_work, process_group='test_proc1')
+        starter.add_target(worker2.do_work, process_group='test_proc2')
 
         logger.info('starting..')
         starter.start()
@@ -92,10 +99,10 @@ class Test2InParallel(unittest.TestCase):
 
     def test_start_2_parallel_workers_with_2_each_in_separate_group(self):
         starter = ProcessStarter()
-        starter.add_target(dummy_worker, args=['w11'], process_group='test_proc1')
-        starter.add_target(dummy_worker, args=['w12'], process_group='test_proc1')
-        starter.add_target(dummy_worker, args=['w21'], process_group='test_proc2')
-        starter.add_target(dummy_worker, args=['w22'], process_group='test_proc2')
+        starter.add_target(DummyWorker('w11'), process_group='test_proc1')
+        starter.add_target(DummyWorker('w12'), process_group='test_proc1')
+        starter.add_target(DummyWorker('w21'), process_group='test_proc2')
+        starter.add_target(DummyWorker('w22'), process_group='test_proc2')
 
         logger.info('starting..')
         starter.start()

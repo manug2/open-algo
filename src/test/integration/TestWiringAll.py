@@ -28,7 +28,7 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
         self.everything.port_wiring.set_portfolio_limit(50).set_portfolio_limit_short(-50)
 
         self.everything.set_strategy(DummyBuyStrategy(100))
-        wire_logger()
+        self.logger = wire_logger()
 
     def test_wire_all(self):
         rates_streamer, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop = \
@@ -48,10 +48,9 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
 
             sleep(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
         except RuntimeError as e:
-            print('error starting all components')
-            print(e)
+            self.logger.error('error starting all components', e)
         except:
-            print('error starting all components')
+            self.logger.error('error starting all components')
         try:
             execution_loop.stop()
             portfolio_loop.stop()
@@ -59,7 +58,7 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
             rates_streamer.stop()
             rates_cache_loop.stop()
         except:
-            print('error stopping all components')
+            self.logger.info('error stopping all components')
         finally:
             execution_thread.join(timeout=2*execution_loop.heartbeat)
             portfolio_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
@@ -68,6 +67,9 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
             rates_cache_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
     def test_wire_all_with_command_listener(self):
+        from com.open.algo.starter import ThreadStarter
+
+        starter = ThreadStarter(self.__class__.__name__)
         command_q_for_cloning = Queue()
         command_q = QueueSPMC(Journaler())
         self.everything.set_command_q(command_q, command_q_for_cloning)
@@ -75,19 +77,14 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
         rates_streamer, rates_command_listener, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop = \
             self.everything.wire()
 
-        rates_streamer_listener_thread = None
-        rates_stream_thread = Thread(target=rates_streamer.stream)
-        rates_cache_thread = Thread(target=rates_cache_loop.start)
-        portfolio_thread = Thread(target=portfolio_loop.start)
-        execution_thread = Thread(target=execution_loop.start)
-        strategy_thread = Thread(target=strategy_loop.start)
+        starter.add_target(rates_streamer.stream).add_target(rates_command_listener.listen)
+        starter.add_target(rates_cache_loop.start).add_target(rates_cache_loop.listener.listen)
+        starter.add_target(portfolio_loop.start).add_target(portfolio_loop.listener.listen)
+        starter.add_target(execution_loop.start).add_target(execution_loop.listener.listen)
+        starter.add_target(strategy_loop.start).add_target(strategy_loop.listener.listen)
+
         try:
-            rates_stream_thread.start()
-            rates_streamer_listener_thread = rates_command_listener.start()
-            rates_cache_thread.start()
-            portfolio_thread.start()
-            execution_thread.start()
-            strategy_thread.start()
+            starter.start()
 
             sleep(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
         except RuntimeError as e:
@@ -99,16 +96,7 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
 
             command_q.put_nowait(COMMAND_STOP)
 
-            execution_thread.join(timeout=2*execution_loop.heartbeat)
-            execution_loop.listener_thread.join(timeout=1)
-            portfolio_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-            portfolio_loop.listener_thread.join(timeout=1)
-            strategy_thread.join(timeout=2*execution_loop.heartbeat)
-            strategy_loop.listener_thread.join(timeout=1)
-            rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-            rates_cache_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-            rates_cache_loop.listener_thread.join(timeout=1)
-            rates_streamer_listener_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+            starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
 
 class TestCommandQueueWiring(unittest.TestCase):

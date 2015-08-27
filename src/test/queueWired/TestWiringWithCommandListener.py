@@ -5,7 +5,8 @@ from com.open.algo.wiring.wiring import *
 from com.open.algo.dummy import DummyBuyStrategy
 from com.open.algo.journal import Journaler
 from com.open.algo.oanda.parser import parse_event_str
-from com.open.algo.wiring.commandListener import QueueCommandListener, COMMAND_STOP
+from com.open.algo.wiring.commandListener import COMMAND_STOP
+from com.open.algo.starter import ThreadStarter
 
 TICK_MAX_AGE = 365*24*60*60
 TICK_STRING = \
@@ -14,6 +15,7 @@ TICK_STRING = \
 
 class TestWirePricesCache(unittest.TestCase):
     def setUp(self):
+        self.starter = ThreadStarter(self.__class__.__name__)
         self.rates_q = Queue()
         self.tick = parse_event_str(None, TICK_STRING)
         self.forward_q = Queue()
@@ -27,15 +29,15 @@ class TestWirePricesCache(unittest.TestCase):
 
     def test_forwarded_rate_should_be_in_fx_cache(self):
         rates_cache_loop = self.rates_cache_wiring.wire()
-        rates_cache_thread = Thread(target=rates_cache_loop.start)
-        rates_cache_thread.start()
+        self.starter.add_target(rates_cache_loop.start)
+        self.starter.add_target(rates_cache_loop.listener.listen)
+        self.starter.start()
 
         self.rates_q.put_nowait(self.tick)
         await_event_receipt(self, self.forward_q, 'did not find one order in cache forward queue')
 
         self.command_q.put_nowait(COMMAND_STOP)
-        rates_cache_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        rates_cache_loop.listener_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        self.starter.join()
 
         try:
             rates = rates_cache_loop.handler.get_rate(self.tick.instrument)
@@ -54,6 +56,7 @@ from com.open.algo.model import ExceptionEvent
 
 class TestWirePortfolio(unittest.TestCase):
     def setUp(self):
+        self.starter = ThreadStarter(self.__class__.__name__)
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WirePortfolio()
@@ -71,20 +74,21 @@ class TestWirePortfolio(unittest.TestCase):
         self.cache.set_rate(TickEvent('EUR_USD', get_time(), 1.0, 1.0))
 
         portfolio_loop = self.wiring.wire()
-        portfolio_thread = Thread(target=portfolio_loop.start)
+        self.starter.add_target(portfolio_loop.start)
+        self.starter.add_target(portfolio_loop.listener.start)
+        self.starter.start()
 
-        portfolio_thread.start()
         self.portfolio_q.put_nowait(buy_order)
         out_event = await_event_receipt(self, self.execution_q, 'did not find one order in execution queue')
 
         self.command_q.put_nowait(COMMAND_STOP)
-        portfolio_thread.join(2*portfolio_loop.heartbeat)
-        portfolio_loop.listener_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        self.starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
         self.assertEqual(buy_order, out_event)
 
 
 class TestWireExecutor(unittest.TestCase):
     def setUp(self):
+        self.starter = ThreadStarter(self.__class__.__name__)
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WireExecutor().set_journaler(Journaler())
@@ -98,14 +102,15 @@ class TestWireExecutor(unittest.TestCase):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
 
         execution_loop = self.wiring.wire()
-        execution_thread = Thread(target=execution_loop.start)
-        execution_thread.start()
+        self.starter.add_target(execution_loop.start)
+        self.starter.add_target(execution_loop.listener.start)
+        self.starter.start()
+
         self.execution_q.put_nowait(buy_order)
         executed_order = await_event_receipt(self, self.portfolio_q, 'did not find one order in portfolio queue')
 
         self.command_q.put_nowait(COMMAND_STOP)
-        execution_thread.join(timeout=2*execution_loop.heartbeat)
-        execution_loop.listener_thread.join(timeout=1)
+        self.starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
         if get_day_of_week() >= 5:
             self.assertIsInstance(executed_order, ExceptionEvent)
@@ -118,6 +123,7 @@ class TestWireExecutor(unittest.TestCase):
 
 class TestWireDummyBuyStrategy(unittest.TestCase):
     def setUp(self):
+        self.starter = ThreadStarter(self.__class__.__name__)
         self.rates_q = Queue()
         self.tick = parse_event_str(None, TICK_STRING)
 
@@ -142,11 +148,11 @@ class TestWireDummyBuyStrategy(unittest.TestCase):
         strategy_loop = self.strategy_wiring.wire()
         rates_cache_loop = self.rates_cache_wiring.wire()
 
-        strategy_thread = Thread(target=strategy_loop.start)
-        rates_cache_thread = Thread(target=rates_cache_loop.start)
-
-        rates_cache_thread.start()
-        strategy_thread.start()
+        self.starter.add_target(strategy_loop.start)
+        self.starter.add_target(strategy_loop.listener.start)
+        self.starter.add_target(rates_cache_loop.start)
+        self.starter.add_target(rates_cache_loop.listener.start)
+        self.starter.start()
 
         self.rates_q.put_nowait(self.tick)
         signal = await_event_receipt(self, self.signal_output_q, 'should have received a signal from strategy')
@@ -155,7 +161,4 @@ class TestWireDummyBuyStrategy(unittest.TestCase):
 
         self.command_q.put_nowait(COMMAND_STOP)
 
-        rates_cache_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        strategy_thread.join(MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        rates_cache_loop.listener_thread.join(timeout=1)
-        strategy_loop.listener_thread.join(timeout=1)
+        self.starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)

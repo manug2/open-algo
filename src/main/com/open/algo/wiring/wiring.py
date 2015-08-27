@@ -397,6 +397,7 @@ def wire_logger():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
+    return logger
 
 
 def wire_file_logger(file_path):
@@ -407,3 +408,4 @@ def wire_file_logger(file_path):
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s')
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+    return logger

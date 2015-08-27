@@ -3,7 +3,6 @@ import unittest
 from testUtils import *
 from com.open.algo.wiring.wiring import *
 from com.open.algo.dummy import DummyBuyStrategy
-from com.open.algo.journal import Journaler
 from com.open.algo.oanda.parser import parse_event_str
 
 TICK_MAX_AGE = 365*24*60*60
@@ -44,7 +43,6 @@ class TestWirePricesCache(unittest.TestCase):
 
 from com.open.algo.trading.fxEvents import *
 from com.open.algo.utils import get_time, get_day_of_week
-from com.open.algo.model import ExceptionEvent
 
 
 class TestWirePortfolio(unittest.TestCase):
@@ -71,34 +69,6 @@ class TestWirePortfolio(unittest.TestCase):
         portfolio_loop.stop()
         portfolio_thread.join(2*portfolio_loop.heartbeat)
         self.assertEqual(buy_order, out_event)
-
-
-class TestWireExecutor(unittest.TestCase):
-    def setUp(self):
-        self.portfolio_q = Queue()
-        self.execution_q = Queue()
-        self.wiring = WireExecutor().set_journaler(Journaler())
-        self.wiring.set_execution_result_q(self.portfolio_q).set_execution_q(self.execution_q)
-        self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
-
-    def test_executed_order_should_reach_portfolio_q(self):
-        buy_order = OrderEvent('EUR_USD', 1000, 'buy')
-
-        execution_loop = self.wiring.wire()
-        execution_thread = Thread(target=execution_loop.start)
-        execution_thread.start()
-        self.execution_q.put_nowait(buy_order)
-        executed_order = await_event_receipt(self, self.portfolio_q, 'did not find one order in portfolio queue')
-        execution_loop.stop()
-        execution_thread.join(timeout=2*execution_loop.heartbeat)
-
-        if get_day_of_week() >= 5:
-            self.assertIsInstance(executed_order, ExceptionEvent)
-        else:
-            self.assertIsInstance(executed_order, ExecutedOrder
-                      , 'expecting an executed order of type [%s] but got of type [%s] - %s'
-                          % (type(ExecutedOrder), type(executed_order), executed_order))
-            self.assertEqual(buy_order, executed_order.order)
 
 
 class TestWireDummyBuyStrategy(unittest.TestCase):
