@@ -5,7 +5,7 @@ from com.open.algo.wiring.wiring import *
 from com.open.algo.dummy import DummyBuyStrategy
 from com.open.algo.journal import Journaler
 from com.open.algo.oanda.parser import parse_event_str
-from com.open.algo.wiring.commandListener import COMMAND_STOP
+from com.open.algo.utils import COMMAND_STOP
 from com.open.algo.starter import ThreadStarter
 
 TICK_MAX_AGE = 365*24*60*60

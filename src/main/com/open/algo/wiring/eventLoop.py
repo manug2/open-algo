@@ -5,8 +5,8 @@ import sys
 from time import sleep
 
 from com.open.algo.model import ExceptionEvent
-from com.open.algo.utils import EventHandler
-from com.open.algo.wiring.commandListener import COMMAND_STOP, QueueCommandListener
+from com.open.algo.utils import COMMAND_STOP, EventHandler
+from com.open.algo.wiring.commandListener import QueueCommandListener
 import os
 
 

@@ -6,7 +6,7 @@ from com.open.algo.wiring.wiring import *
 from time import sleep
 from com.open.algo.dummy import DummyBuyStrategy
 from com.open.algo.journal import Journaler
-from com.open.algo.wiring.commandListener import COMMAND_STOP
+from com.open.algo.utils import COMMAND_STOP
 
 
 class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):

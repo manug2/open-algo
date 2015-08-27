@@ -9,7 +9,7 @@ OA_OUTPUT_DIR = '.'
 
 from com.open.algo.journal import *
 from com.open.algo.wiring.wiring import *
-from com.open.algo.wiring.commandListener import COMMAND_STOP
+from com.open.algo.utils import COMMAND_STOP
 
 
 def collect(duration, instruments, sleepy_time, file_path, ThreadOrProcessClass, QueueClass):

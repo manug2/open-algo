@@ -2,7 +2,6 @@ import unittest
 from testUtils import *
 from com.open.algo.wiring.wiring import *
 from com.open.algo.journal import Journaler
-from com.open.algo.wiring.commandListener import COMMAND_STOP
 
 
 class TestWirePricesStream(unittest.TestCase):
@@ -191,7 +190,7 @@ class TestWireExecutor(unittest.TestCase):
             self.assertEqual(buy_order, executed_order.order)
 
 
-from com.open.algo.wiring.commandListener import COMMAND_STOP
+from com.open.algo.utils import COMMAND_STOP
 from com.open.algo.starter import ThreadStarter
 
 
