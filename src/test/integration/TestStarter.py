@@ -5,8 +5,7 @@ sys.path.append('../../../../fx-oanda')
 import unittest
 from threading import Thread
 from time import sleep
-import logging
-from com.open.algo.starter import *
+from com.open.algo.wiring.starter import *
 
 
 def wire_logger():
@@ -109,4 +108,20 @@ class Test2InParallel(unittest.TestCase):
         logger.info('joining..')
         starter.join()
         logger.info('finished!')
+
+    def test_ThreadStarter_should_allow_different_group_targets(self):
+        starter = ThreadStarter()
+        starter.add_target(worker1.do_work, 'w1')
+        try:
+            starter.add_target(worker2.do_work, 'w2')
+        except:
+            self.fail('should not have raised exception')
+
+    def test_ThreadStarter_should_allow_same_group_targets(self):
+        starter = ThreadStarter()
+        starter.add_target(worker1.do_work, 'w1')
+        try:
+            starter.add_target(worker2.do_work, 'w1')
+        except:
+            self.fail('should not have raised exception')
 

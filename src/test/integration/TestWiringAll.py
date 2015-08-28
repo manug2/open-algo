@@ -1,9 +1,8 @@
 import unittest
-from queue import Queue
-from threading import Thread
+from time import sleep
+
 from testUtils import *
 from com.open.algo.wiring.wiring import *
-from time import sleep
 from com.open.algo.dummy import DummyBuyStrategy
 from com.open.algo.journal import Journaler
 from com.open.algo.utils import COMMAND_STOP
@@ -67,9 +66,9 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
             rates_cache_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
     def test_wire_all_with_command_listener(self):
-        from com.open.algo.starter import ThreadStarter
+        from com.open.algo.wiring.starter import ThreadStarter
 
-        starter = ThreadStarter(self.__class__.__name__)
+        starter = ThreadStarter()
         command_q_for_cloning = Queue()
         command_q = QueueSPMC(Journaler())
         self.everything.set_command_q(command_q, command_q_for_cloning)

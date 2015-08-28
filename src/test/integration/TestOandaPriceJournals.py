@@ -52,7 +52,7 @@ class TestStreaming(unittest.TestCase):
         self.assertIsNotNone(out_event)
         self.assertTrue(isinstance(out_event, Heartbeat))
 
-    def test_should_log_oanda_streaming_ticks_to_fil_journaler_q(self):
+    def test_should_log_oanda_streaming_ticks_to_file_journaler_q(self):
         filename = os.path.join(OUTPUT_DIR, 'journal_oanda_tick_ut.txt')
         try:
             os.remove(filename)

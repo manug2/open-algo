@@ -18,8 +18,8 @@ class ProcessStarter:
             raise RuntimeError('cannot accept new target as already started others')
 
         if process_group not in self.process_starter_map:
-            self.process_starter_map[process_group] = ThreadStarter(group=process_group)
-        self.process_starter_map[process_group].add_target(target_method)
+            self.process_starter_map[process_group] = ThreadStarter()
+            self.process_starter_map[process_group].add_target(target_method, process_group)
         return self
 
     def start(self):
@@ -72,15 +72,15 @@ from threading import Lock
 
 
 class ThreadStarter:
-    def __init__(self, group='default'):
-        self.group = group
+    def __init__(self):
+        self.group = None
         self.targets = []
         self.started = False
         self.futures = None
         self.executor = None
         self.join_count = 0
 
-    def add_target(self, target_method, process_group=None):
+    def add_target(self, target_method, process_group='default'):
         if self.started:
             raise RuntimeError('cannot accept new target as already started others')
 
@@ -88,6 +88,9 @@ class ThreadStarter:
             raise ValueError('target [%s] already added with args [%s]' % target_method)
         else:
             self.targets.append(target_method)
+
+        if not self.group:
+            self.group = process_group
         return self
 
     def start(self):

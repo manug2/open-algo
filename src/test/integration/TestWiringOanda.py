@@ -1,4 +1,5 @@
 import unittest
+
 from testUtils import *
 from com.open.algo.wiring.wiring import *
 from com.open.algo.journal import Journaler
@@ -131,7 +132,7 @@ class TestWirePricesStreamToCacheWithCommandListener(unittest.TestCase):
         # end of wire test, but what to measure
 
     def test_when_using_starter_forwarded_rate_should_be_in_fx_cache(self):
-        self.starter = ThreadStarter(self.__class__.__name__)
+        self.starter = ThreadStarter()
         rates_streamer, rates_command_listener = self.prices_wiring.wire()
         rates_cache_loop = self.rates_cache_wiring.wire()
 
@@ -158,7 +159,7 @@ class TestWirePricesStreamToCacheWithCommandListener(unittest.TestCase):
 
 
 from com.open.algo.trading.fxEvents import *
-from com.open.algo.utils import get_time, get_day_of_week
+from com.open.algo.utils import get_day_of_week
 from com.open.algo.model import ExceptionEvent
 
 
@@ -191,12 +192,12 @@ class TestWireExecutor(unittest.TestCase):
 
 
 from com.open.algo.utils import COMMAND_STOP
-from com.open.algo.starter import ThreadStarter
+from com.open.algo.wiring.starter import ThreadStarter
 
 
 class TestWireExecutorWithCommandListener(unittest.TestCase):
     def setUp(self):
-        self.starter = ThreadStarter(self.__class__.__name__)
+        self.starter = ThreadStarter()
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WireExecutor().set_journaler(Journaler())

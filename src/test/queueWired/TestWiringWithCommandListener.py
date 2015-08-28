@@ -1,12 +1,12 @@
-
 import unittest
+
 from testUtils import *
 from com.open.algo.wiring.wiring import *
 from com.open.algo.dummy import DummyBuyStrategy
 from com.open.algo.journal import Journaler
 from com.open.algo.oanda.parser import parse_event_str
 from com.open.algo.utils import COMMAND_STOP
-from com.open.algo.starter import ThreadStarter
+from com.open.algo.wiring.starter import ThreadStarter
 
 TICK_MAX_AGE = 365*24*60*60
 TICK_STRING = \
@@ -15,7 +15,7 @@ TICK_STRING = \
 
 class TestWirePricesCache(unittest.TestCase):
     def setUp(self):
-        self.starter = ThreadStarter(self.__class__.__name__)
+        self.starter = ThreadStarter()
         self.rates_q = Queue()
         self.tick = parse_event_str(None, TICK_STRING)
         self.forward_q = Queue()
@@ -56,7 +56,7 @@ from com.open.algo.model import ExceptionEvent
 
 class TestWirePortfolio(unittest.TestCase):
     def setUp(self):
-        self.starter = ThreadStarter(self.__class__.__name__)
+        self.starter = ThreadStarter()
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WirePortfolio()
@@ -88,8 +88,8 @@ class TestWirePortfolio(unittest.TestCase):
 
 class TestWireExecutor(unittest.TestCase):
     def setUp(self):
-        self.starter = ThreadStarter(self.__class__.__name__)
-        self.portfolio_q = Queue()
+        self.starter = ThreadStarter()
+        self.portfolioire_q = Queue()
         self.execution_q = Queue()
         self.wiring = WireExecutor().set_journaler(Journaler())
         self.wiring.set_execution_result_q(self.portfolio_q).set_execution_q(self.execution_q)
@@ -123,7 +123,7 @@ class TestWireExecutor(unittest.TestCase):
 
 class TestWireDummyBuyStrategy(unittest.TestCase):
     def setUp(self):
-        self.starter = ThreadStarter(self.__class__.__name__)
+        self.starter = ThreadStarter()
         self.rates_q = Queue()
         self.tick = parse_event_str(None, TICK_STRING)
 
