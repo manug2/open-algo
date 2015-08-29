@@ -29,8 +29,7 @@ class TestPriceJournals(unittest.TestCase):
         self.tick_event = parse_tick(None, self.tick_json)
 
         self.write_q = Queue()
-        self.journal_q = Queue()
-        self.journaler = FileJournaler(self.journal_q, full_path=self.filename)
+        self.journaler = FileJournaler(full_path=self.filename)
 
         self.read_q = Queue()
         self.reader = FileJournalerReader(self.read_q, full_path=self.filename)
@@ -38,7 +37,7 @@ class TestPriceJournals(unittest.TestCase):
     def play_event_queue(self):
         try:
             while True:
-                e = self.journal_q.get_nowait()
+                e = self.journaler.events_q.get_nowait()
                 self.journaler.process(e)
         except Empty:
             pass

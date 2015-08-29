@@ -30,9 +30,8 @@ class TestPriceJournals(unittest.TestCase):
         self.tick_json = json.loads(self.tick_str)
         self.tick_event = parse_tick(None, self.tick_json)
 
-        self.journal_q = Queue()
-        self.journaler = FileJournaler(self.journal_q, full_path=self.filename)
-        self.looper = EventLoop(self.journal_q, self.journaler)
+        self.journaler = FileJournaler(full_path=self.filename)
+        self.looper = EventLoop(self.journaler.events_q, self.journaler)
         self.loop_thread = Thread(target=self.looper.start, args=[])
 
         self.read_q = Queue()

@@ -58,8 +58,7 @@ class TestStreaming(unittest.TestCase):
             os.remove(filename)
         except OSError:
             pass
-        journal_q = Queue()
-        journaler = FileJournaler(journal_q, full_path=filename)
+        journaler = FileJournaler(full_path=filename)
 
         # plug the new file journaler
         self.prices.journaler = journaler

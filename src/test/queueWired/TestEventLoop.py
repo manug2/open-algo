@@ -268,7 +268,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(Queue(), full_path=filename)
+        journaler = FileJournaler(full_path=filename)
         journaler.start()
         journaler.log_event(get_time(), 'this is a test event #1')
         journaler.log_event(get_time(), 'this is a test event #2')
@@ -288,7 +288,7 @@ class TestFileJounaler(unittest.TestCase):
             pass
 
         print('writing..')
-        journaler = FileJournaler(Queue(), full_path=filename)
+        journaler = FileJournaler(full_path=filename)
         journaler.start()
         event = 'this is a test event #1'
         journaler.log_event(get_time(), event)
@@ -313,7 +313,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(Queue(), full_path=filename)
+        journaler = FileJournaler(full_path=filename)
         journaler.start()
         journaler.close()
         self.assertTrue(os.path.exists(filename))
@@ -338,7 +338,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(Queue(), name_scheme=scheme)
+        journaler = FileJournaler(name_scheme=scheme)
         journaler.start()
         journaler.close()
         self.assertTrue(os.path.exists(filename))

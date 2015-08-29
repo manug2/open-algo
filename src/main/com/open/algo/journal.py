@@ -40,13 +40,15 @@ class Journaler(object):
     def get_last_received(self):
         return self.last_received
 
+from queue import Queue
+
 
 class FileJournaler(Journaler, EventHandler):
 
-    def __init__(self, events_q, full_path=None, name_scheme=None):
+    def __init__(self, full_path=None, name_scheme=None):
         super(Journaler, self).__init__()
         self.writer = None
-        self.events = events_q
+        self.events_q = Queue()
         assert full_path is not None or name_scheme is not None, 'both full path and name scheme cannot be None'
         self.full_path = full_path
         self.name_scheme = name_scheme
@@ -56,7 +58,7 @@ class FileJournaler(Journaler, EventHandler):
             self.last_event = event
             self.last_received = receive_time
             msg = prepare_journal_entry(receive_time, event)
-            self.events.put_nowait(msg)
+            self.events_q.put_nowait(msg)
         except Full:
             print('WARNING: Count not journal event [%s] as queue is full' % event)
 
@@ -79,7 +81,7 @@ class FileJournaler(Journaler, EventHandler):
             self.writer = open(fp, 'a')
 
     def stop(self):
-        pass
+        self.close()
 
     def close(self):
         if self.writer is not None:

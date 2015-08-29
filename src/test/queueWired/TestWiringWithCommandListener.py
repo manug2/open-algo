@@ -89,7 +89,7 @@ class TestWirePortfolio(unittest.TestCase):
 class TestWireExecutor(unittest.TestCase):
     def setUp(self):
         self.starter = ThreadStarter()
-        self.portfolioire_q = Queue()
+        self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WireExecutor().set_journaler(Journaler())
         self.wiring.set_execution_result_q(self.portfolio_q).set_execution_q(self.execution_q)
