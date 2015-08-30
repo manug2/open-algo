@@ -13,13 +13,15 @@ class ProcessStarter:
         self.process_futures = None
         self.executor = None
 
-    def add_target(self, target_method, process_group='default'):
+    def add_target(self, wiring,
+                   command_q=None, in_q=None, out_q=None, hb_q=None, exception_q=None, process_group='default'):
         if self.started:
             raise RuntimeError('cannot accept new target as already started others')
 
         if process_group not in self.process_starter_map:
             self.process_starter_map[process_group] = ThreadStarter()
-            self.process_starter_map[process_group].add_target(target_method, process_group)
+            self.process_starter_map[process_group].add_target(
+                wiring, command_q, in_q, out_q, hb_q, exception_q, process_group)
         return self
 
     def start(self):
@@ -37,6 +39,7 @@ class ProcessStarter:
         logger.info('[%s-%s] started task/groups in separate processes..' % (os.getppid(), os.getpid()))
         for f in self.process_futures:
             f.add_done_callback(self.process_completed)
+        logger.info('[%s-%s] added callbacks for task/groups in separate processes..' % (os.getppid(), os.getpid()))
 
     def process_completed(self, future):
         starter = self.process_futures[future]
@@ -69,29 +72,62 @@ class ProcessStarter:
         logger.info('[%s-%s] completed all processes.' % (os.getppid(), os.getpid()))
 
 from threading import Lock
+from com.open.algo.wiring.eventLoop import EventLoop
 
 
 class ThreadStarter:
     def __init__(self):
         self.group = None
+        self.wiring = []
+        self.wiring_queues = []
         self.targets = []
         self.started = False
         self.futures = None
         self.executor = None
         self.join_count = 0
 
-    def add_target(self, target_method, process_group='default'):
+    def add_target(self, wiring,
+                   command_q=None, in_q=None, out_q=None, hb_q=None, exception_q=None, process_group='default'):
         if self.started:
             raise RuntimeError('cannot accept new target as already started others')
 
-        if target_method in self.targets:
-            raise ValueError('target [%s] already added with args [%s]' % target_method)
+        if wiring in self.wiring:
+            raise ValueError('target [%s] already added with args [%s]' % wiring)
         else:
-            self.targets.append(target_method)
+            self.wiring.append(wiring)
+            self.wiring_queues.append((command_q, in_q, out_q, hb_q, exception_q))
 
         if not self.group:
             self.group = process_group
         return self
+
+    def __add_targets__(self, targets):
+        if isinstance(targets, tuple):
+            for target in targets:
+                self.targets.append(target.start)
+                if isinstance(target, EventLoop) and target.listener:
+                    self.targets.append(target.listener.start)
+        else:
+            self.targets.append(targets.start)
+            if isinstance(targets, EventLoop) and targets.listener:
+                self.targets.append(targets.listener.start)
+
+    def __prepare__targets__(self):
+        for i in range(0, len(self.wiring)):
+            wiring = self.wiring[i]
+            (command_q, in_q, out_q, hb_q, exception_q) = self.wiring_queues[i]
+            if command_q:
+                wiring.set_command_q(command_q)
+            if in_q:
+                wiring.set_in_q(in_q)
+            if out_q:
+                wiring.set_out_q(out_q)
+            if hb_q:
+                wiring.set_heartbeat_q(hb_q)
+            if exception_q:
+                wiring.set_exception_q(exception_q)
+            targets = wiring.wire()
+            self.__add_targets__(targets)
 
     def start(self):
         logger = logging.getLogger(self.__class__.__name__)
@@ -100,6 +136,7 @@ class ThreadStarter:
             raise RuntimeError('i have already started targets')
 
         self.started = True
+        self.__prepare__targets__()
         for t in self.targets:
             logger.info('[%s-%s] starting [%s] in group [%s]' % (os.getppid(), os.getpid(), t, self.group))
 

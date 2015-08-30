@@ -20,9 +20,9 @@ def collect(duration, instruments, sleepy_time, file_path, StarterClass, QueueCl
 
     logger.info('preparing journaler..')
     filename = os.path.join(OA_OUTPUT_DIR, file_path)
-    journaler = FileJournaler(full_path=filename)
-    journal_loop = EventLoop(journaler.events_q, journaler).set_process_all_on()
-    # journaler = Journaler()
+    #journaler = FileJournaler(full_path=filename)
+    #journal_loop = EventLoop(journaler.events_q, journaler).set_process_all_on()
+    journaler = Journaler()
 
     logger.info('wiring oanda prices streaming..')
     wiring_prices = WireOandaPrices()
@@ -43,23 +43,13 @@ def collect(duration, instruments, sleepy_time, file_path, StarterClass, QueueCl
     command_q_streamer = QueueClass()
     command_q_journaler = QueueClass()
     command_q_cache = QueueClass()
-    wiring_prices.set_command_q(command_q_streamer)
-    wiring_cache.set_command_q(command_q_cache)
-    journal_loop.set_command_q(command_q_journaler)
     command_q.add_consumer(command_q_streamer).add_consumer(command_q_cache).add_consumer(command_q_journaler)
-
-    rates_streamer, stream_command_listener = wiring_prices.wire()
-    rates_cache_loop = wiring_cache.wire()
 
     logger.info('adding targets to starter..')
     starter = StarterClass()
-    starter.add_target(journal_loop.start, 'prices')
-    starter.add_target(rates_streamer.stream, 'prices')
-    starter.add_target(rates_cache_loop.start, 'prices')
-
-    starter.add_target(stream_command_listener.start, 'prices')
-    starter.add_target(rates_cache_loop.listener.start, 'prices')
-    starter.add_target(journal_loop.listener.start, 'prices')
+    starter.add_target(wiring_prices, command_q_streamer, process_group='prices')
+    starter.add_target(wiring_cache, command_q_cache, process_group='prices')
+    #starter.add_target(journaler, 'prices')
 
     total_duration = 0
 
@@ -90,8 +80,8 @@ def collect(duration, instruments, sleepy_time, file_path, StarterClass, QueueCl
         logger.info('waiting for tasks to wrap up..')
         starter.join()
         # is closing journaler required, or should be moved to FileJournaler.stop()
-        logger.info('closing journal..')
-        journaler.close()
+        #logger.info('closing journal..')
+        #journaler.close()
 
     if error:
         raise RuntimeError('error detected -> %s' % error)

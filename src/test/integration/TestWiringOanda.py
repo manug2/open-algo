@@ -87,22 +87,24 @@ class TestWirePricesStreamToCache(unittest.TestCase):
 
 class TestWirePricesStreamToCacheWithCommandListener(unittest.TestCase):
     def setUp(self):
-        command_q_streamer = Queue()
-        command_q_cache = Queue()
+        self.command_q_streamer = Queue()
+        self.command_q_cache = Queue()
         self.spmc_command_q = QueueSPMC(Journaler())
-        self.spmc_command_q.add_consumer(command_q_streamer)
-        self.spmc_command_q.add_consumer(command_q_cache)
+        self.spmc_command_q.add_consumer(self.command_q_streamer)
+        self.spmc_command_q.add_consumer(self.command_q_cache)
 
-        self.prices_wiring = WireOandaPrices().set_command_q(command_q_streamer)
+        self.prices_wiring = WireOandaPrices()
         self.prices_wiring.set_rates_q(Queue()).set_journaler(Journaler())
         self.prices_wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
-        self.rates_cache_wiring = WireRateCache().set_command_q(command_q_cache)
+        self.rates_cache_wiring = WireRateCache()
         self.rates_cache_wiring.set_rates_q(self.prices_wiring.rates_q).set_forward_q(Queue())
         self.rates_cache_wiring.set_max_tick_age(2*24*60*60)
 
     def test_forwarded_rate_should_be_in_fx_cache(self):
+        self.prices_wiring.set_command_q(self.command_q_streamer)
         rates_streamer, rates_command_listener = self.prices_wiring.wire()
+        self.rates_cache_wiring.set_command_q(self.command_q_cache)
         rates_cache_loop = self.rates_cache_wiring.wire()
 
         rates_stream_thread = Thread(target=rates_streamer.stream)
@@ -132,24 +134,20 @@ class TestWirePricesStreamToCacheWithCommandListener(unittest.TestCase):
         # end of wire test, but what to measure
 
     def test_when_using_starter_forwarded_rate_should_be_in_fx_cache(self):
-        self.starter = ThreadStarter()
-        rates_streamer, rates_command_listener = self.prices_wiring.wire()
-        rates_cache_loop = self.rates_cache_wiring.wire()
+        starter = ThreadStarter()
+        starter.add_target(self.prices_wiring, self.command_q_streamer)\
+            .add_target(self.rates_cache_wiring, self.command_q_cache)
 
-        self.starter.add_target(rates_streamer.stream)
-        self.starter.add_target(rates_command_listener.start)
-        self.starter.add_target(rates_cache_loop.start)
-        self.starter.add_target(rates_cache_loop.listener.start)
-        self.starter.start()
+        starter.start()
 
         tick = await_event_receipt(self, self.rates_cache_wiring.forward_q
                                    , 'did not get any rates forwarded by fx cache')
 
         self.spmc_command_q.put_nowait(COMMAND_STOP)
-        self.starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
         try:
-            rates = rates_cache_loop.handler.get_rate(tick.instrument)
+            rates = self.rates_cache_wiring.component.get_rate(tick.instrument)
             print(rates)
             self.assertEqual(tick.bid, rates['bid'])
             self.assertEqual(tick.ask, rates['ask'])
@@ -197,7 +195,6 @@ from com.open.algo.wiring.starter import ThreadStarter
 
 class TestWireExecutorWithCommandListener(unittest.TestCase):
     def setUp(self):
-        self.starter = ThreadStarter()
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WireExecutor().set_journaler(Journaler())
@@ -205,21 +202,45 @@ class TestWireExecutorWithCommandListener(unittest.TestCase):
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
         self.command_q = Queue()
-        self.wiring.set_command_q(self.command_q)
 
-    def test_executed_order_should_reach_portfolio_q(self):
+    def test_using_threads_executed_order_should_reach_portfolio_q(self):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
 
+        self.wiring.set_command_q(self.command_q)
         execution_loop = self.wiring.wire()
-        self.starter.add_target(execution_loop.start)
-        self.starter.add_target(execution_loop.listener.start)
-        self.starter.start()
+        t1 = Thread(target=execution_loop.start)
+        t2 = Thread(target=execution_loop.listener.start)
+
+        t1.start()
+        t2.start()
 
         self.execution_q.put_nowait(buy_order)
         executed_order = await_event_receipt(self, self.portfolio_q, 'did not find one order in portfolio queue')
 
         self.command_q.put_nowait(COMMAND_STOP)
-        self.starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        t1.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+        t2.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+
+        if get_day_of_week() >= 5:
+            self.assertIsInstance(executed_order, ExceptionEvent)
+        else:
+            self.assertIsInstance(executed_order, ExecutedOrder
+                      , 'expecting an executed order of type [%s] but got of type [%s] - %s'
+                          % (type(ExecutedOrder), type(executed_order), executed_order))
+            self.assertEqual(buy_order, executed_order.order)
+
+    def test_using_starter_executed_order_should_reach_portfolio_q(self):
+        buy_order = OrderEvent('EUR_USD', 1000, 'buy')
+
+        starter = ThreadStarter()
+        starter.add_target(self.wiring, self.command_q)
+        starter.start()
+
+        self.execution_q.put_nowait(buy_order)
+        executed_order = await_event_receipt(self, self.portfolio_q, 'did not find one order in portfolio queue')
+
+        self.command_q.put_nowait(COMMAND_STOP)
+        starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
         if get_day_of_week() >= 5:
             self.assertIsInstance(executed_order, ExceptionEvent)

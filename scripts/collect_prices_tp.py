@@ -16,12 +16,12 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
     print('using settings =>', options)
-    from queue import Queue as QueueClass
-    from com.open.algo.wiring.starter import ThreadStarter as StarterClass
+    from queue import Queue
+    from com.open.algo.wiring.starter import ThreadStarter
 
     try:
         prices_collector.collect(options.collection_duration, options.instruments, options.sleepy, options.file_path,
-                                 StarterClass, QueueClass)
+                                 ThreadStarter, Queue)
     except:
         print('Unexpected error:', sys.exc_info()[0])
     finally:

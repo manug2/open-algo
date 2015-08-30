@@ -38,6 +38,9 @@ class WireOandaPrices:
             return rates_streamer
 
     # setup queues
+    def set_out_q(self, out_q):
+        return self.set_rates_q(out_q)
+
     def set_rates_q(self, rates_q):
         self.rates_q = rates_q
         return self
@@ -80,14 +83,22 @@ class WireRateCache:
         self.forward_q = None
         self.max_tick_age = DEFAULT_ACCEPTABLE_TICK_AGE
         self.command_q = None
+        self.component = None
 
     def wire(self):
         rates_cache = FxPricesCache(max_tick_age=self.max_tick_age)
         rates_cache_loop = EventLoop(self.rates_q, rates_cache, forward_q=self.forward_q)
         rates_cache_loop.set_command_q(self.command_q)
+        self.component = rates_cache
         return rates_cache_loop
 
     # setup queues
+    def set_in_q(self, in_q):
+        return self.set_rates_q(in_q)
+
+    def set_out_q(self, out_q):
+        return self.set_forward_q(out_q)
+
     def set_rates_q(self, rates_q):
         self.rates_q = rates_q
         return self
@@ -139,6 +150,12 @@ class WirePortfolio:
         return portfolio_loop
 
     # setup queues
+    def set_in_q(self, in_q):
+        return self.set_portfolio_q(in_q)
+
+    def set_out_q(self, out_q):
+        return self.set_execution_q(out_q)
+
     def set_portfolio_q(self, portfolio_q):
         self.portfolio_q = portfolio_q
         return self
@@ -196,6 +213,12 @@ class WireExecutor:
         return execution_loop
 
     # setup queues
+    def set_in_q(self, in_q):
+        return self.set_execution_q(in_q)
+
+    def set_out_q(self, out_q):
+        return self.set_execution_result_q(out_q)
+
     def set_execution_result_q(self, execution_result_q):
         self.execution_result_q = execution_result_q
         return self
@@ -236,6 +259,12 @@ class WireStrategy:
         return strategy_loop
 
     # setup queues
+    def set_in_q(self, in_q):
+        return self.set_ticks_and_ack_q(in_q)
+
+    def set_out_q(self, out_q):
+        return self.set_signal_output_q(out_q)
+
     def set_ticks_and_ack_q(self, ticks_and_ack_q):
         self.ticks_and_ack_q = ticks_and_ack_q
         return self

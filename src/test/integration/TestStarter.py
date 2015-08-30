@@ -22,10 +22,17 @@ logger = wire_logger()
 
 
 class DummyWorker:
-    def __init__(self, name):
+    def __init__(self, name, name2=None):
         self.name = name
+        self.name2 = name2
 
-    def do_work(self):
+    def wire(self):
+        if self.name2:
+            return self, DummyWorker(self.name2)
+        else:
+            return self
+
+    def start(self):
         for i in range (0, 5):
             logger.info('%s->%d..', self.name, i)
             sleep(0.2)
@@ -38,8 +45,8 @@ worker2 = DummyWorker('w2')
 class Test2InParallel(unittest.TestCase):
 
     def test_2_parallel_workers(self):
-        t1 = Thread(target=worker1.do_work)
-        t2 = Thread(target=worker2.do_work)
+        t1 = Thread(target=worker1.start)
+        t2 = Thread(target=worker2.start)
 
         logger.info('starting t1..')
         t1.start()
@@ -55,7 +62,7 @@ class Test2InParallel(unittest.TestCase):
 
     def test_ThreadStarter_2_parallel_workers_in_default_group(self):
         starter = ThreadStarter()
-        starter.add_target(worker1.do_work).add_target(worker2.do_work)
+        starter.add_target(worker1).add_target(worker2)
 
         logger.info('starting..')
         starter.start()
@@ -65,8 +72,8 @@ class Test2InParallel(unittest.TestCase):
 
     def test_start_2_parallel_workers_in_default_group(self):
         starter = ProcessStarter()
-        starter.add_target(worker1.do_work)
-        starter.add_target(worker2.do_work)
+        starter.add_target(worker1)
+        starter.add_target(worker2)
 
         logger.info('starting..')
         starter.start()
@@ -76,8 +83,8 @@ class Test2InParallel(unittest.TestCase):
 
     def test_start_2_parallel_workers_in_one_group(self):
         starter = ProcessStarter()
-        starter.add_target(worker1.do_work, process_group='test_proc')
-        starter.add_target(worker2.do_work, process_group='test_proc')
+        starter.add_target(worker1, process_group='test_proc')
+        starter.add_target(worker2, process_group='test_proc')
 
         logger.info('starting..')
         starter.start()
@@ -87,8 +94,8 @@ class Test2InParallel(unittest.TestCase):
 
     def test_start_2_parallel_workers_with_one_each_in_separate_group(self):
         starter = ProcessStarter()
-        starter.add_target(worker1.do_work, process_group='test_proc1')
-        starter.add_target(worker2.do_work, process_group='test_proc2')
+        starter.add_target(worker1, process_group='test_proc1')
+        starter.add_target(worker2, process_group='test_proc2')
 
         logger.info('starting..')
         starter.start()
@@ -111,17 +118,26 @@ class Test2InParallel(unittest.TestCase):
 
     def test_ThreadStarter_should_allow_different_group_targets(self):
         starter = ThreadStarter()
-        starter.add_target(worker1.do_work, 'w1')
+        starter.add_target(worker1, process_group='w1')
         try:
-            starter.add_target(worker2.do_work, 'w2')
+            starter.add_target(worker2, process_group='w2')
         except:
             self.fail('should not have raised exception')
 
     def test_ThreadStarter_should_allow_same_group_targets(self):
         starter = ThreadStarter()
-        starter.add_target(worker1.do_work, 'w1')
+        starter.add_target(worker1, process_group='w1')
         try:
-            starter.add_target(worker2.do_work, 'w1')
+            starter.add_target(worker2, process_group='w1')
         except:
             self.fail('should not have raised exception')
 
+    def test_ThreadStarter_2_parallel_workers_returned_from_same_wiring(self):
+        starter = ThreadStarter()
+        starter.add_target(DummyWorker('w1', 'w2'))
+
+        logger.info('starting..')
+        starter.start()
+        logger.info('joining..')
+        starter.join()
+        logger.info('finished!')

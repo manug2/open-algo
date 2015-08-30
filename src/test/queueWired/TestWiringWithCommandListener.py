@@ -25,12 +25,9 @@ class TestWirePricesCache(unittest.TestCase):
         self.rates_cache_wiring.set_max_tick_age(TICK_MAX_AGE)
 
         self.command_q = Queue()
-        self.rates_cache_wiring.set_command_q(self.command_q)
 
     def test_forwarded_rate_should_be_in_fx_cache(self):
-        rates_cache_loop = self.rates_cache_wiring.wire()
-        self.starter.add_target(rates_cache_loop.start)
-        self.starter.add_target(rates_cache_loop.listener.start)
+        self.starter.add_target(self.rates_cache_wiring, self.command_q)
         self.starter.start()
 
         self.rates_q.put_nowait(self.tick)
@@ -40,7 +37,7 @@ class TestWirePricesCache(unittest.TestCase):
         self.starter.join()
 
         try:
-            rates = rates_cache_loop.handler.get_rate(self.tick.instrument)
+            rates = self.rates_cache_wiring.component.get_rate(self.tick.instrument)
             print(rates)
             self.assertEqual(self.tick.bid, rates['bid'])
             self.assertEqual(self.tick.ask, rates['ask'])
@@ -67,15 +64,12 @@ class TestWirePortfolio(unittest.TestCase):
         self.wiring.set_prices_cache(self.cache)
 
         self.command_q = Queue()
-        self.wiring.set_command_q(self.command_q)
 
     def test_signal_should_reach_execution_q(self):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
         self.cache.set_rate(TickEvent('EUR_USD', get_time(), 1.0, 1.0))
 
-        portfolio_loop = self.wiring.wire()
-        self.starter.add_target(portfolio_loop.start)
-        self.starter.add_target(portfolio_loop.listener.start)
+        self.starter.add_target(self.wiring, self.command_q)
         self.starter.start()
 
         self.portfolio_q.put_nowait(buy_order)
@@ -96,14 +90,11 @@ class TestWireExecutor(unittest.TestCase):
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
         self.command_q = Queue()
-        self.wiring.set_command_q(self.command_q)
 
     def test_executed_order_should_reach_portfolio_q(self):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
 
-        execution_loop = self.wiring.wire()
-        self.starter.add_target(execution_loop.start)
-        self.starter.add_target(execution_loop.listener.start)
+        self.starter.add_target(self.wiring, self.command_q)
         self.starter.start()
 
         self.execution_q.put_nowait(buy_order)
@@ -124,41 +115,31 @@ class TestWireExecutor(unittest.TestCase):
 class TestWireDummyBuyStrategy(unittest.TestCase):
     def setUp(self):
         self.starter = ThreadStarter()
-        self.rates_q = Queue()
         self.tick = parse_event_str(None, TICK_STRING)
 
+        self.rates_q = Queue()
         self.tick_for_strategy_q = Queue()
         self.signal_output_q = Queue()
 
         self.strategy_wiring = WireStrategy().set_strategy(DummyBuyStrategy(100))
-        self.strategy_wiring.set_signal_output_q(self.signal_output_q).set_ticks_and_ack_q(self.tick_for_strategy_q)
         command_q_strategy = Queue()
-        self.strategy_wiring.set_command_q(command_q_strategy)
+        self.starter.add_target(self.strategy_wiring,
+                                command_q_strategy, self.tick_for_strategy_q, self.signal_output_q)
 
-        self.rates_cache_wiring = WireRateCache()
-        self.rates_cache_wiring.set_rates_q(self.rates_q).set_forward_q(self.tick_for_strategy_q)
-        self.rates_cache_wiring.set_max_tick_age(TICK_MAX_AGE)
+        self.rates_cache_wiring = WireRateCache().set_max_tick_age(TICK_MAX_AGE)
         command_q_rates = Queue()
-        self.rates_cache_wiring.set_command_q(command_q_rates)
+        self.starter.add_target(self.rates_cache_wiring, command_q_rates, self.rates_q, self.tick_for_strategy_q)
 
         self.command_q = QueueSPMC(Journaler())
         self.command_q.add_consumer(command_q_rates).add_consumer(command_q_strategy)
 
     def test_should_produce_order_when_started(self):
-        strategy_loop = self.strategy_wiring.wire()
-        rates_cache_loop = self.rates_cache_wiring.wire()
-
-        self.starter.add_target(strategy_loop.start)
-        self.starter.add_target(strategy_loop.listener.start)
-        self.starter.add_target(rates_cache_loop.start)
-        self.starter.add_target(rates_cache_loop.listener.start)
         self.starter.start()
 
         self.rates_q.put_nowait(self.tick)
         signal = await_event_receipt(self, self.signal_output_q, 'should have received a signal from strategy')
+        self.command_q.put_nowait(COMMAND_STOP)
+        self.starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+
         self.assertIsNotNone(signal)
         self.assertIsInstance(signal, OrderEvent)
-
-        self.command_q.put_nowait(COMMAND_STOP)
-
-        self.starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
