@@ -30,7 +30,7 @@ class TestWirePricesCache(unittest.TestCase):
     def test_forwarded_rate_should_be_in_fx_cache(self):
         rates_cache_loop = self.rates_cache_wiring.wire()
         self.starter.add_target(rates_cache_loop.start)
-        self.starter.add_target(rates_cache_loop.listener.listen)
+        self.starter.add_target(rates_cache_loop.listener.start)
         self.starter.start()
 
         self.rates_q.put_nowait(self.tick)

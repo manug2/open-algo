@@ -25,15 +25,18 @@ class QueueCommandListener:
     def __repr__(self):
         return '%s[%s]' % (self.__class__.__name__, self.name)
 
-    def start(self):
+    def start_thread(self):
         if not self.command_q:
             raise RuntimeError('cannot setup command listener as no "command_q" was specified')
         if not self.on_command_method:
             raise RuntimeError('cannot setup command listener as no "on_command_method" was specified')
 
-        command_thread = Thread(name='COMMANDER-' + self.name, target=self.listen, args=[])
+        command_thread = Thread(name='COMMANDER-' + self.name, target=self.start, args=[])
         command_thread.start()
         return command_thread
+
+    def start(self):
+        self.listen()
 
     def listen(self):
         import logging

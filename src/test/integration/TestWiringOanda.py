@@ -38,7 +38,7 @@ class TestWirePricesStreamWithCommandListener(unittest.TestCase):
         rates_streamer, listener = self.prices_wiring.wire()
         rates_stream_thread = Thread(target=rates_streamer.stream)
         rates_stream_thread.start()
-        listener_thread = listener.start()
+        listener_thread = listener.start_thread()
 
         await_event_receipt(self, self.rates_q
                                    , 'did not get any rates forwarded by fx cache')
@@ -109,9 +109,9 @@ class TestWirePricesStreamToCacheWithCommandListener(unittest.TestCase):
         rates_cache_thread = Thread(target=rates_cache_loop.start)
 
         rates_stream_thread.start()
-        rates_command_listener_thread = rates_command_listener.start()
+        rates_command_listener_thread = rates_command_listener.start_thread()
         rates_cache_thread.start()
-        rates_cache_listener_thread = rates_cache_loop.listener.start()
+        rates_cache_listener_thread = rates_cache_loop.listener.start_thread()
 
         tick = await_event_receipt(self, self.rates_cache_wiring.forward_q
                                    , 'did not get any rates forwarded by fx cache')
@@ -137,9 +137,9 @@ class TestWirePricesStreamToCacheWithCommandListener(unittest.TestCase):
         rates_cache_loop = self.rates_cache_wiring.wire()
 
         self.starter.add_target(rates_streamer.stream)
-        self.starter.add_target(rates_command_listener.listen)
+        self.starter.add_target(rates_command_listener.start)
         self.starter.add_target(rates_cache_loop.start)
-        self.starter.add_target(rates_cache_loop.listener.listen)
+        self.starter.add_target(rates_cache_loop.listener.start)
         self.starter.start()
 
         tick = await_event_receipt(self, self.rates_cache_wiring.forward_q

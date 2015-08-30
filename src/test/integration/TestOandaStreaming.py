@@ -93,7 +93,7 @@ class TestCommandEvents(unittest.TestCase):
 
         self.command_q = Queue()
         self.listener = QueueCommandListener(self.command_q, self.streamer.on_command)
-        self.command_thread = self.listener.start()
+        self.command_thread = self.listener.start_thread()
 
         self.streaming_thread.start()
 

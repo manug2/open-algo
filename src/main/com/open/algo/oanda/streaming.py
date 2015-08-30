@@ -67,6 +67,9 @@ class OandaEventStreamer(StreamDataProvider):
         self.logger.info('connection to streaming end point successful, now receiving..')
         return resp
 
+    def start(self):
+        self.stream()
+
     def stream(self):
         print('starting process %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
         self.streaming = True

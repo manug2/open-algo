@@ -76,11 +76,11 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
         rates_streamer, rates_command_listener, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop = \
             self.everything.wire()
 
-        starter.add_target(rates_streamer.stream).add_target(rates_command_listener.listen)
-        starter.add_target(rates_cache_loop.start).add_target(rates_cache_loop.listener.listen)
-        starter.add_target(portfolio_loop.start).add_target(portfolio_loop.listener.listen)
-        starter.add_target(execution_loop.start).add_target(execution_loop.listener.listen)
-        starter.add_target(strategy_loop.start).add_target(strategy_loop.listener.listen)
+        starter.add_target(rates_streamer.stream).add_target(rates_command_listener.start)
+        starter.add_target(rates_cache_loop.start).add_target(rates_cache_loop.listener.start)
+        starter.add_target(portfolio_loop.start).add_target(portfolio_loop.listener.start)
+        starter.add_target(execution_loop.start).add_target(execution_loop.listener.start)
+        starter.add_target(strategy_loop.start).add_target(strategy_loop.listener.start)
 
         try:
             starter.start()
