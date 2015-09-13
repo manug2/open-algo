@@ -9,6 +9,32 @@ from com.open.algo.wiring.queue_spmc import *
 from com.open.algo.wiring.commandListener import QueueCommandListener
 
 
+class WireFileJournaler:
+    def __init__(self, journaler):
+        self.journaler = journaler
+        self.in_q = None
+        self.out_q = None
+        self.command_q = None
+
+    def wire(self, com_q=None, in_q=None, out_q=None, hb_q=None, e_q=None):
+        loop = EventLoop(in_q, self.journaler, forward_q=out_q)
+        loop.set_command_q(com_q)
+        return loop
+
+    # setup queues
+    def set_in_q(self, in_q):
+        self.in_q = in_q
+        return self
+
+    def set_out_q(self, out_q):
+        self.out_q = out_q
+        return self
+
+    def set_command_q(self, command_q):
+        self.command_q = command_q
+        return self
+
+
 class WireOandaPrices:
 
     def __init__(self):
@@ -21,17 +47,17 @@ class WireOandaPrices:
         self.config_path = None
         self.instruments = 'EUR_USD'
 
-    def wire(self):
+    def wire(self, com_q=None, in_q=None, out_q=None, hb_q=None, e_q=None):
         domain = ENVIRONMENTS['streaming'][self.target_env]
         settings = read_settings(self.config_path, self.target_env)
 
         rates_streamer = OandaEventStreamer(
             domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
         rates_streamer.set_instruments(self.instruments)
-        rates_streamer.set_events_q(self.rates_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
+        rates_streamer.set_events_q(out_q).set_heartbeat_q(hb_q).set_exception_q(e_q)
 
-        if self.command_q:
-            listener = QueueCommandListener(self.command_q, rates_streamer.on_command)
+        if com_q:
+            listener = QueueCommandListener(com_q, rates_streamer.on_command)
             return rates_streamer, listener
         else:
             # Not required to return anything, but streamer reference can be used in shut down
@@ -85,10 +111,10 @@ class WireRateCache:
         self.command_q = None
         self.component = None
 
-    def wire(self):
+    def wire(self, com_q=None, in_q=None, out_q=None, hb_q=None, e_q=None):
         rates_cache = FxPricesCache(max_tick_age=self.max_tick_age)
-        rates_cache_loop = EventLoop(self.rates_q, rates_cache, forward_q=self.forward_q)
-        rates_cache_loop.set_command_q(self.command_q)
+        rates_cache_loop = EventLoop(in_q, rates_cache, forward_q=out_q)
+        rates_cache_loop.set_command_q(com_q)
         self.component = rates_cache
         return rates_cache_loop
 

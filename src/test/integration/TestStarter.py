@@ -26,7 +26,7 @@ class DummyWorker:
         self.name = name
         self.name2 = name2
 
-    def wire(self):
+    def wire(self, com_q=None, in_q=None, out_q=None, hb_q=None, e_q=None):
         if self.name2:
             return self, DummyWorker(self.name2)
         else:

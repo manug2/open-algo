@@ -20,8 +20,9 @@ class ProcessStarter:
 
         if process_group not in self.process_starter_map:
             self.process_starter_map[process_group] = ThreadStarter()
-            self.process_starter_map[process_group].add_target(
-                wiring, command_q, in_q, out_q, hb_q, exception_q, process_group)
+
+        self.process_starter_map[process_group].add_target(
+            wiring, command_q, in_q, out_q, hb_q, exception_q, process_group)
         return self
 
     def start(self):
@@ -116,6 +117,8 @@ class ThreadStarter:
         for i in range(0, len(self.wiring)):
             wiring = self.wiring[i]
             (command_q, in_q, out_q, hb_q, exception_q) = self.wiring_queues[i]
+            targets = wiring.wire(command_q, in_q, out_q, hb_q, exception_q)
+            '''
             if command_q:
                 wiring.set_command_q(command_q)
             if in_q:
@@ -127,6 +130,7 @@ class ThreadStarter:
             if exception_q:
                 wiring.set_exception_q(exception_q)
             targets = wiring.wire()
+            '''
             self.__add_targets__(targets)
 
     def start(self):
