@@ -340,27 +340,5 @@ class TestFileJounaler(unittest.TestCase):
 
         journaler = FileJournaler(name_scheme=scheme)
         journaler.start()
-        journaler.close()
-        self.assertTrue(os.path.exists(filename))
-
-    def test_should_allow_running_journal_in_an_event_loop(self):
-        scheme = JournalNamingScheme(path=OUTPUT_DIR, name='journal_ut')
-        filename = scheme.get_file_name()
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
-
-        eq = Queue()
-        journaler = FileJournaler(eq, name_scheme=scheme)
-        looper = EventLoop(eq, journaler)
-        loop_thread = Thread(target=looper.start, args=[])
-        loop_thread.start()
-        event = 'this is a dummy event for running journaler in a evnt loop'
-        journaler.log_event(get_time(), event)
-        sleep(looper.heartbeat*2)
         journaler.stop()
-        looper.stop()
-        loop_thread.join(looper.heartbeat*2)
-        journaler.close()
-        self.assertTrue(event, journaler.get_last_event())
+        self.assertTrue(os.path.exists(filename))

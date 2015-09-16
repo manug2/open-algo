@@ -33,15 +33,16 @@ class TestPriceJournals(unittest.TestCase):
 
         self.read_q = Queue()
         self.reader = FileJournalerReader(self.read_q, full_path=self.filename)
+        self.out_events_q = Queue()
 
     def play_event_queue(self):
         try:
             while True:
-                e = self.journaler.events_q.get_nowait()
+                e = self.out_events_q.get_nowait()
                 self.journaler.process(e)
         except Empty:
             pass
-        self.journaler.close()
+        self.journaler.stop()
 
     def test_should_allow_to_read_oanda_like_tick_journals_from_file(self):
         print('writing..')

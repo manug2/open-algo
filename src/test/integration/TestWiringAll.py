@@ -18,11 +18,9 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
         self.journaler = Journaler()
 
         self.everything = WireAll()
-        self.everything.set_rates_q(self.rates_q).set_ticks_and_ack_q(self.tick_and_ack_q)
         self.everything.set_max_tick_age(24*60*60).set_journaler(self.journaler)
         self.everything.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
-        self.everything.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.everything.port_wiring.set_portfolio_ccy('USD').set_portfolio_balance(10000)
         self.everything.port_wiring.set_portfolio_limit(50).set_portfolio_limit_short(-50)
 
@@ -68,10 +66,9 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
     def test_wire_all_with_command_listener(self):
         command_q_for_cloning = Queue()
         command_q = QueueSPMC(Journaler())
-        self.everything.set_command_q(command_q, command_q_for_cloning)
 
         rates_streamer, rates_command_listener, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop = \
-            self.everything.wire()
+            self.everything.wire(command_q=command_q, in_q=command_q_for_cloning)
 
         rates_stream_thread = Thread(target=rates_streamer.stream)
         rates_cache_thread = Thread(target=rates_cache_loop.start)
@@ -121,18 +118,12 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
 class TestCommandQueueWiring(unittest.TestCase):
 
     def setUp(self):
-        self.rates_q = Queue()
-        self.tick_and_ack_q = Queue()
-        self.portfolio_q = Queue()
-        self.execution_q = Queue()
         self.journaler = Journaler()
 
         self.everything = WireAll()
-        self.everything.set_rates_q(self.rates_q).set_ticks_and_ack_q(self.tick_and_ack_q)
         self.everything.set_max_tick_age(24*60*60).set_journaler(self.journaler)
         self.everything.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
-        self.everything.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.everything.port_wiring.set_portfolio_ccy('USD').set_portfolio_balance(10000)
         self.everything.port_wiring.set_portfolio_limit(50).set_portfolio_limit_short(-50)
 
@@ -140,11 +131,10 @@ class TestCommandQueueWiring(unittest.TestCase):
         wire_logger()
         self.command_q_for_cloning = Queue()
         self.command_q = QueueSPMC(Journaler())
-        self.everything.set_command_q(self.command_q, self.command_q_for_cloning)
 
     def test_should_wire_components_with_cloned_command_q_for_listening(self):
         rates_streamer, rates_command_listener, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop = \
-            self.everything.wire()
+            self.everything.wire(command_q=self.command_q, in_q=self.command_q_for_cloning)
 
         self.assertIsNotNone(rates_cache_loop.command_q)
         self.assertIsNotNone(portfolio_loop.command_q)
@@ -153,7 +143,7 @@ class TestCommandQueueWiring(unittest.TestCase):
 
     def test_should_have_cloned_command_queues_not_equal_to_original_q(self):
         rates_streamer, rates_command_listener, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop = \
-            self.everything.wire()
+            self.everything.wire(command_q=self.command_q, in_q=self.command_q_for_cloning)
 
         self.assertNotEqual(self.command_q_for_cloning, rates_cache_loop.command_q)
         self.assertNotEqual(self.command_q_for_cloning, portfolio_loop.command_q)
@@ -162,7 +152,7 @@ class TestCommandQueueWiring(unittest.TestCase):
 
     def test_spmc_command_q_should_have_cloned_queues_as_consumers(self):
         rates_streamer, rates_command_listener, rates_cache_loop, portfolio_loop, execution_loop, strategy_loop = \
-            self.everything.wire()
+            self.everything.wire(command_q=self.command_q, in_q=self.command_q_for_cloning)
 
         self.assertTrue(rates_command_listener.command_q in self.command_q.consumer_queues)
         self.assertTrue(rates_cache_loop.command_q in self.command_q.consumer_queues)

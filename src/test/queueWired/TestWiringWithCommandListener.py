@@ -21,13 +21,12 @@ class TestWirePricesCache(unittest.TestCase):
         self.forward_q = Queue()
 
         self.rates_cache_wiring = WireRateCache()
-        self.rates_cache_wiring.set_rates_q(self.rates_q).set_forward_q(self.forward_q)
         self.rates_cache_wiring.set_max_tick_age(TICK_MAX_AGE)
 
         self.command_q = Queue()
 
     def test_forwarded_rate_should_be_in_fx_cache(self):
-        self.starter.add_target(self.rates_cache_wiring, self.command_q)
+        self.starter.add_target(self.rates_cache_wiring, self.command_q, in_q=self.rates_q, out_q=self.forward_q)
         self.starter.start()
 
         self.rates_q.put_nowait(self.tick)
@@ -57,7 +56,6 @@ class TestWirePortfolio(unittest.TestCase):
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WirePortfolio()
-        self.wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.wiring.set_portfolio_ccy('USD').set_portfolio_balance(10000)
         self.wiring.set_portfolio_limit(500).set_portfolio_limit_short(-500)
         self.cache = FxPricesCache()
@@ -69,7 +67,7 @@ class TestWirePortfolio(unittest.TestCase):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
         self.cache.set_rate(TickEvent('EUR_USD', get_time(), 1.0, 1.0))
 
-        self.starter.add_target(self.wiring, self.command_q)
+        self.starter.add_target(self.wiring, command_q=self.command_q, in_q=self.portfolio_q, out_q=self.execution_q)
         self.starter.start()
 
         self.portfolio_q.put_nowait(buy_order)
@@ -86,7 +84,6 @@ class TestWireExecutor(unittest.TestCase):
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WireExecutor().set_journaler(Journaler())
-        self.wiring.set_execution_result_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
         self.command_q = Queue()
@@ -94,7 +91,7 @@ class TestWireExecutor(unittest.TestCase):
     def test_executed_order_should_reach_portfolio_q(self):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
 
-        self.starter.add_target(self.wiring, self.command_q)
+        self.starter.add_target(self.wiring, command_q=self.command_q, in_q=self.execution_q, out_q=self.portfolio_q)
         self.starter.start()
 
         self.execution_q.put_nowait(buy_order)

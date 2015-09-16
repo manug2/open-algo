@@ -7,17 +7,19 @@ from com.open.algo.journal import Journaler
 
 class TestWirePricesStreamToCache(unittest.TestCase):
     def setUp(self):
+        self.rates_q = Queue()
+        self.forward_q = Queue()
+
         self.prices_wiring = WireOandaPrices()
-        self.prices_wiring.set_rates_q(Queue()).set_journaler(Journaler())
+        self.prices_wiring.set_journaler(Journaler())
         self.prices_wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
         self.rates_cache_wiring = WireRateCache()
-        self.rates_cache_wiring.set_rates_q(self.prices_wiring.rates_q).set_forward_q(Queue())
         self.rates_cache_wiring.set_max_tick_age(2*24*60*60)
 
     def test_forwarded_rate_should_be_in_fx_cache(self):
-        rates_streamer = self.prices_wiring.wire()
-        rates_cache_loop = self.rates_cache_wiring.wire()
+        rates_streamer = self.prices_wiring.wire(out_q=self.rates_q)
+        rates_cache_loop = self.rates_cache_wiring.wire(in_q=self.rates_q, out_q=self.forward_q)
 
         rates_stream_thread = Thread(target=rates_streamer.stream)
         rates_cache_thread = Thread(target=rates_cache_loop.start)
@@ -25,7 +27,7 @@ class TestWirePricesStreamToCache(unittest.TestCase):
         rates_stream_thread.start()
         rates_cache_thread.start()
 
-        tick = await_event_receipt(self, self.rates_cache_wiring.forward_q
+        tick = await_event_receipt(self, self.forward_q
                                    , 'did not get any rates forwarded by fx cache')
         rates_streamer.stop()
         rates_cache_loop.stop()
@@ -52,7 +54,6 @@ class TestWirePortfolio(unittest.TestCase):
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WirePortfolio()
-        self.wiring.set_portfolio_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.wiring.set_portfolio_ccy('USD').set_portfolio_balance(10000)
         self.wiring.set_portfolio_limit(500).set_portfolio_limit_short(-500)
         self.cache = FxPricesCache()
@@ -62,7 +63,7 @@ class TestWirePortfolio(unittest.TestCase):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
         self.cache.set_rate(TickEvent('EUR_USD', get_time(), 1.0, 1.0))
 
-        portfolio_loop = self.wiring.wire()
+        portfolio_loop = self.wiring.wire(in_q=self.portfolio_q, out_q=self.execution_q)
         portfolio_thread = Thread(target=portfolio_loop.start)
 
         portfolio_thread.start()
@@ -78,13 +79,12 @@ class TestWireExecutor(unittest.TestCase):
         self.portfolio_q = Queue()
         self.execution_q = Queue()
         self.wiring = WireExecutor().set_journaler(Journaler())
-        self.wiring.set_execution_result_q(self.portfolio_q).set_execution_q(self.execution_q)
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
 
     def test_executed_order_should_reach_portfolio_q(self):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
 
-        execution_loop = self.wiring.wire()
+        execution_loop = self.wiring.wire(in_q=self.execution_q, out_q=self.portfolio_q)
         execution_thread = Thread(target=execution_loop.start)
         execution_thread.start()
         self.execution_q.put_nowait(buy_order)
@@ -103,23 +103,22 @@ class TestWireExecutor(unittest.TestCase):
 
 class TestWireDummyBuyStrategy(unittest.TestCase):
     def setUp(self):
+        self.rates_q = Queue()
         self.tick_for_strategy_q = Queue()
         self.signal_output_q = Queue()
 
         self.strategy_wiring = WireStrategy().set_strategy(DummyBuyStrategy(100))
-        self.strategy_wiring.set_signal_output_q(self.signal_output_q).set_ticks_and_ack_q(self.tick_for_strategy_q)
-        self.strategy_loop = self.strategy_wiring.wire()
+        self.strategy_loop = self.strategy_wiring.wire(in_q=self.tick_for_strategy_q, out_q=self.signal_output_q)
         self.strategy_thread = Thread(target=self.strategy_loop.start)
 
         self.prices_wiring = WireOandaPrices()
-        self.prices_wiring.set_rates_q(Queue()).set_journaler(Journaler())
+        self.prices_wiring.set_journaler(Journaler())
         self.prices_wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
-        self.streamer = self.prices_wiring.wire()
+        self.streamer = self.prices_wiring.wire(out_q=self.rates_q)
 
         self.rates_cache_wiring = WireRateCache()
-        self.rates_cache_wiring.set_rates_q(self.prices_wiring.rates_q).set_forward_q(self.tick_for_strategy_q)
         self.rates_cache_wiring.set_max_tick_age(24*60*60)
-        self.rates_cache_loop = self.rates_cache_wiring.wire()
+        self.rates_cache_loop = self.rates_cache_wiring.wire(in_q=self.rates_q, out_q=self.tick_for_strategy_q)
 
         self.streaming_thread = Thread(target=self.streamer.stream, args=[])
         self.rates_cache_thread = Thread(target=self.rates_cache_loop.start)

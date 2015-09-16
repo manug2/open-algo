@@ -19,7 +19,6 @@ from com.open.algo.journal import *
 
 TARGET_ENV = "practice"
 OUTPUT_DIR = '../output/'
-MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM=5
 
 
 class TestStreaming(unittest.TestCase):
@@ -35,19 +34,20 @@ class TestStreaming(unittest.TestCase):
         self.prices = OandaEventStreamer(domain, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], self.journaler)
         self.prices.set_instruments('EUR_USD')
         self.prices.set_events_q(self.ticks_q).set_heartbeat_q(self.heartbeat_q).set_exception_q(self.exception_q)
-        self.price_thread = Thread(target=self.prices.stream, args=[])
-        self.price_thread.start()
+        self.price_thread = Thread(target=self.prices.start, args=[])
 
     def tearDown(self):
         self.prices.stop()
         self.price_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
 
     def test_journaler_should_log_streaming_events(self):
+        self.price_thread.start()
         await_event_receipt(self, self.ticks_q, 'did not get any tick')
         out_event = self.journaler.get_last_event()
         self.assertIsNotNone(out_event)
 
     def test_should_receive_streaming_heartbeat_events(self):
+        self.price_thread.start()
         out_event = await_event_receipt(self, self.heartbeat_q, 'did not get any heartbeat', timeout=10)
         self.assertIsNotNone(out_event)
         self.assertTrue(isinstance(out_event, Heartbeat))
@@ -62,8 +62,11 @@ class TestStreaming(unittest.TestCase):
 
         # plug the new file journaler
         self.prices.journaler = journaler
-        tick = await_event_receipt(self, self.ticks_q, 'did not get any tick')
-        self.prices.stop()
+        self.price_thread.start()
+        try:
+            tick = await_event_receipt(self, self.ticks_q, 'did not get any tick')
+        finally:
+            self.prices.stop()
 
         try:
             while True:

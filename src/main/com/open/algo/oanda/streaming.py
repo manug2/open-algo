@@ -68,6 +68,8 @@ class OandaEventStreamer(StreamDataProvider):
         return resp
 
     def start(self):
+        if not self.journaler.started():
+            self.journaler.start()
         self.stream()
 
     def stream(self):
@@ -113,6 +115,8 @@ class OandaEventStreamer(StreamDataProvider):
         if self.session is not None:
             self.session.close()
             self.session = None
+        if self.journaler.started():
+            self.journaler.stop()
 
     def set_instruments(self, instruments):
         self.instruments = instruments

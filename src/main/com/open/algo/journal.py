@@ -40,7 +40,13 @@ class Journaler:
     def get_last_received(self):
         return self.last_received
 
-from queue import Queue
+    @abstractmethod
+    def started(self):
+        return True
+
+    @abstractmethod
+    def stop(self):
+        pass
 
 
 class FileJournaler(Journaler, EventHandler):
@@ -48,7 +54,6 @@ class FileJournaler(Journaler, EventHandler):
     def __init__(self, full_path=None, name_scheme=None):
         super(Journaler, self).__init__()
         self.writer = None
-        #self.events_q = Queue()
         assert full_path is not None or name_scheme is not None, 'both full path and name scheme cannot be None'
         self.full_path = full_path
         self.name_scheme = name_scheme
@@ -59,20 +64,12 @@ class FileJournaler(Journaler, EventHandler):
             self.last_received = receive_time
             msg = prepare_journal_entry(receive_time, event)
             self.process(msg)
-            #print('could not journal to file, so printing', msg)
-            #self.events_q.put_nowait(msg)
-        except Full:
-            print('WARNING: Count not journal event [%s] as queue is full' % event)
+        except RuntimeError as e:
+            print('WARNING: Count not journal event [%s] due to error [%s]' % (event, e))
 
     def process(self, event):
         self.writer.write(event)
         self.writer.write(os.linesep)
-        self.writer.flush()
-
-    def process_all(self, events):
-        for event in events:
-            self.writer.write(event)
-            self.writer.write(os.linesep)
         self.writer.flush()
 
     def start(self):
@@ -91,9 +88,8 @@ class FileJournaler(Journaler, EventHandler):
                 self.writer.close()
             self.writer = None
 
-    def set_in_q(self, in_q):
-        self.events_q = in_q
-        return self
+    def started(self):
+        return self.writer is not None
 
 
 class FileJournalerReader:
@@ -127,7 +123,7 @@ class FileJournalerReader:
         self.reader.close()
 
 
-class JournalNamingScheme():
+class JournalNamingScheme:
     def __init__(self, path='', name='journal', prefix='', suffix='', ext='.txt'):
         self.path = path
         self.name = name

@@ -141,5 +141,5 @@ def step_impl(context, env, connection, instrument):
         get_price_streamer(context, connection, env, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], 'EUR_USD')
     price_thread = threading.Thread(target=context.streamer.stream, args=[])
     price_thread.start()
-    time.sleep(3.5)
+    time.sleep(5)
     context.streamer.stop()
