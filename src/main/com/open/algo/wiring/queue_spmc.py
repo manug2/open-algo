@@ -30,9 +30,12 @@ class QueueSPMC(Queue):
     def add_consumer(self, consumer_q, timeout=0.5):
         if consumer_q in self.consumer_queues:
             raise ValueError('consumer q already added to SPMC queue - [%s]' % consumer_q)
+        elif consumer_q == self:
+            raise ValueError('cannot add self as a downstream queue - [%s]' % consumer_q)
 
         self.consumer_queues.append(consumer_q)
         self.consumer_timeout.append(timeout)
+        return self
 
     def put_nowait(self, item):
         for i in range(0, len(self.consumer_queues)):

@@ -12,19 +12,18 @@ if __name__ == '__main__':
     parser.add_option("-i", "--instruments", type="string", dest="instruments", default='EUR_USD')
     # parser.add_option("-d", "--debug", action="store_true", dest="debug", default=False)
     parser.add_option("-s", "--monitor_interval", type="int", dest="sleepy", default=10)
-    parser.add_option("-f", "--file_path", type="string", dest="file_path", default='prices_collected_mp.txt')
+    parser.add_option("-f", "--file_path", type="string", dest="file_path", default='prices_collected_tp.txt')
 
     (options, args) = parser.parse_args()
     print('using settings =>', options)
-    #from multiprocessing import Queue
-    from multiprocessing import Manager
-    from com.open.algo.wiring.starter import ProcessStarter
+    from queue import Queue
+    from com.open.algo.wiring.starter import ThreadStarter
 
     try:
         prices_collector.collect(options.collection_duration, options.instruments, options.sleepy, options.file_path,
-                                 ProcessStarter, Manager().Queue)
+                                 ThreadStarter, Queue)
     except:
         print('Unexpected error:', sys.exc_info()[0])
     finally:
         print('completed collection!')
-    print('stopping process %s-%s, for [%s]' % (os.getppid(), os.getpid(), 'collect_prices_mp'))
+    print('stopping process %s-%s, for [%s]' % (os.getppid(), os.getpid(), 'collect_prices_tp'))

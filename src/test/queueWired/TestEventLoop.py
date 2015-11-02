@@ -268,7 +268,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(Queue(), full_path=filename)
+        journaler = FileJournaler(full_path=filename)
         journaler.start()
         journaler.log_event(get_time(), 'this is a test event #1')
         journaler.log_event(get_time(), 'this is a test event #2')
@@ -288,7 +288,7 @@ class TestFileJounaler(unittest.TestCase):
             pass
 
         print('writing..')
-        journaler = FileJournaler(Queue(), full_path=filename)
+        journaler = FileJournaler(full_path=filename)
         journaler.start()
         event = 'this is a test event #1'
         journaler.log_event(get_time(), event)
@@ -313,7 +313,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(Queue(), full_path=filename)
+        journaler = FileJournaler(full_path=filename)
         journaler.start()
         journaler.close()
         self.assertTrue(os.path.exists(filename))
@@ -338,29 +338,7 @@ class TestFileJounaler(unittest.TestCase):
         except OSError:
             pass
 
-        journaler = FileJournaler(Queue(), name_scheme=scheme)
+        journaler = FileJournaler(name_scheme=scheme)
         journaler.start()
-        journaler.close()
-        self.assertTrue(os.path.exists(filename))
-
-    def test_should_allow_running_journal_in_an_event_loop(self):
-        scheme = JournalNamingScheme(path=OUTPUT_DIR, name='journal_ut')
-        filename = scheme.get_file_name()
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
-
-        eq = Queue()
-        journaler = FileJournaler(eq, name_scheme=scheme)
-        looper = EventLoop(eq, journaler)
-        loop_thread = Thread(target=looper.start, args=[])
-        loop_thread.start()
-        event = 'this is a dummy event for running journaler in a evnt loop'
-        journaler.log_event(get_time(), event)
-        sleep(looper.heartbeat*2)
         journaler.stop()
-        looper.stop()
-        loop_thread.join(looper.heartbeat*2)
-        journaler.close()
-        self.assertTrue(event, journaler.get_last_event())
+        self.assertTrue(os.path.exists(filename))

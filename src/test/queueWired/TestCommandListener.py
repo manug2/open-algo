@@ -15,7 +15,7 @@ class TestQueuedCommandListener(unittest.TestCase):
         self.command_q = Queue()
         self.listener = QueueCommandListener(self.command_q, self.on_command)
         self.last_command = None
-        self.command_thread = self.listener.start()
+        self.command_thread = self.listener.start_thread()
 
     def tearDown(self):
         if self.listener.listening:

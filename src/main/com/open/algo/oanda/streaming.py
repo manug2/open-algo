@@ -67,6 +67,11 @@ class OandaEventStreamer(StreamDataProvider):
         self.logger.info('connection to streaming end point successful, now receiving..')
         return resp
 
+    def start(self):
+        if not self.journaler.started():
+            self.journaler.start()
+        self.stream()
+
     def stream(self):
         print('starting process %s-%s, for [%s]' % (os.getppid(), os.getpid(), str(self)))
         self.streaming = True
@@ -110,6 +115,8 @@ class OandaEventStreamer(StreamDataProvider):
         if self.session is not None:
             self.session.close()
             self.session = None
+        if self.journaler.started():
+            self.journaler.stop()
 
     def set_instruments(self, instruments):
         self.instruments = instruments
