@@ -45,41 +45,42 @@ class BidsMACrossoverStrategy(AbstractStrategy):
         ma2 = self.ma_function(self.bids, period=self.period2)
 
         try:
-            order = None
-            signal_units = 0
-
-            suspect_cross_over = abs(ma1-ma2) <= self.tolerance
-            if suspect_cross_over:
-                if ma1 < self.ma1:
-                    side = ORDER_SIDE_SELL
-                elif ma1 > self.ma1:
-                    side = ORDER_SIDE_BUY
-                else:
-                    return None
-
-                order = OrderEvent(event.instrument, self.units, side)
-                signal_units = order.get_signed_units()
-                try:
-                    signal_amount_pending_ack = self.get_signaled_position(event.instrument)
-                except KeyError:
-                    signal_amount_pending_ack = 0
-
-                if signal_amount_pending_ack != 0:
-                    if signal_units > 0 and signal_amount_pending_ack > 0:
-                        signal_units = 0
-                    elif signal_units < 0 and signal_amount_pending_ack < 0:
-                        signal_units = 0
-
-            if signal_units != 0:
-                self.logger.info('issuing order - %s' % order)
-                self.update_signaled_position(order.instrument, order.get_signed_units())
-                return order
+            return self.check_cross_over_and_create_order(event, ma1, ma2)
 
         finally:
             self.ma1 = ma1
             self.ma2 = ma2
 
-        return None
+    def check_cross_over_and_create_order(self, event, ma1, ma2):
+        order = None
+        signal_units = 0
+        suspect_cross_over = abs(ma1 - ma2) <= self.tolerance
+        if suspect_cross_over:
+            if ma1 < self.ma1:
+                side = ORDER_SIDE_SELL
+            elif ma1 > self.ma1:
+                side = ORDER_SIDE_BUY
+            else:
+                return None
+
+            order = OrderEvent(event.instrument, self.units, side)
+            signal_units = order.get_signed_units()
+            try:
+                signal_amount_pending_ack = self.get_signaled_position(event.instrument)
+            except KeyError:
+                signal_amount_pending_ack = 0
+
+            if signal_amount_pending_ack != 0:
+                if signal_units > 0 and signal_amount_pending_ack > 0:
+                    signal_units = 0
+                elif signal_units < 0 and signal_amount_pending_ack < 0:
+                    signal_units = 0
+        if signal_units != 0:
+            self.logger.info('issuing order - %s' % order)
+            self.update_signaled_position(order.instrument, order.get_signed_units())
+            return order
+        else:
+            return None
 
     def process_all(self, events):
         pass
