@@ -5,8 +5,11 @@ import sys
 sys.path.append('../../main')
 import unittest
 from com.open.algo.oanda.parser import parse_event_str
-from com.open.algo.strategy import *
+from com.open.algo.strategy import AbstractStrategy
+from com.open.algo.strategies.crossOver import BidsMACrossoverStrategy
 from com.open.algo.utils import get_time
+from com.open.algo.calcs.ma import sma
+from com.open.algo.trading.fxEvents import ORDER_SIDE_SELL, ORDER_SIDE_BUY, OrderEvent
 
 
 class TestMACrossoverStrategyClass(unittest.TestCase):

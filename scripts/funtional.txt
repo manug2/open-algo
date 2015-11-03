@@ -1,0 +1,11 @@
+Reduce classes, replace by functions, to make code cleaner and leaner
+If cannot replace a class by function, implement __call__ method in class to use its instance as a function
+e.g.
+    matcher = GrammerMatcher('a b c')
+    result = mactcher('hello')
+
+    class GrammerMatcher:
+        def __init__(self, expr):
+            self.re = re.compile(expr)
+        def __call__(self, expr)
+            return self.re.matches(expr)
