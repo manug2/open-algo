@@ -3,8 +3,6 @@ import logging
 import concurrent.futures
 import os
 
-logger = logging.getLogger('')
-
 
 class ProcessStarter:
     def __init__(self):
@@ -43,15 +41,16 @@ class ProcessStarter:
         logger.info('[%s-%s] added callbacks for task/groups in separate processes..' % (os.getppid(), os.getpid()))
 
     def process_completed(self, future):
+        logger = logging.getLogger('')
         starter = self.process_futures[future]
         try:
-            returnValue = future.result()
+            return_value = future.result()
         except Exception as exc:
             logger.info('[%s-%s] process for starting [%s, %s] generated an exception: %s'
                   % (os.getppid(), os.getpid(), starter.group, starter.targets, exc))
         else:
             logger.info('[%s-%s] process for starting [%s, %s] generated an result: %s'
-                        % (os.getppid(), os.getpid(), starter.group, starter.targets, returnValue))
+                        % (os.getppid(), os.getpid(), starter.group, starter.targets, return_value))
         logger.info('[%s-%s] completed starting process for group [%s]' % (os.getppid(), os.getpid(), starter.group))
 
     def join(self):
@@ -83,7 +82,7 @@ class ThreadStarter:
         self.wiring_queues = []
         self.targets = []
         self.started = False
-        self.futures = None
+        self.futures = []
         self.executor = None
         self.join_count = 0
 
@@ -150,15 +149,16 @@ class ThreadStarter:
         logger.info('[%s-%s] tasks started in separate threads.' % (os.getppid(), os.getpid()))
 
     def task_completed(self, future):
+        logger = logging.getLogger('')
         target_method = self.futures[future]
         try:
-            returnValue = future.result()
+            return_value = future.result()
         except Exception as exc:
             logger.error('[%s-%s] [%s] generated an exception: %s'
                         % (os.getppid(), os.getpid(), target_method, exc))
         else:
             logger.info('[%s-%s] [%s] generated return value : %s'
-                        % (os.getppid(), os.getpid(), target_method, returnValue))
+                        % (os.getppid(), os.getpid(), target_method, return_value))
         with Lock():
             self.join_count += 1
 

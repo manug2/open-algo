@@ -2,7 +2,7 @@ __author__ = 'maverick'
 
 import logging
 from com.open.algo.strategy import AbstractStrategy
-from com.open.algo.trading.fxEvents import ORDER_SIDE_SELL, ORDER_SIDE_BUY, OrderEvent
+from com.open.algo.trading.fxEvents import ORDER_SIDE_SELL, ORDER_SIDE_BUY
 from com.open.algo.calcs.ma import sma
 
 
@@ -19,9 +19,8 @@ class BidsMACrossoverStrategy(AbstractStrategy):
         self.period2 = period2
         self.ma1 = None
         self.ma2 = None
-        self.tolerance = 0.001
+        self.tolerance = 0.00001
         self.ma_function = ma_function
-        self.units = 1000
 
     def stop(self):
         pass
@@ -43,44 +42,20 @@ class BidsMACrossoverStrategy(AbstractStrategy):
 
         ma1 = self.ma_function(self.bids, period=self.period1)
         ma2 = self.ma_function(self.bids, period=self.period2)
+        diff = ma1 - ma2
 
         try:
-            return self.check_cross_over_and_create_order(event, ma1, ma2)
-
+            suspect_cross_over = abs(diff) >= self.tolerance
+            if suspect_cross_over:
+                if ma1 < self.ma1:
+                    return ORDER_SIDE_SELL
+                elif ma1 > self.ma1:
+                    return ORDER_SIDE_BUY
+                else:
+                    return None
         finally:
             self.ma1 = ma1
             self.ma2 = ma2
-
-    def check_cross_over_and_create_order(self, event, ma1, ma2):
-        order = None
-        signal_units = 0
-        suspect_cross_over = abs(ma1 - ma2) <= self.tolerance
-        if suspect_cross_over:
-            if ma1 < self.ma1:
-                side = ORDER_SIDE_SELL
-            elif ma1 > self.ma1:
-                side = ORDER_SIDE_BUY
-            else:
-                return None
-
-            order = OrderEvent(event.instrument, self.units, side)
-            signal_units = order.get_signed_units()
-            try:
-                signal_amount_pending_ack = self.get_signaled_position(event.instrument)
-            except KeyError:
-                signal_amount_pending_ack = 0
-
-            if signal_amount_pending_ack != 0:
-                if signal_units > 0 and signal_amount_pending_ack > 0:
-                    signal_units = 0
-                elif signal_units < 0 and signal_amount_pending_ack < 0:
-                    signal_units = 0
-        if signal_units != 0:
-            self.logger.info('issuing order - %s' % order)
-            self.update_signaled_position(order.instrument, order.get_signed_units())
-            return order
-        else:
-            return None
 
     def process_all(self, events):
         pass

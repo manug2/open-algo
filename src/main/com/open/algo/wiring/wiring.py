@@ -156,19 +156,28 @@ class WireExecutor:
         return self
 
 
+from com.open.algo.strategy import StrategyOrderManager
+from com.open.algo.strategy import AbstractStrategy
+
+
 class WireStrategy:
 
     def __init__(self):
         self.command_q = None
         self.strategy = None
+        self.strategy_manager = None
 
     def wire(self, com_q=None, in_q=None, out_q=None, hb_q=None, e_q=None):
-        strategy_loop = EventLoop(in_q, self.strategy, processed_event_q=out_q)
+        strategy_loop = EventLoop(in_q, self.strategy_manager, processed_event_q=out_q)
         strategy_loop.set_command_q(com_q)
         return strategy_loop
 
-    def set_strategy(self, strategy):
+    def set_strategy(self, strategy, units=100):
+        if not isinstance(strategy, AbstractStrategy):
+            raise TypeError('expecting sub-class of type [%s], provided type [%s]' % (AbstractStrategy, type(strategy)))
+
         self.strategy = strategy
+        self.strategy_manager = StrategyOrderManager(self.strategy, units)
         return self
 
 

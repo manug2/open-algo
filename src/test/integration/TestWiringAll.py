@@ -24,7 +24,7 @@ class TestWireRatesStrategyPortfolioExecutor(unittest.TestCase):
         self.everything.port_wiring.set_portfolio_ccy('USD').set_portfolio_balance(10000)
         self.everything.port_wiring.set_portfolio_limit(50).set_portfolio_limit_short(-50)
 
-        self.everything.set_strategy(DummyBuyStrategy(100))
+        self.everything.set_strategy(DummyBuyStrategy())
         self.logger = wire_logger()
 
     def test_wire_all(self):
@@ -127,7 +127,7 @@ class TestCommandQueueWiring(unittest.TestCase):
         self.everything.port_wiring.set_portfolio_ccy('USD').set_portfolio_balance(10000)
         self.everything.port_wiring.set_portfolio_limit(50).set_portfolio_limit_short(-50)
 
-        self.everything.set_strategy(DummyBuyStrategy(100))
+        self.everything.set_strategy(DummyBuyStrategy())
         wire_logger()
         self.command_q_for_cloning = Queue()
         self.command_q = QueueSPMC(Journaler())

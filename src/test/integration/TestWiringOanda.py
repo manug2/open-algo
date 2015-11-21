@@ -36,14 +36,16 @@ class TestWirePricesStreamWithCommandListener(unittest.TestCase):
     def test_forwarded_rate_should_be_in_fx_cache(self):
         rates_streamer, listener = self.prices_wiring.wire(com_q=self.command_q, out_q=self.rates_q)
         rates_stream_thread = Thread(target=rates_streamer.stream)
-        rates_stream_thread.start()
-        listener_thread = listener.start_thread()
+        try:
+            listener_thread = listener.start_thread()
+            rates_stream_thread.start()
 
-        await_event_receipt(self, self.rates_q
-                                   , 'did not get any rates forwarded by fx cache')
-        self.command_q.put_nowait(COMMAND_STOP)
-        rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-        listener_thread.join(timeout=1)
+            await_event_receipt(self, self.rates_q
+                                       , 'did not get any rates forwarded by fx cache', timeout=10)
+        finally:
+            self.command_q.put_nowait(COMMAND_STOP)
+            rates_stream_thread.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+            listener_thread.join(timeout=1)
         # end of wire test, but what to measure
 
 
@@ -169,6 +171,29 @@ class TestWireExecutor(unittest.TestCase):
         self.execution_q = Queue()
         self.wiring = WireExecutor().set_journaler(Journaler())
         self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
+
+        self.command_q = Queue()
+
+    def test_executed_order_should_reach_portfolio_q_using_starter(self):
+        buy_order = OrderEvent('EUR_USD', 1000, 'buy')
+
+        starter = ThreadStarter()
+        starter.add_target(self.wiring, command_q=self.command_q, in_q=self.execution_q, out_q=self.portfolio_q)
+        starter.start()
+
+        self.execution_q.put_nowait(buy_order)
+        executed_order = await_event_receipt(self, self.portfolio_q, 'did not find one order in portfolio queue')
+
+        self.command_q.put_nowait(COMMAND_STOP)
+        starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
+
+        if get_day_of_week() >= 5:
+            self.assertIsInstance(executed_order, ExceptionEvent)
+        else:
+            self.assertIsInstance(executed_order, ExecutedOrder
+                      , 'expecting an executed order of type [%s] but got of type [%s] - %s'
+                          % (type(ExecutedOrder), type(executed_order), executed_order))
+            self.assertEqual(buy_order, executed_order.order)
 
     def test_executed_order_should_reach_portfolio_q(self):
         buy_order = OrderEvent('EUR_USD', 1000, 'buy')
