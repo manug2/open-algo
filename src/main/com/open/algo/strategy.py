@@ -20,6 +20,12 @@ class AbstractStrategy(EventHandler):
     def process(self, event):
         return self.calculate_signals(event)
 
+    def process_all(self, events):
+        result = None
+        for event in events:
+            result = self.calculate_signals(event)
+        return result
+
 
 from com.open.algo.model import ExceptionEvent
 
@@ -29,6 +35,8 @@ class StrategyOrderManager(EventHandler):
     def __init__(self, strategy, units=1000):
         'call super'
         assert strategy is not None
+        assert isinstance(strategy, AbstractStrategy)
+
         self.units = units
         self.strategy = strategy
         self.signaled_positions = dict()

@@ -39,14 +39,15 @@ def step_impl(context, connection):
 @when('i say connect')
 def step_impl(context):
     context.response = None
-    context.prices = \
+    context.streamer = \
         get_price_streamer(context, context.connection, context.env, context.token, context.account_id, 'EUR_USD')
-    print(str(context.prices))
-    context.response = context.prices.connect()
+    print(str(context.streamer))
+    context.response = context.streamer.connect()
 
 
 @then('we are able to connect to Oanda')
 def step_impl(context):
+    context.streamer.stop()
     assert context.response.status_code == 200
 
 
@@ -59,18 +60,34 @@ def step_impl(context, domainAlias):
 @when('i say stream')
 def step_impl(context):
 
-    context.prices = \
+    context.streamer = \
         get_price_streamer(context, context.connection, context.env, context.token, context.account_id, 'EUR_USD')
 
-    price_thread = threading.Thread(target=context.prices.stream, args=[])
-    price_thread.start()
-    time.sleep(2.5)
-    context.prices.stop()
+    context.price_thread = threading.Thread(target=context.streamer.stream, args=[])
+    context.price_thread.start()
 
 
 @then('we received a tick')
 def step_impl(context):
-    event = context.events.get(True, 0.5)
+    print('waiting for a tick..')
+    attempts = 0
+    while True:
+        try:
+            event = context.events.get_nowait()
+            break
+        except queue.Empty:
+            attempts += 1
+            if attempts > 20:
+                break
+            else:
+                time.sleep(1)
+
+    assert event is not None, 'did not receive tick'
+    if event:
+        print('got a tick')
+    context.streamer.stop()
+    context.price_thread.join(timeout=5)
+    print('stopped streaming..')
     assert event.TYPE == 'TICK'
     assert event.instrument is not None
 
@@ -78,13 +95,17 @@ def step_impl(context):
 @then('we received few ticks for this instrument')
 def step_impl(context):
     try:
-        while True:
-            context.last_tick = context.events.get_nowait()
+        event = context.events.get(timeout=25)
+        assert context.last_tick is not None, 'did not receive tick'
+        assert isinstance(context.last_tick, TickEvent), 'expected to receive TickEvent, but go [%s]' % event
+        assert event.TYPE == 'TICK'
+        assert event.instrument == context.instrument
+        context.last_tick = event
     except queue.Empty:
         pass
-
-    assert context.last_tick.TYPE == 'TICK'
-    assert context.last_tick.instrument == context.instrument
+    finally:
+        context.streamer.stop()
+        context.price_thread.join(timeout=5)
 
 
 @then('journaler logs input events')
@@ -133,13 +154,46 @@ def get_price_streamer(context, connection, env, token, account_id, instruments)
     pricer.set_events_q(context.events).set_heartbeat_q(context.heartbeat_events).set_exception_q(context.exceptions)
     return pricer
 
+
 @given('System is connected to Oanda {env} using {connection} connection for {instrument} prices')
 def step_impl(context, env, connection, instrument):
     context.instrument = instrument
     settings = read_settings(CONFIG_PATH_FOR_FEATURE_STEPS, env)
     context.streamer = \
         get_price_streamer(context, connection, env, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], 'EUR_USD')
-    price_thread = threading.Thread(target=context.streamer.stream, args=[])
-    price_thread.start()
+    context.price_thread = threading.Thread(target=context.streamer.stream, args=[])
+    context.price_thread.start()
     time.sleep(5)
     context.streamer.stop()
+    context.price_thread.join(timeout=10)
+
+
+@given('System is connecting to Oanda {env} using {connection} connection for {instrument} prices')
+def step_impl(context, env, connection, instrument):
+    context.instrument = instrument
+    settings = read_settings(CONFIG_PATH_FOR_FEATURE_STEPS, env)
+    context.streamer = \
+        get_price_streamer(context, connection, env, settings['ACCESS_TOKEN'], settings['ACCOUNT_ID'], 'EUR_USD')
+    context.price_thread = threading.Thread(target=context.streamer.stream, args=[])
+    context.price_thread.start()
+
+
+@then('Oanda rates connection is stopped')
+def step_impl(context):
+    context.streamer.stop()
+
+
+@then('we wait for Oanda to sends heartbeat and stop')
+def step_impl(context):
+    try:
+        context.last_hb = context.heartbeat_events.get(timeout=10)
+        assert isinstance(context.last_hb, Heartbeat), 'expecting heartbeat, received event [%s]' % context.last_hb
+        assert context.last_hb.TYPE == 'HB', 'expecting heartbeat, received event of type [%s]' % context.last_hb.TYPE
+        assert context.last_hb.alias == 'oanda-stream', \
+            'expecting from oanda-stream, received event of alias [%s]' % context.last_hb.alias
+    except queue.Empty:
+        assert context.last_hb is not None, 'did not received heartbeat'
+    finally:
+        context.streamer.stop()
+
+
