@@ -67,9 +67,9 @@ class BidsMACrossoverStrategy(AbstractStrategy):
         return self
 
     def set_tolerance(self, tolerance):
-        if tolerance is None:
-            raise ValueError('value of "%s" cannot be None' % 'tolerance')
-        if not isinstance(tolerance, float):
-            raise ValueError('value of "%s" should be of type "%s", not "%s"' % ('period2', type(float), type(tolerance)))
+        assert tolerance is not None, 'value of "%s" cannot be None' % 'tolerance'
+        assert isinstance(tolerance, float), 'value of "%s" should be of type "%s", not "%s"' % \
+                                             ('period2', type(float), type(tolerance))
         self.tolerance = tolerance
         return self
+

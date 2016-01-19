@@ -34,3 +34,46 @@ class TestTime(unittest.TestCase):
 
     def test_should_give_time_zone(self):
         print(get_time())
+
+    def test_should_give_time_by_adding_offset(self):
+        t1 = get_time()
+        t2 = get_time(1)
+        age = get_age_seconds(t2, t1)
+        self.assertAlmostEqual(1.0, age)
+
+    def test_should_give_time_by_adding_offset_to_another_time(self):
+        t1 = get_time()
+        print(t1)
+        #spend some time
+        b = 0
+        for i in range(1, 1000000):
+            b += 1
+        print(get_time())
+        t2 = get_time(1, t1)
+        print(t2)
+        age = get_age_seconds(t2, t1)
+        self.assertAlmostEqual(1.0, age)
+
+    def test_should_add_1s_to_time(self):
+        t1 = get_time_with_zero_millis()
+        t2 = add_time(t1, 1.0)
+        age = get_age_seconds(t2, t1)
+        self.assertAlmostEqual(1.0, age)
+
+    def test_should_add_seconds_to_time(self):
+        t1 = get_time_with_zero_millis()
+        t2 = add_time(t1, 1.5)
+        age = get_age_seconds(t2, t1)
+        self.assertAlmostEqual(1.5, age)
+
+    def test_should_subtract_1s_from_time(self):
+        t1 = get_time_with_zero_millis()
+        t2 = add_time(t1, -1.0)
+        age = get_age_seconds(t2, t1)
+        self.assertAlmostEqual(-1.0, age)
+
+    def test_should_subtract_seconds_from_time(self):
+        t1 = get_time_with_zero_millis()
+        t2 = add_time(t1, -2.0)
+        age = get_age_seconds(t2, t1)
+        self.assertAlmostEqual(-2.0, age)

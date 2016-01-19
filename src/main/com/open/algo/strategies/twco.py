@@ -3,21 +3,21 @@ __author__ = 'maverick'
 import logging
 from com.open.algo.strategy import AbstractStrategy
 from com.open.algo.trading.fxEvents import ORDER_SIDE_SELL, ORDER_SIDE_BUY
-from com.open.algo.calcs.twma import TickTWMA
+from com.open.algo.calcs.twma import TWMA
 
 
 class TWMACrossoverStrategy(AbstractStrategy):
 
-    def __init__(self, base_tick, period1=5, period2=10, attribute='bid'):
-        if period1 >= period2:
-            raise ValueError('For ma, period 1(%s) cannot be ge period 2(%s)', period1, period2)
+    def __init__(self, period1, period2, time_attr='time', val_attr='bid'):
+        assert period1 < period2, 'For TWMA crossover, period 1(%s) cannot be ge period 2(%s)' % (period1, period2)
         super(TWMACrossoverStrategy, self).__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.ma_func1 = TickTWMA(period1, base_tick, attribute)
-        self.ma_func2 = TickTWMA(period2, base_tick, attribute)
-        self.ma1 = 0
-        self.ma2 = 0
+        self.ticks = []
+        self.ma1 = None
+        self.ma2 = None
         self.tolerance = 0.00001
+        self.ma_function1 = TWMA(period1, time_attr, val_attr)
+        self.ma_function2 = TWMA(period2, time_attr, val_attr)
 
     def stop(self):
         pass
@@ -26,8 +26,21 @@ class TWMACrossoverStrategy(AbstractStrategy):
         if not event:
             raise ValueError('cannot calculate signal from None event')
 
-        ma1 = self.ma_func1(event)
-        ma2 = self.ma_func2(event)
+        self.ticks.append(event)
+
+        if len(self.ticks) < self.ma_function1.time_period:
+            return None
+
+        if len(self.ticks) < self.ma_function2.time_period:
+            if len(self.ticks) == self.ma_function2.time_period - 1:
+                self.ma1 = self.ma_function1(event.time, self.ticks)
+            return None
+
+        #now = event.receive_time
+        now = event.time
+
+        ma1 = self.ma_function1(now, self.ticks)
+        ma2 = self.ma_function2(now, self.ticks)
         diff = ma1 - ma2
 
         try:
@@ -47,9 +60,8 @@ class TWMACrossoverStrategy(AbstractStrategy):
         pass
 
     def set_tolerance(self, tolerance):
-        if tolerance is None:
-            raise ValueError('value of "%s" cannot be None' % 'tolerance')
-        if not isinstance(tolerance, float):
-            raise ValueError('value of "%s" should be of type "%s", not "%s"' % ('period2', type(float), type(tolerance)))
+        assert tolerance is not None, 'value of "%s" cannot be None' % 'tolerance'
+        assert isinstance(tolerance, float), 'value of "%s" should be of type "%s", not "%s"' % \
+                                             ('period2', type(float), type(tolerance))
         self.tolerance = tolerance
         return self

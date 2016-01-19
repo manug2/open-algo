@@ -1,6 +1,16 @@
 __author__ = 'ManuGarg'
 
 
+def extract_time_and_value(record, time_attr, val_attr):
+    if isinstance(record, dict):
+        value = record[val_attr]
+        time = record[time_attr]
+    else:
+        value = getattr(record, val_attr)
+        time = getattr(record, time_attr)
+    return time, value
+
+
 def extract_value(record, attr):
     if isinstance(record, dict):
         value = record[attr]
@@ -8,41 +18,49 @@ def extract_value(record, attr):
         value = getattr(record, attr)
     return value
 
-from com.open.algo.utils import get_age_seconds, get_time
+from com.open.algo.utils import get_age_seconds
 TIME_CALC_TOLERANCE = 0.000000001
 
 
 class TWMA:
+    def __init__(self, time_period, time_attr, val_attr):
+        assert time_period > 0, 'time period is required'
+        assert time_attr is not None, 'time field is required'
+        assert val_attr is not None, 'value field is required'
 
-    def __init__(self, period, base_value=0.0, base_time=get_time()):
-        assert period > 0.0, 'require time period > 0 for calculating time weighted moving averages, given [%s]' % period
-        self.period = period
-        self.last_time = base_time
-        self.last_twma = base_value
+        self.time_period = time_period
+        self.time_attr = time_attr
+        self.val_attr = val_attr
 
-    def __call__(self, time, value):
-        age = get_age_seconds(time, self.last_time)
+    def __call__(self, now, data):
+        assert data is not None, 'input data list is required'
 
-        if age - self.period > TIME_CALC_TOLERANCE:
-            new_twma = value
-        else:
-            c = (self.period - age) / self.period
-            new_twma = (c * self.last_twma) + ((1 - c) * value)
+        len_data = len(data)
+        assert len_data > 0, 'input data list is empty'
+        assert now is not None, 'time now is required'
 
-        self.last_time = time
-        self.last_twma = new_twma
-        return new_twma
+        upper_time = now
+        total_time = 0
+        accumulator = 0
+        index = len_data - 1
+        latest_value = 0
 
+        while total_time < self.time_period and index >= 0:
+            lower_time, val_at_index = extract_time_and_value(data[index], self.time_attr, self.val_attr)
+            delta = get_age_seconds(upper_time, lower_time)
 
-class TickTWMA:
-    def __init__(self, period, base_tick, attribute, time_attribute='time'):
-        self.attr = attribute
-        self.time_attr = time_attribute
-        last_value = extract_value(base_tick, self.attr)
-        last_time = extract_value(base_tick, self.time_attr)
-        self.ma_func = TWMA(period, base_value=last_value, base_time=last_time)
+            if delta <= 0.0:
+                index -= 1
+                continue
+            else:
+                latest_value = val_at_index
 
-    def __call__(self, tick):
-        new_value = extract_value(tick, self.attr)
-        new_time = extract_value(tick, self.time_attr)
-        return self.ma_func(new_time, new_value)
+            accumulator += latest_value * delta
+            total_time += delta
+            upper_time = lower_time
+            index -= 1
+
+        if total_time < self.time_period:
+            oldest_value = extract_value(data[0], self.val_attr)
+            accumulator += oldest_value * (self.time_period-total_time)
+        return accumulator / self.time_period
