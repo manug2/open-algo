@@ -17,12 +17,12 @@ Feature: Oanda provides streaming rates capability
 
     @slow
 	Scenario: Sample ticks can be received from Oanda if connection is available and logged by journaler
-		Given System is connected to Oanda practice using streaming connection for EUR_USD prices
+		Given System is connected to Oanda manu.practice using streaming connection for EUR_USD prices
 		 then we received few ticks for this instrument
 		  and journaler logs input events
 
     @slow
 	Scenario: we expect Oanda to send heartbeats
-		Given System is connecting to Oanda practice using streaming connection for EUR_USD prices
+		Given System is connecting to Oanda manu.practice using streaming connection for EUR_USD prices
 		 then we wait for Oanda to sends heartbeat and stop
 
