@@ -77,7 +77,7 @@ class TestWireDummyBuyStrategy(unittest.TestCase):
         self.tick_for_strategy_q = Queue()
         self.signal_output_q = Queue()
 
-        self.strategy_wiring = WireStrategy().set_strategy(DummyBuyStrategy(100))
+        self.strategy_wiring = WireStrategy().set_strategy(DummyBuyStrategy(), 100)
         self.strategy_loop = self.strategy_wiring.wire(in_q=self.tick_for_strategy_q, out_q=self.signal_output_q)
         self.strategy_thread = Thread(target=self.strategy_loop.start)
 

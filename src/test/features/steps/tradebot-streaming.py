@@ -7,17 +7,18 @@ from com.open.algo.trading.eventTrading import AlgoTrader
 from com.open.algo.dummy import DummyBuyStrategy, DummyExecutor
 from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.trading.fxEvents import *
+from com.open.algo.strategy import StrategyOrderManager
 
 
 @given('we are using a dummy strategy and executor')
 def step_impl(context):
-    context.strategy = DummyBuyStrategy(100)
+    context.strategy = StrategyOrderManager(DummyBuyStrategy(), 100)
     context.executor = DummyExecutor()
 
 
 @given('we are using a dummy strategy')
 def step_impl(context):
-    context.strategy = DummyBuyStrategy(100)
+    context.strategy = StrategyOrderManager(DummyBuyStrategy(), 100)
 
 
 @given('we are using a dummy executor')

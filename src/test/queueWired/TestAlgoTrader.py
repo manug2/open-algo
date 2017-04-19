@@ -6,13 +6,14 @@ from com.open.algo.trading.fxEvents import *
 from com.open.algo.wiring.eventLoop import EventLoop
 from com.open.algo.dummy import *
 from com.open.algo.utils import get_time, EVENT_TYPES_ORDER
+from com.open.algo.strategy import StrategyOrderManager
 
 
 class TestStreamTrading(unittest.TestCase):
     def setUp(self):
         self.events = Queue()
         self.execution_q = Queue()
-        self.strategy = DummyBuyStrategy(100)
+        self.strategy = StrategyOrderManager(DummyBuyStrategy(), 100)
         self.executor = DummyExecutor()
         self.algo_trader = AlgoTrader(None, self.strategy, self.executor)
         self.trader = EventLoop(self.events, self.algo_trader)
@@ -45,7 +46,7 @@ class TestStreamTradingRandom(unittest.TestCase):
     def setUp(self):
         self.events = Queue()
         self.execution_q = Queue()
-        self.strategy = BuyOrSellAt5thTickStrategy(100)
+        self.strategy = StrategyOrderManager(BuyOrSellAt5thTickStrategy(), 100)
         self.executor = DummyExecutor()
         self.algo_trader = AlgoTrader(None, self.strategy, self.executor)
         self.trader = EventLoop(self.events, self.algo_trader)

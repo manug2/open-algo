@@ -13,35 +13,22 @@ class DummyBuyStrategy(AbstractStrategy):
     this strategy is used for testing of trading system in an event driven fashion
     as well as for unit testing of base class.
     """
-    def __init__(self, units):
+    def __init__(self):
         super(DummyBuyStrategy, self).__init__()
-        self.units = units
 
     def calculate_signals(self, event):
-        try:
-            signal_amount_pending_ack = self.get_signaled_position(event.instrument)
-        except KeyError:
-            signal_amount_pending_ack = 0
-        if signal_amount_pending_ack == 0:
-            order = OrderEvent(event.instrument, self.units, ORDER_SIDE_BUY)
-            logger.info('issuing order - %s' % order)
-            self.update_signaled_position(order.instrument, order.get_signed_units())
-            return order
+        return ORDER_SIDE_BUY
 
 
 class BuyOrSellAt5thTickStrategy(AbstractStrategy):
-    def __init__(self, units):
+    def __init__(self):
         super(BuyOrSellAt5thTickStrategy, self).__init__()
-        self.units = units
         self.ticks = 0
 
     def calculate_signals(self, event):
         self.ticks += 1
         if self.ticks % 5 == 0:
-            side = random.choice([ORDER_SIDE_BUY, ORDER_SIDE_SELL])
-            order = OrderEvent(event.instrument, self.units, side)
-            self.update_signaled_position(order.instrument, order.get_signed_units())
-            return order
+            return random.choice([ORDER_SIDE_BUY, ORDER_SIDE_SELL])
 
 
 class AlternateBuySellAt5thTickStrategy(AbstractStrategy):
@@ -49,22 +36,20 @@ class AlternateBuySellAt5thTickStrategy(AbstractStrategy):
     this strategy is used for unit testing of abstract class.
     abstract class maintains signals, open interests etc.
     """
-    def __init__(self, units):
+    def __init__(self):
         super(AlternateBuySellAt5thTickStrategy, self).__init__()
-        self.units = units
         self.ticks = 0
-        self.side = ORDER_SIDE_BUY
+        self.side = ORDER_SIDE_SELL
 
     def calculate_signals(self, event):
         self.ticks += 1
         if self.ticks % 5 == 0:
-            order = OrderEvent(event.instrument, self.units, self.side)
             if self.side == ORDER_SIDE_SELL:
                 self.side = ORDER_SIDE_BUY
+                return self.side
             else:
                 self.side = ORDER_SIDE_SELL
-            self.update_signaled_position(order.instrument, order.get_signed_units())
-            return order
+                return self.side
 
 
 from com.open.algo.model import ExecutionHandler

@@ -8,7 +8,7 @@ Feature: Oanda provides order execution capability via API
 		 then system does not get a failure response
 
 	Scenario: Execution order can be issued to Oanda
-		Given Executor is setup to connect to Oanda practice using api connection
+		Given Executor is setup to connect to Oanda manu.practice using api connection
 		  and we want to buy 125 units of EUR_USD
 		 when i say execute order
 		 then Oanda booked a new trade
@@ -17,7 +17,7 @@ Feature: Oanda provides order execution capability via API
 		  and Oanda trade has side = buy
 
 	Scenario: Limit order can be issued to Oanda
-		Given Executor is setup to connect to Oanda practice using api connection
+		Given Executor is setup to connect to Oanda manu.practice using api connection
 		  and we put limit order to buy 100 units of EUR_USD at price 0.75 expiring in 2 minutes
 		 when i say execute order
 		 then Oanda opened a new order
@@ -26,7 +26,7 @@ Feature: Oanda provides order execution capability via API
 		  and Oanda order has side = buy
 
 	Scenario: We can query open orders from Oanda
-		Given Executor is setup to connect to Oanda practice using api connection
+		Given Executor is setup to connect to Oanda manu.practice using api connection
 		  and we put limit order to buy 125 units of EUR_USD at price 0.75 expiring in 2 minutes
 		  and we have executed the order
 		 when i say query my orders

@@ -27,3 +27,10 @@ class TestTickEvents(unittest.TestCase):
 
     def testTickEventHasExpectedAsk(self):
         self.assertEquals(TickEvent(None, None, None, 123.4).ask, 123.4)
+
+    def testTickEventHasNoDefaultReceivedTime(self):
+        self.assertIsNone(TickEvent(None, None, None, 123.4).receive_time)
+
+    def testTickEventHasExpectedReceivedTime(self):
+        rt = "2015-06-11T22:48:01.000000Z"
+        self.assertEqual(rt, TickEvent(None, None, None, 123.4, rt).receive_time)

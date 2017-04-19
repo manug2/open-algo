@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-from com.open.algo.utils import get_time
+from com.open.algo.utils import get_time, EVENT_TYPES_EXCEPTION
 
 
 # FX Events Abstract Class
@@ -25,7 +25,7 @@ class Event:
 
 class ExceptionEvent(Event):
     def __init__(self, caller, message, orig_event=None):
-        super(ExceptionEvent, self).__init__('EXCEPTION')
+        super(ExceptionEvent, self).__init__(EVENT_TYPES_EXCEPTION)
         self.caller = caller
         self.message = message
         self.time = get_time()

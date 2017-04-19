@@ -11,6 +11,7 @@ from queue import Queue
 from com.open.algo.wiring.eventLoop import EventLoop
 from threading import Thread
 from testUtils import *
+from com.open.algo.strategy import StrategyOrderManager
 
 
 class TestDummyBuyStrategy(unittest.TestCase):
@@ -18,7 +19,7 @@ class TestDummyBuyStrategy(unittest.TestCase):
 
         self.ticks_and_ack_q = Queue()
         self.signal_output_q = Queue()
-        self.strategy = DummyBuyStrategy(100)
+        self.strategy = StrategyOrderManager(DummyBuyStrategy(), 100)
         self.strategy_loop = EventLoop(self.ticks_and_ack_q, self.strategy, processed_event_q=self.signal_output_q)
         self.strategy_thread = Thread(target=self.strategy_loop.start, args=[])
 

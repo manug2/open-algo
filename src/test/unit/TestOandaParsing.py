@@ -77,7 +77,7 @@ class TestParseExecutionResponse(unittest.TestCase):
             '{"instrument": "EUR_USD", "time": "2015-05-08T20:59:45.031348Z", "bid": 1.11975, "ask": 1.12089}'
         self.executed_order_json = json.loads(self.executed_order_str)
 
-    def test_should_give_executed_order_object(self):
+    def should_give_executed_order_object(self):
         self.fail('not yet implemented')
 
 
@@ -88,5 +88,5 @@ class TestParseExecutionEvents(unittest.TestCase):
             '{"instrument": "EUR_USD", "time": "2015-05-08T20:59:45.031348Z", "bid": 1.11975, "ask": 1.12089}'
         self.executed_order_json = json.loads(self.executed_order_str)
 
-    def test_should_give_executed_order_object(self):
+    def should_give_executed_order_object(self):
         self.fail('not yet implemented')

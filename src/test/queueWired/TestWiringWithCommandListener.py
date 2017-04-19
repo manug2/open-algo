@@ -78,37 +78,6 @@ class TestWirePortfolio(unittest.TestCase):
         self.assertEqual(buy_order, out_event)
 
 
-class TestWireExecutor(unittest.TestCase):
-    def setUp(self):
-        self.starter = ThreadStarter()
-        self.portfolio_q = Queue()
-        self.execution_q = Queue()
-        self.wiring = WireExecutor().set_journaler(Journaler())
-        self.wiring.set_target_env('practice').set_config_path(CONFIG_PATH_FOR_UNIT_TESTS)
-
-        self.command_q = Queue()
-
-    def test_executed_order_should_reach_portfolio_q(self):
-        buy_order = OrderEvent('EUR_USD', 1000, 'buy')
-
-        self.starter.add_target(self.wiring, command_q=self.command_q, in_q=self.execution_q, out_q=self.portfolio_q)
-        self.starter.start()
-
-        self.execution_q.put_nowait(buy_order)
-        executed_order = await_event_receipt(self, self.portfolio_q, 'did not find one order in portfolio queue')
-
-        self.command_q.put_nowait(COMMAND_STOP)
-        self.starter.join(timeout=MAX_TIME_TO_ALLOW_SOME_EVENTS_TO_STREAM)
-
-        if get_day_of_week() >= 5:
-            self.assertIsInstance(executed_order, ExceptionEvent)
-        else:
-            self.assertIsInstance(executed_order, ExecutedOrder
-                      , 'expecting an executed order of type [%s] but got of type [%s] - %s'
-                          % (type(ExecutedOrder), type(executed_order), executed_order))
-            self.assertEqual(buy_order, executed_order.order)
-
-
 class TestWireDummyBuyStrategy(unittest.TestCase):
     def setUp(self):
         self.starter = ThreadStarter()
@@ -118,7 +87,7 @@ class TestWireDummyBuyStrategy(unittest.TestCase):
         self.tick_for_strategy_q = Queue()
         self.signal_output_q = Queue()
 
-        self.strategy_wiring = WireStrategy().set_strategy(DummyBuyStrategy(100))
+        self.strategy_wiring = WireStrategy().set_strategy(DummyBuyStrategy(), 100)
         command_q_strategy = Queue()
         self.starter.add_target(self.strategy_wiring,
                                 command_q_strategy, self.tick_for_strategy_q, self.signal_output_q)
